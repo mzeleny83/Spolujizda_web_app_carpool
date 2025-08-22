@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiM2NjdlZWEiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xOC45MiA2LjAxQzE4LjcyIDUuNDIgMTguMTYgNSAxNy41IDVIMTVWM0gxM1Y1SDExVjNIOVY1SDYuNUM1Ljg0IDUgNS4yOCA1LjQyIDUuMDggNi4wMUwzIDEyVjIwQzMgMjAuNTUgMy40NSAyMSA0IDIxSDVDNS41NSAyMSA2IDIwLjU1IDYgMjBWMTlIMThWMjBDMTggMjAuNTUgMTguNDUgMjEgMTkgMjFIMjBDMjAuNTUgMjEgMjEgMjAuNTUgMjEgMjBWMTJMMTguOTIgNi4wMVpNNi41IDE2QzUuNjcgMTYgNSAxNS4zMyA1IDE0LjVTNS42NyAxMyA2LjUgMTMgOCAxMy42NyA4IDE0LjUgNy4zMyAxNiA2LjUgMTZaTTE3LjUgMTZDMTYuNjcgMTYgMTYgMTUuMzMgMTYgMTQuNVMxNi42NyAxMyAxNy41IDEzIDE5IDEzLjY3IDE5IDE0LjUgMTguMzMgMTYgMTcuNSAxNlpNNSAxMUwxOSAxMUwxNy4zIDdINi43TDUgMTFaIi8+Cjwvc3ZnPgo8L3N2Zz4K">
+    <title>Spolujízda - Sdílení jízd s mapou</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/navigation.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="/static/js/traffic.js"></script>
+    <script src="/static/js/offline.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Spolujízda</h1>
+            <div class="user-info">
+                <input type="text" id="userName" placeholder="Vaše jméno" required>
+                <button onclick="startTracking()">Začít sledování</button>
+                <button onclick="stopTracking()">Zastavit sledování</button>
+            </div>
+        </header>
+        
+        <button class="panel-toggle" id="panelToggle" onclick="togglePanel()">×</button>
+        
+        <div class="main-content">
+            <div class="left-panel" id="leftPanel">
+                <div class="buttons">
+                    <button onclick="showOfferForm()">Nabídnout jízdu</button>
+                    <button onclick="showSearchForm()">Hledat jízdu</button>
+                    <button onclick="showRecurringForm()">🔁 Pravidelné jízdy</button>
+                    <button onclick="showActiveRides()">Aktivní jízdy</button>
+                    <button onclick="showSettings()">⚙️ Nastavení</button>
+                </div>
+                
+                <div id="offerForm" class="form-container" style="display: none;">
+                    <h2>Nabídnout jízdu</h2>
+                    <form id="rideOfferForm">
+                        <input type="text" id="fromOffer" placeholder="Odkud" required onchange="updateRoutePreview()">
+                        <input type="text" id="toOffer" placeholder="Kam" required onchange="updateRoutePreview()">
+                        <input type="datetime-local" id="departureOffer" required>
+                        <input type="number" id="seatsOffer" placeholder="Počet míst" min="1" max="8" required>
+                        <input type="number" id="priceOffer" placeholder="Cena za osobu (Kč)" min="0" required>
+                        <button type="button" onclick="planRoute()">Naplánovat trasu na mapě</button>
+                        <div id="routeWaypoints"></div>
+                        <button type="submit">Nabídnout</button>
+                    </form>
+                </div>
+                
+                <div id="searchForm" class="form-container" style="display: none;">
+                    <h2>Hledat jízdu</h2>
+                    <form id="rideSearchForm">
+                        <input type="text" id="fromSearch" placeholder="Odkud" required>
+                        <input type="text" id="toSearch" placeholder="Kam" required>
+                        <h4>🔍 Filtry</h4>
+                        <input type="number" id="maxPrice" placeholder="Max. cena (Kč)" min="0">
+                        <select id="minRating">
+                            <option value="">Jakékoli hodnocení</option>
+                            <option value="4.5">⭐ 4.5+ hvězdiček</option>
+                            <option value="4.0">⭐ 4.0+ hvězdiček</option>
+                            <option value="3.5">⭐ 3.5+ hvězdiček</option>
+                        </select>
+                        <button type="submit">Hledat</button>
+                    </form>
+                </div>
+                
+                <div id="results" class="results-container"></div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="map-container">
+                    <button class="fullscreen-toggle" onclick="toggleFullscreen()">⛶</button>
+                    <div id="map"></div>
+                </div>
+                <div class="map-controls">
+                    <button onclick="centerOnUser()">Najít mě</button>
+                    <button onclick="showAllUsers()">Zobrazit všechny</button>
+                    <button onclick="clearRideMarkers()">🧽 Vymazat jízdy</button>
+                    <button onclick="stopVoiceGuidance()">🔇 Stop navigace</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <div id="status" class="status-bar">
+                <span id="connectionStatus">Odpojeno</span>
+                <span id="locationStatus">GPS: Neaktivní</span>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

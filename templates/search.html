@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spolujízda - Hledat jízdy</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .search-box { margin: 20px 0; }
+        input { padding: 10px; margin: 5px; width: 200px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .ride { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🚗 Spolujízda - Hledat jízdy</h1>
+    
+    <div class="search-box">
+        <input type="text" id="from" placeholder="Odkud (Praha, Brno...)" value="Praha">
+        <button onclick="search()">🔍 Hledat</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+    async function search() {
+        const from = document.getElementById('from').value;
+        const results = document.getElementById('results');
+        
+        results.innerHTML = '⏳ Hledám...';
+        
+        try {
+            const response = await fetch(`/api/rides/search?from=${from}`);
+            const rides = await response.json();
+            
+            if (rides.length === 0) {
+                results.innerHTML = '❌ Žádné jízdy nenalezeny';
+                return;
+            }
+            
+            results.innerHTML = rides.map(ride => `
+                <div class="ride">
+                    <h3>${ride.from_location} → ${ride.to_location}</h3>
+                    <p>🕐 ${ride.departure_time} | 💰 ${ride.price_per_person} Kč | 👥 ${ride.available_seats} míst</p>
+                    <p>🚗 ${ride.driver_name || 'Neznámý řidič'} ⭐ ${ride.driver_rating}</p>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            results.innerHTML = '❌ Chyba: ' + error.message;
+        }
+    }
+    </script>
+</body>
+</html>

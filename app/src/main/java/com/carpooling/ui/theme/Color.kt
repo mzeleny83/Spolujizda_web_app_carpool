@@ -1,0 +1,1 @@
+package com.carpooling.ui.theme\n\nimport androidx.compose.ui.graphics.Color\n\nval Purple80 = Color(0xFFD0BCFF)\nval PurpleGrey80 = Color(0xFFCCC2DC)\nval Pink80 = Color(0xFFEFB8C8)\n\nval Purple40 = Color(0xFF6650a4)\nval PurpleGrey40 = Color(0xFF625b71)\nval Pink40 = Color(0xFF7D5260)

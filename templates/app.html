@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spolujízda - Kompletní aplikace</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #007bff; padding-bottom: 20px; }
+        .nav { display: flex; gap: 15px; }
+        .nav button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .nav button.active { background: #0056b3; }
+        .section { display: none; }
+        .section.active { display: block !important; }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
+        .btn { padding: 15px 30px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px 5px; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        .search-form { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .ride { border: 1px solid #ddd; margin: 15px 0; padding: 20px; border-radius: 8px; background: #f9f9f9; }
+        .user-info { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Spolujízda</h1>
+            <div class="nav">
+                <button onclick="showSection('search')" class="active">Hledat</button>
+                <button onclick="showSection('map'); loadMapRides();">🗺️ Mapa</button>
+                <button onclick="showSection('reservations')" id="reservationsBtn" style="display:none;">🎫 Rezervace</button>
+                <button onclick="showSection('my-rides')" id="myRidesBtn" style="display:none;">🚗 Moje jízdy</button>
+                <button onclick="showSection('offer')" id="offerBtn" style="display:none;">Nabídnout</button>
+                <button onclick="showSection('login')" id="loginBtn">Přihlásit</button>
+                <button onclick="showSection('register')" id="registerBtn">Registrovat</button>
+                <button onclick="logout()" id="logoutBtn" style="display:none;">Odhlásit</button>
+            </div>
+        </div>
+
+        <div id="userInfo" class="user-info" style="display:none;"></div>
+        <div id="message"></div>
+
+        <!-- Hledání jízd -->
+        <div id="search" class="section active">
+            <h2>Hledat jízdy</h2>
+            <div class="search-form">
+                <input type="text" id="from" placeholder="Odkud (Praha, Brno, Ostrava...)" />
+                <input type="text" id="to" placeholder="Kam (Praha, Brno, Ostrava...)" />
+                <button class="btn" onclick="search()">🔍 Hledat</button>
+                <button class="btn btn-success" onclick="showAll()">📋 Všechny jízdy</button>
+            </div>
+            <div id="searchResults"></div>
+        </div>
+
+        <!-- Přihlášení -->
+        <div id="login" class="section">
+            <h2>Přihlášení</h2>
+            <div class="form-group">
+                <label>Telefon nebo email:</label>
+                <input type="text" id="loginPhone" placeholder="+420123456789 nebo email@example.com" />
+            </div>
+            <div class="form-group">
+                <label>Heslo:</label>
+                <input type="password" id="loginPassword" />
+            </div>
+            <button class="btn" onclick="login()">Přihlásit se</button>
+        </div>
+
+        <!-- Registrace -->
+        <div id="register" class="section">
+            <h2>Registrace</h2>
+            <div class="form-group">
+                <label>Jméno:</label>
+                <input type="text" id="regName" placeholder="Jan Novák" />
+            </div>
+            <div class="form-group">
+                <label>Telefon:</label>
+                <input type="text" id="regPhone" placeholder="+420123456789" />
+            </div>
+            <div class="form-group">
+                <label>Email (volitelný):</label>
+                <input type="email" id="regEmail" placeholder="jan@example.com" />
+            </div>
+            <div class="form-group">
+                <label>Heslo:</label>
+                <input type="password" id="regPassword" />
+            </div>
+            <div class="form-group">
+                <label>Potvrzení hesla:</label>
+                <input type="password" id="regPasswordConfirm" />
+            </div>
+            <button class="btn" onclick="register()">Registrovat se</button>
+        </div>
+
+        <!-- Mapa jízd -->
+        <div id="map" class="section">
+            <h2>🗺️ Mapa jízd</h2>
+            <div id="realMap" style="width: 100%; height: 500px; border: 2px solid #ddd; border-radius: 8px;"></div>
+            
+            <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;" id="mapRidesList">
+                <!-- Jízdy se načtou zde -->
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #dee2e6;">
+                <h4 style="margin: 0 0 10px 0; color: #495057;">🗺️ Legenda mapy:</h4>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 14px;">
+                    <div><span style="background: #4caf50; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-right: 8px; font-size: 10px;">START</span>Odkud jede auto</div>
+                    <div><span style="background: #f44336; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-right: 8px; font-size: 10px;">CÍL</span>Kam jede auto</div>
+                    <div><span style="color: #2196f3; font-weight: bold; margin-right: 8px;">—</span>Trasa mezi městy</div>
+                </div>
+            </div>
+            <button class="btn" onclick="loadMapRides()" style="margin-top: 15px;">🔄 Načíst jízdy</button>
+        </div>
+
+        <!-- Rezervované jízdy -->
+        <div id="reservations" class="section">
+            <h2>🎫 Moje rezervace</h2>
+            <div id="reservationsList">
+                <p>Načítám vaše rezervace...</p>
+            </div>
+            <button class="btn" onclick="loadReservations()" style="margin-top: 15px;">🔄 Aktualizovat</button>
+        </div>
+
+        <!-- Moje jízdy (pro řidiče) -->
+        <div id="my-rides" class="section">
+            <h2>🚗 Moje jízdy</h2>
+            <div id="myRidesList">
+                <p>Načítám vaše jízdy...</p>
+            </div>
+            <button class="btn" onclick="loadMyRides()" style="margin-top: 15px;">🔄 Aktualizovat</button>
+        </div>
+
+        <!-- Nabídka jízdy -->
+        <div id="offer" class="section">
+            <h2>Nabídnout jízdu</h2>
+            <div class="form-group">
+                <label>Odkud:</label>
+                <input type="text" id="offerFrom" placeholder="Praha" />
+            </div>
+            <div class="form-group">
+                <label>Kam:</label>
+                <input type="text" id="offerTo" placeholder="Brno" />
+            </div>
+            <div class="form-group">
+                <label>Datum a čas odjezdu:</label>
+                <input type="datetime-local" id="offerTime" />
+            </div>
+            <div class="form-group">
+                <label>Počet volných míst:</label>
+                <select id="offerSeats">
+                    <option value="1">1 místo</option>
+                    <option value="2">2 místa</option>
+                    <option value="3">3 místa</option>
+                    <option value="4">4 místa</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Cena za osobu (Kč):</label>
+                <input type="number" id="offerPrice" placeholder="200" />
+            </div>
+            <button class="btn btn-success" onclick="offerRide()">🚗 Nabídnout jízdu</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('message');
+            msg.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => msg.innerHTML = '', 5000);
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+            
+            // Najdi a aktivuj správné tlačítko
+            const buttons = document.querySelectorAll('.nav button');
+            buttons.forEach(btn => {
+                if (btn.textContent.includes('Hledat') && section === 'search') btn.classList.add('active');
+                if (btn.textContent.includes('Mapa') && section === 'map') btn.classList.add('active');
+                if (btn.textContent.includes('Rezervace') && section === 'reservations') btn.classList.add('active');
+                if (btn.textContent.includes('Moje jízdy') && section === 'my-rides') btn.classList.add('active');
+                if (btn.textContent.includes('Nabídnout') && section === 'offer') btn.classList.add('active');
+                if (btn.textContent.includes('Přihlásit') && section === 'login') btn.classList.add('active');
+                if (btn.textContent.includes('Registrovat') && section === 'register') btn.classList.add('active');
+            });
+        }
+
+        function updateUI() {
+            if (currentUser) {
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('userInfo').innerHTML = `Přihlášen jako: <strong>${currentUser.name}</strong> (${currentUser.phone}) ⭐ ${currentUser.rating || 5.0}`;
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('registerBtn').style.display = 'none';
+                document.getElementById('offerBtn').style.display = 'inline-block';
+                document.getElementById('reservationsBtn').style.display = 'inline-block';
+                document.getElementById('myRidesBtn').style.display = 'inline-block';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('userInfo').style.display = 'none';
+                document.getElementById('loginBtn').style.display = 'inline-block';
+                document.getElementById('registerBtn').style.display = 'inline-block';
+                document.getElementById('offerBtn').style.display = 'none';
+                document.getElementById('reservationsBtn').style.display = 'none';
+                document.getElementById('myRidesBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'none';
+            }
+        }
+
+        async function register() {
+            const data = {
+                name: document.getElementById('regName').value,
+                phone: document.getElementById('regPhone').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                password_confirm: document.getElementById('regPasswordConfirm').value
+            };
+
+            try {
+                const response = await fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('Registrace úspěšná! Nyní se můžete přihlásit.');
+                    showSection('login');
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Chyba při registraci: ' + error.message, 'error');
+            }
+        }
+
+        async function login() {
+            const data = {
+                phone: document.getElementById('loginPhone').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            try {
+                const response = await fetch('/api/users/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    currentUser = {
+                        id: result.user_id,
+                        name: result.name,
+                        phone: document.getElementById('loginPhone').value,
+                        rating: result.rating || 5.0
+                    };
+                    updateUI();
+                    showMessage('Přihlášení úspěšné!');
+                    showSection('search');
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Chyba při přihlášení: ' + error.message, 'error');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            updateUI();
+            showMessage('Odhlášení úspěšné!');
+            showSection('search');
+        }
+
+        async function offerRide() {
+            if (!currentUser) {
+                showMessage('Musíte být přihlášeni!', 'error');
+                return;
+            }
+
+            const data = {
+                user_id: currentUser.id,
+                from_location: document.getElementById('offerFrom').value,
+                to_location: document.getElementById('offerTo').value,
+                departure_time: document.getElementById('offerTime').value,
+                available_seats: parseInt(document.getElementById('offerSeats').value),
+                price_per_person: parseInt(document.getElementById('offerPrice').value),
+                route_waypoints: []
+            };
+
+            try {
+                const response = await fetch('/api/rides/offer', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('Jízda úspěšně nabídnuta!');
+                    document.getElementById('offer').querySelectorAll('input').forEach(i => i.value = '');
+                    showSection('search');
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Chyba při nabízení jízdy: ' + error.message, 'error');
+            }
+        }
+
+        async function search() {
+            const from = document.getElementById('from').value.trim();
+            const to = document.getElementById('to').value.trim();
+            const results = document.getElementById('searchResults');
+            
+            results.innerHTML = '⏳ Hledám jízdy...';
+            
+            try {
+                let url = '/api/rides/search?';
+                if (from) url += `from=${from}&`;
+                if (to) url += `to=${to}&`;
+                
+                const response = await fetch(url);
+                const rides = await response.json();
+                
+                if (rides.length === 0) {
+                    results.innerHTML = '<div style="text-align:center;color:#666;margin:30px 0;">❌ Žádné jízdy nenalezeny</div>';
+                    return;
+                }
+                
+                results.innerHTML = rides.map(ride => `
+                    <div class="ride">
+                        <h3>${ride.from_location} → ${ride.to_location}</h3>
+                        <div>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</div>
+                        <div>🚗 ${ride.driver_name || 'Neznámý řidič'} ⭐ ${ride.driver_rating || 5.0}</div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn" onclick="reserveRide(${ride.id})" style="background: #28a745; margin-right: 10px;">🎫 Rezervovat</button>
+                            <button class="btn btn-success" onclick="payForRide(${ride.id}, ${ride.price_per_person})">💳 Zaplatit</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                results.innerHTML = '❌ Chyba: ' + error.message;
+            }
+        }
+
+        async function showAll() {
+            const results = document.getElementById('searchResults');
+            results.innerHTML = '⏳ Načítám všechny jízdy...';
+            
+            try {
+                const response = await fetch('/api/rides/all');
+                const rides = await response.json();
+                
+                results.innerHTML = rides.map(ride => `
+                    <div class="ride">
+                        <h3>${ride.from_location} → ${ride.to_location}</h3>
+                        <div>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</div>
+                        <div>🚗 ${ride.driver_name || 'Neznámý řidič'}</div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn" onclick="reserveRide(${ride.id})" style="background: #28a745; margin-right: 10px;">🎫 Rezervovat</button>
+                            <button class="btn btn-success" onclick="payForRide(${ride.id}, ${ride.price_per_person})">💳 Zaplatit</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                results.innerHTML = '❌ Chyba: ' + error.message;
+            }
+        }
+
+        async function loadMapRides() {
+            const mapRides = document.getElementById('mapRides');
+            mapRides.innerHTML = '⏳ Načítám jízdy na mapu...';
+            
+            try {
+                const response = await fetch('/api/rides/all');
+                const rides = await response.json();
+                
+                if (rides.length === 0) {
+                    mapRides.innerHTML = '<div style="text-align:center;color:#666;">❌ Žádné jízdy na mapě</div>';
+                    return;
+                }
+                
+                mapRides.innerHTML = rides.map((ride, index) => `
+                    <div style="background: white; margin: 10px 0; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="background: #007bff; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 12px; font-weight: bold;">${index + 1}</span>
+                            <strong style="color: #007bff;">${ride.from_location} → ${ride.to_location}</strong>
+                        </div>
+                        <div style="margin-left: 35px; color: #666; font-size: 14px;">
+                            🕐 ${ride.departure_time}<br>
+                            👥 ${ride.available_seats} volných míst<br>
+                            💰 ${ride.price_per_person} Kč/osoba<br>
+                            🚗 ${ride.driver_name || 'Neznámý řidič'}
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                mapRides.innerHTML = '❌ Chyba při načítání: ' + error.message;
+            }
+        }
+        
+        async function loadMapRides() {
+            const ridesList = document.getElementById('mapRidesList');
+            ridesList.innerHTML = '⏳ Načítám jízdy na mapu...';
+            
+            try {
+                const response = await fetch('/api/rides/all');
+                const rides = await response.json();
+                
+                // Aktualizuj počet jízd v legendě
+                document.getElementById('ridesCount').textContent = rides.length;
+                
+                ridesList.innerHTML = rides.map((ride, index) => `
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="background: #007bff; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 12px; font-weight: bold;">${index + 1}</span>
+                            <strong style="color: #007bff; font-size: 16px;">${ride.from_location} → ${ride.to_location}</strong>
+                        </div>
+                        <div style="margin-left: 35px; color: #666;">
+                            🕐 ${ride.departure_time}<br>
+                            👥 ${ride.available_seats} volných míst<br>
+                            💰 ${ride.price_per_person} Kč na osobu<br>
+                            🚗 ${ride.driver_name || 'Neznámý řidič'}
+                        </div>
+                    </div>
+                `).join('');
+                
+                showMessage(`Načteno ${rides.length} jízd na mapu!`);
+                
+            } catch (error) {
+                ridesList.innerHTML = '❌ Chyba při načítání: ' + error.message;
+            }
+        }
+        
+        let map;
+        let markers = [];
+        
+        function initRealMap() {
+            if (map) return;
+            
+            // Vytvoř mapu střed ČR
+            map = L.map('realMap').setView([49.75, 15.5], 7);
+            
+            // Přidej OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+        
+        async function loadMapRides() {
+            initRealMap();
+            
+            // Vymaž staré markery
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            const ridesList = document.getElementById('mapRidesList');
+            ridesList.innerHTML = '⏳ Načítám jízdy na mapu...';
+            
+            try {
+                const response = await fetch('/api/rides/all');
+                const rides = await response.json();
+                
+                // Města a jejich souřadnice
+                const cities = {
+                    'Praha': [50.0755, 14.4378],
+                    'Brno': [49.1951, 16.6068],
+                    'Ostrava': [49.8209, 18.2625],
+                    'Plzeň': [49.7384, 13.3736],
+                    'Liberec': [50.7663, 15.0543],
+                    'Olomouc': [49.5938, 17.2509],
+                    'Zlín': [49.2265, 17.6679],
+                    'Rájec Jestřebí': [49.4186, 16.7486],
+                    'České Budějovice': [48.9745, 14.4743],
+                    'Hradec Králové': [50.2103, 15.8327]
+                };
+                
+                rides.forEach((ride, index) => {
+                    const fromCoords = cities[ride.from_location];
+                    const toCoords = cities[ride.to_location];
+                    
+                    if (fromCoords && toCoords) {
+                        // Start marker - odkud (zelený START)
+                        const startMarker = L.marker(fromCoords, {
+                            icon: L.divIcon({
+                                html: `<div style="background: #4caf50; color: white; padding: 4px 8px; border-radius: 15px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; white-space: nowrap;">START ${index + 1}</div>`,
+                                className: 'custom-marker',
+                                iconSize: [60, 25]
+                            })
+                        }).addTo(map);
+                        
+                        // End marker - kam (červený CÍL)
+                        const endMarker = L.marker(toCoords, {
+                            icon: L.divIcon({
+                                html: `<div style="background: #f44336; color: white; padding: 4px 8px; border-radius: 15px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; white-space: nowrap;">CÍL ${index + 1}</div>`,
+                                className: 'custom-marker',
+                                iconSize: [50, 25]
+                            })
+                        }).addTo(map);
+                        
+                        // Čára trasy
+                        const routeLine = L.polyline([fromCoords, toCoords], {
+                            color: '#2196f3',
+                            weight: 3,
+                            opacity: 0.7
+                        }).addTo(map);
+                        
+                        // Info popup s tlačítky
+                        const popupContent = `
+                            <div style="min-width: 220px;">
+                                <h4 style="margin: 0 0 10px 0; color: #007bff;">${ride.from_location} → ${ride.to_location}</h4>
+                                <p style="margin: 5px 0;"><strong>🕐 Čas:</strong> ${ride.departure_time}</p>
+                                <p style="margin: 5px 0;"><strong>👥 Místa:</strong> ${ride.available_seats} volných</p>
+                                <p style="margin: 5px 0;"><strong>💰 Cena:</strong> ${ride.price_per_person} Kč/osoba</p>
+                                <p style="margin: 5px 0;"><strong>🚗 Řidič:</strong> ${ride.driver_name || 'Neznámý'}</p>
+                                <div style="margin-top: 15px; text-align: center;">
+                                    <button onclick="reserveRide(${ride.id})" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; margin-right: 5px; cursor: pointer; font-size: 12px;">🎫 Rezervovat</button>
+                                    <button onclick="payForRide(${ride.id}, ${ride.price_per_person})" style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">💳 Zaplatit</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        startMarker.bindPopup(popupContent);
+                        endMarker.bindPopup(popupContent);
+                        routeLine.bindPopup(popupContent);
+                        
+                        markers.push(startMarker, endMarker, routeLine);
+                    }
+                });
+                
+                // Seznam jízd pod mapou
+                ridesList.innerHTML = rides.map((ride, index) => `
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="background: #4caf50; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 12px; font-weight: bold;">${index + 1}</span>
+                            <strong style="color: #007bff; font-size: 16px;">${ride.from_location} → ${ride.to_location}</strong>
+                        </div>
+                        <div style="margin-left: 35px; color: #666;">
+                            🕐 ${ride.departure_time}<br>
+                            👥 ${ride.available_seats} volných míst<br>
+                            💰 ${ride.price_per_person} Kč na osobu<br>
+                            🚗 ${ride.driver_name || 'Neznámý řidič'}
+                        </div>
+                    </div>
+                `).join('');
+                
+                showMessage(`Načteno ${rides.length} jízd na mapu!`);
+                
+            } catch (error) {
+                ridesList.innerHTML = '❌ Chyba při načítání: ' + error.message;
+            }
+        }
+        
+        async function reserveRide(rideId) {
+            if (!currentUser) {
+                showMessage('Musíte být přihlášeni!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/reservations/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ride_id: rideId,
+                        passenger_id: currentUser.id,
+                        seats_reserved: 1
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('Jízda úspěšně rezervována!');
+                    // Obnov seznam jízd
+                    if (document.getElementById('search').classList.contains('active')) {
+                        showAll();
+                    }
+                    // Automaticky přejdi na rezervace
+                    setTimeout(() => {
+                        showSection('reservations');
+                        loadReservations();
+                    }, 1500);
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Chyba při rezervaci: ' + error.message, 'error');
+            }
+        }
+        
+        async function payForRide(rideId, price) {
+            if (!currentUser) {
+                showMessage('Musíte být přihlášeni!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/payments/create-checkout-session', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ride_id: rideId,
+                        user_id: currentUser.id,
+                        amount: price
+                    })
+                });
+                
+                const session = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = session.checkout_url;
+                } else {
+                    showMessage(session.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Chyba při platbě: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadReservations() {
+            if (!currentUser) {
+                showMessage('Musíte být přihlášeni!', 'error');
+                return;
+            }
+            
+            const reservationsList = document.getElementById('reservationsList');
+            reservationsList.innerHTML = '⏳ Načítám vaše rezervace...';
+            
+            try {
+                const response = await fetch(`/api/reservations/user/${currentUser.id}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const reservations = await response.json();
+                
+                if (reservations.length === 0) {
+                    reservationsList.innerHTML = '<div style="text-align:center;color:#666;margin:30px 0;">❌ Žádné rezervace</div>';
+                    return;
+                }
+                
+                reservationsList.innerHTML = reservations.map(reservation => `
+                    <div class="ride">
+                        <h3>${reservation.from_location} → ${reservation.to_location}</h3>
+                        <div>🕐 ${reservation.departure_time} | 🎫 ${reservation.seats_reserved} místo | 💰 ${reservation.price_per_person} Kč</div>
+                        <div>🚗 Řidič: ${reservation.driver_name || 'Neznámý'}</div>
+                        <div style="margin-top: 10px;">
+                            <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">✓ Rezervováno</span>
+                            <button class="btn btn-success" onclick="payForReservation(${reservation.reservation_id}, ${reservation.price_per_person})" style="margin-left: 10px; padding: 5px 15px;">💳 Zaplatit</button>
+                            <button class="btn btn-danger" onclick="cancelReservation(${reservation.reservation_id})" style="margin-left: 10px; padding: 5px 15px;">❌ Zrušit</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                reservationsList.innerHTML = '❌ Chyba při načítání: ' + error.message;
+            }
+        }
+        
+        async function payForReservation(reservationId, price) {
+            if (!currentUser) {
+                showMessage('Musíte být přihlášeni!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/payments/create-checkout-session', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ride_id: reservationId, // Použij reservation_id jako ride_id
+                        user_id: currentUser.id,
+                        amount: price
+                    })
+                });
+                
+                const session = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = session.checkout_url;
+                } else {
+                    showMessage(session.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Chyba při platbě: ' + error.message, 'error');
+            }
+        }
+        
+        async function cancelReservation(reservationId) {
+            if (!confirm('Opravdu chcete zrušit tuto rezervaci?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/reservations/cancel/${reservationId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('Rezervace zrušena!');
+                    loadReservations(); // Obnov seznam
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Chyba při rušení: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadMyRides() {
+            if (!currentUser) {
+                showMessage('Musíte být přihlášeni!', 'error');
+                return;
+            }
+            
+            const myRidesList = document.getElementById('myRidesList');
+            myRidesList.innerHTML = '⏳ Načítám vaše jízdy...';
+            
+            try {
+                const response = await fetch(`/api/rides/driver/${currentUser.id}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const rides = await response.json();
+                
+                if (rides.length === 0) {
+                    myRidesList.innerHTML = '<div style="text-align:center;color:#666;margin:30px 0;">❌ Žádné nabízené jízdy</div>';
+                    return;
+                }
+                
+                myRidesList.innerHTML = rides.map(ride => `
+                    <div class="ride">
+                        <h3>${ride.from_location} → ${ride.to_location}</h3>
+                        <div>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} volných míst | 💰 ${ride.price_per_person} Kč</div>
+                        <div>📋 Rezervace: ${ride.reservations_count || 0} | 💰 Příjem: ${(ride.reservations_count || 0) * ride.price_per_person} Kč</div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn" onclick="viewRideReservations(${ride.id})" style="background: #17a2b8; margin-right: 10px;">👥 Rezervace</button>
+                            <button class="btn btn-danger" onclick="cancelRide(${ride.id})">❌ Zrušit jízdu</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                myRidesList.innerHTML = '❌ Chyba při načítání: ' + error.message;
+            }
+        }
+        
+        async function viewRideReservations(rideId) {
+            try {
+                const response = await fetch(`/api/rides/${rideId}/reservations`);
+                const reservations = await response.json();
+                
+                if (reservations.length === 0) {
+                    showMessage('Žádné rezervace pro tuto jízdu');
+                    return;
+                }
+                
+                let reservationsList = reservations.map(res => 
+                    `• ${res.passenger_name} (${res.passenger_phone}) - ${res.seats_reserved} místo`
+                ).join('\n');
+                
+                alert(`Rezervace pro jízdu:\n\n${reservationsList}`);
+                
+            } catch (error) {
+                showMessage('Chyba při načítání rezervací: ' + error.message, 'error');
+            }
+        }
+        
+        async function cancelRide(rideId) {
+            if (!confirm('Opravdu chcete zrušit tuto jízdu? Všechny rezervace budou zrušeny.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/rides/cancel/${rideId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('Jízda zrušena!');
+                    loadMyRides(); // Obnov seznam
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Chyba při rušení jízdy: ' + error.message, 'error');
+            }
+        }
+        
+        // Inicializace
+        updateUI();
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Spolujízda</title>
+</head>
+<body>
+    <h1>Test vyhledávání jízd</h1>
+    
+    <input type="text" id="from" placeholder="Odkud" value="Praha">
+    <button onclick="searchRides()">Hledat</button>
+    
+    <div id="results"></div>
+
+    <script>
+    async function searchRides() {
+        const from = document.getElementById('from').value;
+        const url = `/api/rides/search?from=${from}`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            document.getElementById('results').innerHTML = 
+                '<h3>Výsledky:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        } catch (error) {
+            document.getElementById('results').innerHTML = 'Chyba: ' + error;
+        }
+    }
+    </script>
+</body>
+</html>

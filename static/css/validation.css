@@ -1,0 +1,23 @@
+/* Validační styly */
+.field-error {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
+    animation: shake 0.5s ease-in-out;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.field-success {
+    border: 2px solid #28a745 !important;
+}

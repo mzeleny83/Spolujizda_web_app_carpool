@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Panel - Spolujízda</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .debug-button { background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 5px; margin: 5px; cursor: pointer; }
+        .debug-output { background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug Panel - Spolujízda</h1>
+    
+    <div class="debug-section">
+        <h3>📊 Databáze</h3>
+        <button class="debug-button" onclick="loadAllRides()">Načíst všechny jízdy</button>
+        <button class="debug-button" onclick="loadAllUsers()">Načíst všechny uživatele</button>
+        <div id="dbOutput" class="debug-output"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>🔍 Test hledání</h3>
+        <input type="number" id="testLat" placeholder="Latitude" value="49.4">
+        <input type="number" id="testLng" placeholder="Longitude" value="16.6">
+        <input type="number" id="testRange" placeholder="Rozsah (km)" value="50">
+        <button class="debug-button" onclick="testSearch()">Test hledání</button>
+        <div id="searchOutput" class="debug-output"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>📍 GPS Test</h3>
+        <button class="debug-button" onclick="testGPS()">Test GPS</button>
+        <div id="gpsOutput" class="debug-output"></div>
+    </div>
+
+    <script>
+        async function loadAllRides() {
+            try {
+                const response = await fetch('/api/rides/all');
+                const rides = await response.json();
+                document.getElementById('dbOutput').textContent = 
+                    `Nalezeno ${rides.length} jízd:\n` + 
+                    JSON.stringify(rides, null, 2);
+            } catch (error) {
+                document.getElementById('dbOutput').textContent = 'Chyba: ' + error.message;
+            }
+        }
+
+        async function loadAllUsers() {
+            try {
+                const response = await fetch('/api/users/list');
+                const users = await response.json();
+                document.getElementById('dbOutput').textContent = 
+                    `Nalezeno ${users.length} uživatelů:\n` + 
+                    JSON.stringify(users, null, 2);
+            } catch (error) {
+                document.getElementById('dbOutput').textContent = 'Chyba: ' + error.message;
+            }
+        }
+
+        async function testSearch() {
+            const lat = document.getElementById('testLat').value;
+            const lng = document.getElementById('testLng').value;
+            const range = document.getElementById('testRange').value;
+            
+            try {
+                const response = await fetch(`/api/rides/search?lat=${lat}&lng=${lng}&range=${range}&include_own=true`);
+                const rides = await response.json();
+                document.getElementById('searchOutput').textContent = 
+                    `Test hledání na pozici ${lat}, ${lng} v rozsahu ${range} km:\n` +
+                    `Nalezeno ${rides.length} jízd:\n` + 
+                    JSON.stringify(rides, null, 2);
+            } catch (error) {
+                document.getElementById('searchOutput').textContent = 'Chyba: ' + error.message;
+            }
+        }
+
+        function testGPS() {
+            if (navigator.geolocation) {
+                document.getElementById('gpsOutput').textContent = 'Získávám GPS pozici...';
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        const accuracy = position.coords.accuracy;
+                        document.getElementById('gpsOutput').textContent = 
+                            `GPS úspěšně získáno:\n` +
+                            `Latitude: ${lat}\n` +
+                            `Longitude: ${lng}\n` +
+                            `Přesnost: ${accuracy} metrů`;
+                    },
+                    function(error) {
+                        document.getElementById('gpsOutput').textContent = 
+                            `GPS chyba: ${error.message}\n` +
+                            `Kód chyby: ${error.code}`;
+                    },
+                    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+                );
+            } else {
+                document.getElementById('gpsOutput').textContent = 'GPS není podporováno v tomto prohlížeči';
+            }
+        }
+    </script>
+</body>
+</html>
