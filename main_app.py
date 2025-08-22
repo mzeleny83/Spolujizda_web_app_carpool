@@ -30,7 +30,17 @@ print("--- main_app.py is being loaded! ---")
 
 @app.route('/')
 def home():
-    return render_template('app.html')
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head><title>Spolujízda</title></head>
+    <body>
+        <h1>🚗 Spolujízda funguje!</h1>
+        <p>Server běží na Heroku!</p>
+        <a href="/api/status">Test API</a>
+    </body>
+    </html>
+    '''
 
 @app.route('/fixed')
 def fixed_home():
@@ -116,6 +126,36 @@ def get_ride_reservations(ride_id):
                 'seats_reserved': res[0],
                 'passenger_name': res[1],
                 'passenger_phone': res[2]
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rides/<int:ride_id>/messages')
+def get_ride_messages(ride_id):
+    try:
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        c.execute('''
+            SELECT m.message, m.created_at, m.sender_id, u.name as sender_name
+            FROM messages m
+            JOIN users u ON m.sender_id = u.id
+            WHERE m.ride_id = ?
+            ORDER BY m.created_at ASC
+        ''', (ride_id,))
+        
+        messages = c.fetchall()
+        conn.close()
+        
+        result = []
+        for msg in messages:
+            result.append({
+                'message': msg[0],
+                'created_at': msg[1],
+                'sender_id': msg[2],
+                'sender_name': msg[3]
             })
         
         return jsonify(result), 200
@@ -1197,6 +1237,7 @@ if __name__ == '__main__':
             pass
         
         port = int(os.environ.get('PORT', 8081))
+        print(f"Starting server on port {port}")
         socketio.run(app, debug=False, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
     except KeyboardInterrupt:
         signal_handler(signal.SIGINT, None)

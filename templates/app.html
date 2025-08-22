@@ -136,6 +136,20 @@
             <button class="btn" onclick="loadMyRides()" style="margin-top: 15px;">🔄 Aktualizovat</button>
         </div>
 
+        <!-- Chat -->
+        <div id="chat" class="section">
+            <h2 id="chatTitle">💬 Chat</h2>
+            <div id="chatMessages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin: 15px 0; background: #f9f9f9;">
+                <p style="text-align: center; color: #666;">Vyberte chat...</p>
+            </div>
+            <div id="chatInput" style="display: none;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="messageInput" placeholder="Napište zprávu..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button class="btn" onclick="sendMessage()">📨 Odeslat</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Nabídka jízdy -->
         <div id="offer" class="section">
             <h2>Nabídnout jízdu</h2>
@@ -189,6 +203,7 @@
                 if (btn.textContent.includes('Mapa') && section === 'map') btn.classList.add('active');
                 if (btn.textContent.includes('Rezervace') && section === 'reservations') btn.classList.add('active');
                 if (btn.textContent.includes('Moje jízdy') && section === 'my-rides') btn.classList.add('active');
+                if (btn.textContent.includes('Chat') && section === 'chat') btn.classList.add('active');
                 if (btn.textContent.includes('Nabídnout') && section === 'offer') btn.classList.add('active');
                 if (btn.textContent.includes('Přihlásit') && section === 'login') btn.classList.add('active');
                 if (btn.textContent.includes('Registrovat') && section === 'register') btn.classList.add('active');
@@ -663,6 +678,7 @@
                         <div>🚗 Řidič: ${reservation.driver_name || 'Neznámý'}</div>
                         <div style="margin-top: 10px;">
                             <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">✓ Rezervováno</span>
+                            <button class="btn" onclick="openChat('passenger', ${reservation.reservation_id}, '${reservation.driver_name}')" style="background: #17a2b8; margin-left: 10px; padding: 5px 15px;">💬 Chat s řidičem</button>
                             <button class="btn btn-success" onclick="payForReservation(${reservation.reservation_id}, ${reservation.price_per_person})" style="margin-left: 10px; padding: 5px 15px;">💳 Zaplatit</button>
                             <button class="btn btn-danger" onclick="cancelReservation(${reservation.reservation_id})" style="margin-left: 10px; padding: 5px 15px;">❌ Zrušit</button>
                         </div>
@@ -756,6 +772,7 @@
                         <div>📋 Rezervace: ${ride.reservations_count || 0} | 💰 Příjem: ${(ride.reservations_count || 0) * ride.price_per_person} Kč</div>
                         <div style="margin-top: 10px;">
                             <button class="btn" onclick="viewRideReservations(${ride.id})" style="background: #17a2b8; margin-right: 10px;">👥 Rezervace</button>
+                            <button class="btn" onclick="openChat('driver', ${ride.id}, 'Pasažéři')" style="background: #6f42c1; margin-right: 10px;">💬 Chat</button>
                             <button class="btn btn-danger" onclick="cancelRide(${ride.id})">❌ Zrušit jízdu</button>
                         </div>
                     </div>
@@ -807,6 +824,87 @@
                 }
             } catch (error) {
                 showMessage('Chyba při rušení jízdy: ' + error.message, 'error');
+            }
+        }
+        
+        let currentChatRide = null;
+        let currentChatType = null;
+        
+        function openChat(type, rideId, partnerName) {
+            currentChatRide = rideId;
+            currentChatType = type;
+            
+            document.getElementById('chatTitle').textContent = `💬 Chat - ${partnerName}`;
+            document.getElementById('chatInput').style.display = 'block';
+            
+            showSection('chat');
+            loadChatMessages(rideId);
+        }
+        
+        async function loadChatMessages(rideId) {
+            try {
+                const response = await fetch(`/api/rides/${rideId}/messages`);
+                const messages = await response.json();
+                
+                const chatMessages = document.getElementById('chatMessages');
+                
+                if (messages.length === 0) {
+                    chatMessages.innerHTML = '<p style="text-align: center; color: #666;">Zatím žádné zprávy...</p>';
+                    return;
+                }
+                
+                chatMessages.innerHTML = messages.map(msg => {
+                    const isOwn = msg.sender_id === currentUser.id;
+                    const align = isOwn ? 'right' : 'left';
+                    const bgColor = isOwn ? '#007bff' : '#6c757d';
+                    
+                    return `
+                        <div style="text-align: ${align}; margin: 10px 0;">
+                            <div style="display: inline-block; background: ${bgColor}; color: white; padding: 8px 12px; border-radius: 15px; max-width: 70%;">
+                                <div style="font-size: 12px; opacity: 0.8;">${msg.sender_name}</div>
+                                <div>${msg.message}</div>
+                                <div style="font-size: 10px; opacity: 0.6;">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Scroll na konec
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+            } catch (error) {
+                document.getElementById('chatMessages').innerHTML = '❌ Chyba při načítání zpráv';
+            }
+        }
+        
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message || !currentUser || !currentChatRide) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/messages/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ride_id: currentChatRide,
+                        sender_id: currentUser.id,
+                        message: message
+                    })
+                });
+                
+                if (response.ok) {
+                    messageInput.value = '';
+                    loadChatMessages(currentChatRide); // Obnov zprávy
+                } else {
+                    showMessage('Chyba při odesílání zprávy', 'error');
+                }
+                
+            } catch (error) {
+                showMessage('Chyba při odesílání: ' + error.message, 'error');
             }
         }
         
