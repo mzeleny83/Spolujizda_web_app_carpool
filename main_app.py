@@ -30,17 +30,7 @@ print("--- main_app.py is being loaded! ---")
 
 @app.route('/')
 def home():
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head><title>Spolujízda</title></head>
-    <body>
-        <h1>🚗 Spolujízda funguje!</h1>
-        <p>Server běží na Heroku!</p>
-        <a href="/api/status">Test API</a>
-    </body>
-    </html>
-    '''
+    return render_template('app.html')
 
 @app.route('/fixed')
 def fixed_home():
