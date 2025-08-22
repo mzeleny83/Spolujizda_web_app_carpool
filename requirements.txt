@@ -1,5 +1,5 @@
-Flask==2.3.3
-flask-cors==4.0.0
-flask-socketio==5.3.6
-requests==2.31.0
-stripe==7.8.0
+Flask
+flask-cors
+flask-socketio
+requests
+stripe
