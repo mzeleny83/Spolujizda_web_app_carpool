@@ -1547,6 +1547,10 @@ def get_recurring_rides():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/robots.txt')
+def robots_txt():
+    return send_from_directory('static', 'robots.txt', mimetype='text/plain')
+
 @app.route('/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)

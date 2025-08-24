@@ -10,4 +10,4 @@ Disallow: /test
 Disallow: /payment-*
 Disallow: /qr-payment
 
-Sitemap: http://sveztese.cz/sitemap.xml
+Sitemap: https://www.sveztese.cz/sitemap.xml
