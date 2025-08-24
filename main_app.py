@@ -87,6 +87,7 @@ def debug_panel():
 
 @app.route('/health')
 def health_check():
+    import datetime
     return jsonify({
         'status': 'OK',
         'timestamp': datetime.datetime.now().isoformat(),
@@ -2462,11 +2463,6 @@ if __name__ == '__main__':
         def redirect_root_to_www():
             if request.host == "sveztese.cz":
                 return redirect("https://www.sveztese.cz" + request.full_path, code=301)
-
-            @app.route('/robots.txt')
-            def robots_txt():
-                content = "User-agent: *\nAllow: /"
-                return Response(content, mimetype='text/plain')
         
         @app.before_request
         def force_https():
