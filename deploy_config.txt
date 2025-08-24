@@ -1,0 +1,55 @@
+# Apache Virtual Host konfigurace pro sveztese.cz
+
+<VirtualHost *:80>
+    ServerName sveztese.cz
+    ServerAlias www.sveztese.cz
+    
+    # Redirect na HTTPS
+    Redirect permanent / https://sveztese.cz/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName sveztese.cz
+    ServerAlias www.sveztese.cz
+    
+    DocumentRoot /var/www/sveztese.cz
+    
+    # SSL certifikát
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/sveztese.cz.crt
+    SSLCertificateKeyFile /etc/ssl/private/sveztese.cz.key
+    
+    # Python Flask aplikace
+    WSGIDaemonProcess sveztese python-path=/var/www/sveztese.cz
+    WSGIProcessGroup sveztese
+    WSGIScriptAlias / /var/www/sveztese.cz/app.wsgi
+    
+    # Statické soubory
+    Alias /static /var/www/sveztese.cz/static
+    <Directory /var/www/sveztese.cz/static>
+        Require all granted
+    </Directory>
+    
+    # Aplikační složka
+    <Directory /var/www/sveztese.cz>
+        WSGIApplicationGroup %{GLOBAL}
+        Require all granted
+    </Directory>
+    
+    # Logy
+    ErrorLog ${APACHE_LOG_DIR}/sveztese_error.log
+    CustomLog ${APACHE_LOG_DIR}/sveztese_access.log combined
+</VirtualHost>
+
+# WSGI soubor (app.wsgi)
+#!/usr/bin/python3
+import sys
+import os
+
+sys.path.insert(0, "/var/www/sveztese.cz/")
+os.chdir("/var/www/sveztese.cz/")
+
+from main_app import app as application
+
+if __name__ == "__main__":
+    application.run()

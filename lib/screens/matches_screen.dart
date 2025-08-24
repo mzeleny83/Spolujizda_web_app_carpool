@@ -28,9 +28,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
       // Use the correct API endpoint - if no search term, get all rides
       String url;
       if (from.isEmpty) {
-        url = 'http://localhost:8080/api/rides/all';
+        url = 'http://localhost:8081/api/rides/all';
       } else {
-        url = 'http://localhost:8080/api/rides/search?from=$from';
+        url = 'http://localhost:8081/api/rides/search?from=$from';
       }
       final response = await http.get(Uri.parse(url));
 
@@ -62,6 +62,20 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
+  Widget _buildRatingStars(double rating) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        return Icon(
+          index < rating.floor() ? Icons.star : 
+          index < rating ? Icons.star_half : Icons.star_border,
+          color: Colors.amber,
+          size: 20,
+        );
+      }),
+    );
+  }
+
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -89,6 +103,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildRatingStars(ride['driver_rating']?.toDouble() ?? 5.0),
+                const SizedBox(height: 4),
                 Text('${ride['from_location']} → ${ride['to_location']}'),
                 Text('Čas: ${ride['departure_time']} | Cena: ${ride['price_per_person']} Kč'),
               ],

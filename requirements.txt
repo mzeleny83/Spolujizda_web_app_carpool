@@ -1,5 +1,7 @@
-Flask
-flask-cors
-flask-socketio
-requests
-stripe
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.6
+bcrypt==4.0.1
+requests==2.31.0
+stripe==6.6.0
+gunicorn==21.2.0

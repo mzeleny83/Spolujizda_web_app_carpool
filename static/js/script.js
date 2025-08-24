@@ -1770,6 +1770,76 @@ async function autoSearchAllRides() {
                 }
               });
 
+              if (foundRides.length >= 5) {
+                break;
+              }
+            }
+          } catch (error) {
+            console.error(`Chyba při hledání v okruhu ${step} km:`, error);
+          }
+
+          if (step >= maxRange) break;
+        }
+
+        if (foundRides.length === 0) {
+          resultsDiv.innerHTML = "<p>Ve vašem okolí nejsou žádné dostupné jízdy.</p>";
+        } else {
+          displayAllRides(foundRides);
+        }
+      } catch (error) {
+        console.error("Chyba při hledání jízd:", error);
+        resultsDiv.innerHTML = `<p>Chyba při načítání jízd: ${error.message}</p>`;
+      }
+    },
+    (error) => {
+      console.error("GPS chyba:", error.message);
+      resultsDiv.innerHTML = "Nepodařilo se získat polohu: " + error.message;
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    }
+  );
+}
+
+function displayAllRides(rides) {
+  const resultsContainer = document.getElementById("results");
+  if (!Array.isArray(rides) || rides.length === 0) {
+    resultsContainer.innerHTML = "<p>Žádné jízdy nenalezeny.</p>";
+    return;
+  }
+  
+  let html = `<h3>Dostupné jízdy (${rides.length}):</h3>`;
+  rides.forEach((ride) => {
+    html += `
+      <div style="margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+        <h4>🚗 ${ride.driver_name || 'Neznámý řidič'}</h4>
+        <p><strong>${ride.from_location}</strong> → <strong>${ride.to_location}</strong></p>
+        <p>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</p>
+      </div>
+    `;
+  });
+  resultsContainer.innerHTML = html;
+}
+
+});${longitude}&user_id=${userId}&range=${step}&include_own=true`
+            );
+
+            if (!response.ok) {
+              console.error(`HTTP chyba: ${response.status}`);
+              continue;
+            }
+
+            const rides = await response.json();
+
+            if (rides && Array.isArray(rides) && rides.length > 0) {
+              rides.forEach((ride) => {
+                if (!foundRides.find((r) => r.id === ride.id)) {
+                  foundRides.push(ride);
+                }
+              });
+
               // Zobraz okamžitě každou nalezenou jízdu
               displayAllRides(foundRides);
               addRideMarkersToMap(foundRides);

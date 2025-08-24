@@ -27,6 +27,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
                 controller: _fromController,
                 decoration: const InputDecoration(
                   labelText: 'Odkud',
+                  hintText: 'Zadejte výchozí místo',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.location_on),
                 ),
@@ -36,6 +37,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
                 controller: _toController,
                 decoration: const InputDecoration(
                   labelText: 'Kam',
+                  hintText: 'Zadejte cílové místo',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.flag),
                 ),
@@ -73,6 +75,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
                 controller: _priceController,
                 decoration: const InputDecoration(
                   labelText: 'Cena za osobu (Kč)',
+                  hintText: 'Zadejte cenu',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.attach_money),
                 ),

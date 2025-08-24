@@ -1,96 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/find_ride_screen.dart';
+import 'screens/offer_ride_screen.dart';
+import 'screens/matches_screen.dart';
+import 'screens/chat_screen.dart';
+import 'screens/map_screen.dart';
+import 'screens/simple_search.dart';
+import 'screens/rating_screen.dart';
+import 'screens/driver_reservations_screen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Spolujízda',
-      home: SearchScreen(),
-    );
-  }
-}
-
-class SearchScreen extends StatefulWidget {
-  @override
-  _SearchScreenState createState() => _SearchScreenState();
-}
-
-class _SearchScreenState extends State<SearchScreen> {
-  final _controller = TextEditingController();
-  List<dynamic> _rides = [];
-  bool _loading = false;
-
-  Future<void> _search() async {
-    setState(() { _loading = true; });
-    
-    try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8080/api/rides/search?from=${_controller.text}')
-      );
-      
-      if (response.statusCode == 200) {
-        setState(() {
-          _rides = json.decode(response.body);
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      setState(() { _loading = false; });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Spolujízda - Hledat jízdy')),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: 'Praha, Brno, Ostrava...',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _search,
-                  child: Text('Hledat'),
-                ),
-              ],
-            ),
-          ),
-          if (_loading) CircularProgressIndicator(),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _rides.length,
-              itemBuilder: (context, index) {
-                final ride = _rides[index];
-                return Card(
-                  margin: EdgeInsets.all(8),
-                  child: ListTile(
-                    title: Text('${ride['from_location']} → ${ride['to_location']}'),
-                    subtitle: Text('${ride['departure_time']} • ${ride['price_per_person']} Kč'),
-                    trailing: Text('${ride['available_seats']} míst'),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
       ),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/find': (context) => const FindRideScreen(),
+        '/offer': (context) => const OfferRideScreen(),
+        '/matches': (context) => const MatchesScreen(),
+        '/chat': (context) => const ChatScreen(),
+        '/map': (context) => const MapScreen(),
+        '/simple': (context) => const SimpleSearchScreen(),
+        '/rating': (context) => const RatingScreen(),
+        '/driver-reservations': (context) => const DriverReservationsScreen(),
+      },
     );
   }
 }

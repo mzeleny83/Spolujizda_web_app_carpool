@@ -63,6 +63,13 @@ class HomeScreen extends StatelessWidget {
                     Colors.red,
                     '/map',
                   ),
+                  _buildMenuCard(
+                    context,
+                    'Moji pasažéři',
+                    Icons.star,
+                    Colors.amber,
+                    '/driver-reservations',
+                  ),
                 ],
               ),
             ),
