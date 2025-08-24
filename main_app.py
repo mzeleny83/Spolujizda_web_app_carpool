@@ -2459,6 +2459,8 @@ if __name__ == '__main__':
         app = Flask(__name__)
 
 
+        
+        
         @app.before_request
         def redirect_root_to_www():
             if request.host == "sveztese.cz":

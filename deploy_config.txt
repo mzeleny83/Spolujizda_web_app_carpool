@@ -9,8 +9,9 @@
 </VirtualHost>
 
 <VirtualHost *:443>
-    ServerName sveztese.cz
-    ServerAlias www.sveztese.cz
+    ServerName www.sveztese.cz
+    ServerAlias sveztese.cz
+    Redirect permanent / https://www.sveztese.cz/
     
     DocumentRoot /var/www/sveztese.cz
     
