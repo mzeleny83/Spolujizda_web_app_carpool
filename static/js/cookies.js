@@ -24,10 +24,7 @@ class CookieConsent {
                     <a href="/privacy" style="color: #007bff;">Více informací</a>
                 </p>
                 <button onclick="cookieConsent.accept()" style="background: #007bff; color: white; border: none; padding: 8px 16px; margin: 0 5px; border-radius: 4px; cursor: pointer;">
-                    Přijmout vše
-                </button>
-                <button onclick="cookieConsent.acceptNecessary()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; margin: 0 5px; border-radius: 4px; cursor: pointer;">
-                    Pouze nezbytné
+                    Rozumím
                 </button>
             </div>
         `;

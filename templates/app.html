@@ -332,14 +332,7 @@
         </footer>
     </div>
 
-    <!-- Cookie consent banner -->
-    <div id="cookieConsent" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: white; padding: 15px; z-index: 10000; text-align: center;">
-        <div style="max-width: 900px; margin: 0 auto;">
-            <p style="margin: 0 0 10px 0; font-size: 14px;">Používáme cookies pro zlepšení vašeho zážitku. Pokračováním souhlasíte s jejich používáním.</p>
-            <button onclick="acceptCookies()" style="background: #007bff; color: white; border: none; padding: 8px 20px; border-radius: 4px; margin-right: 10px; cursor: pointer;">Souhlasím</button>
-            <a href="/privacy" target="_blank" style="color: #ccc; text-decoration: none; font-size: 12px;">Více informací</a>
-        </div>
-    </div>
+    
 
     <!-- Plovoucí chat okno -->
     <div id="floatingChat" style="display: none; position: fixed; bottom: 20px; right: 20px; width: 350px; height: 400px; background: white; border: 2px solid #007bff; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000;">
@@ -1812,17 +1805,9 @@
             }
         }
         
-        // Cookie consent
-        function showCookieConsent() {
-            if (!localStorage.getItem('cookieConsent')) {
-                document.getElementById('cookieConsent').style.display = 'block';
-            }
-        }
         
-        function acceptCookies() {
-            localStorage.setItem('cookieConsent', 'accepted');
-            document.getElementById('cookieConsent').style.display = 'none';
-        }
+        
+        
         
         // Funkce pro práci s uživateli
         async function loadAllUsers() {
@@ -2172,8 +2157,7 @@
         updateUI();
         loadCities();
         
-        // Zobraz cookie consent po načtení
-        setTimeout(showCookieConsent, 2000);
+        
         
         // Inicializuj slider hodnotu
         setTimeout(() => {
