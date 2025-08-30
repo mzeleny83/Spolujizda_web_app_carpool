@@ -256,14 +256,23 @@ button[style*="background: #dc3545"]:hover {
 
 
 .map-fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1000;
-    border-radius: 0;
-    background: white;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    border-radius: 0 !important;
+    background: white !important;
+}
+
+.map-fullscreen #map {
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 1000 !important;
 }
 
 .fullscreen-toggle {
@@ -640,5 +649,22 @@ input[title]:hover::before {
         bottom: 15px !important;
         right: 15px !important;
         z-index: 9999 !important;
+    }
+    
+    .map-fullscreen {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 1000 !important;
+    }
+    
+    .map-fullscreen #map {
+        width: 100vw !important;
+        height: 100vh !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
     }
 }
