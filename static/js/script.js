@@ -833,6 +833,7 @@ function startTracking() {
             btn.innerHTML = '⏹️ Zastavit sledování';
             btn.title = 'Zastaví sledování GPS polohy';
             btn.disabled = false;
+            btn.onclick = toggleTracking; // Zajistí funkčnost
             
             console.log('✅ GPS sledování aktivní - watchId:', watchId);
         },
@@ -848,6 +849,7 @@ function startTracking() {
             btn.innerHTML = '📍 Najít mě a sledovat';
             btn.title = 'Spustí sledování vaší GPS polohy a vycentruje mapu na vaši pozici';
             btn.disabled = false;
+            btn.onclick = toggleTracking; // Zajistí funkčnost
             
             let errorMsg = 'Chyba GPS: ';
             switch(error.code) {
@@ -888,16 +890,18 @@ function stopTracking() {
         socket.emit('stop_location_updates', { user_id: currentUserId });
     }
     
+    // DŮLEŽITÉ: Reset všech stavů
     isTracking = false;
     currentUserId = null;
     
-    // Změní tlačítko zpět
+    // Změní tlačítko zpět a zajistí funkčnost
     const btn = document.getElementById('trackingBtn');
     btn.innerHTML = '📍 Najít mě a sledovat';
     btn.title = 'Spustí sledování vaší GPS polohy a vycentruje mapu na vaši pozici';
     btn.disabled = false;
+    btn.onclick = toggleTracking; // Zajistí funkčnost
     
-    console.log('✅ Sledování GPS úplně zastaveno');
+    console.log('✅ Sledování GPS úplně zastaveno - tlačítko aktivní');
 }
 
 // Přepínání levého panelu
