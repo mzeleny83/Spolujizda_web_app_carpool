@@ -275,6 +275,21 @@ button[style*="background: #dc3545"]:hover {
     z-index: 1000 !important;
 }
 
+/* GPS souřadnice v fullscreen módu na mobilu */
+@media (max-width: 768px) {
+    .map-fullscreen #gpsCoords {
+        position: fixed !important;
+        top: 10px !important;
+        left: 10px !important;
+        right: auto !important;
+        z-index: 1001 !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        padding: 5px 8px !important;
+        border-radius: 5px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+    }
+}
+
 .fullscreen-toggle {
     position: fixed !important;
     bottom: 20px !important;
