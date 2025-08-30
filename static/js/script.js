@@ -751,89 +751,106 @@ function startTracking() {
     const userName = localStorage.getItem('user_name');
     
     if (!userId || !userName) {
+        alert('⚠️ Musíte se přihlásit pro sledování GPS!');
+        showQuickLogin();
         return;
     }
     
     currentUserId = userName;
     
-    if (navigator.geolocation) {
-        // Nejdříve získá přesnou polohu
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                
-                // Kontrola přesnosti před využitím
-                const accuracy = position.coords.accuracy;
-                console.log(`GPS přesnost: ${accuracy}m na pozici ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-                
-                // Použije pozici i při nižší přesnosti
-                
-                // Vycentruje mapu jen při prvním spuštění
-                map.setView([lat, lng], 16);
-                updateOwnLocation(lat, lng);
-                
-                // Spustí kontinuelní sledování
-                watchId = navigator.geolocation.watchPosition(
-                    function(position) {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        
+    if (!navigator.geolocation) {
+        alert('❌ GPS není podporováno vaším prohlížečem');
+        return;
+    }
+    
+    console.log('Spouštím GPS sledování...');
+    
+    // Nejdříve získá přesnou polohu
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            console.log(`✅ GPS získáno: ${lat.toFixed(6)}, ${lng.toFixed(6)} (±${accuracy}m)`);
+            
+            // Vycentruje mapu
+            map.setView([lat, lng], 16);
+            updateOwnLocation(lat, lng);
+            
+            // Spustí kontinuelní sledování
+            watchId = navigator.geolocation.watchPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    
+                    console.log(`📍 GPS update: ${lat.toFixed(6)}, ${lng.toFixed(6)} (±${accuracy}m)`);
+                    
+                    // Pošle polohu na server
+                    if (socket && socket.connected) {
                         socket.emit('update_location', {
                             user_id: currentUserId,
                             lat: lat,
                             lng: lng
                         });
-                        
-                        // Kontrola přesnosti GPS
-                        const accuracy = position.coords.accuracy;
-                        console.log(`GPS aktualizace: přesnost ${accuracy}m`);
-                        
-                        // Kontrola rozumné vzdálenosti od poslední pozice
-                        if (userMarker) {
-                            const lastPos = userMarker.getLatLng();
-                            const distance = map.distance([lat, lng], [lastPos.lat, lastPos.lng]);
-                            
-                            // Pokud je vzdálenost větší než 10km za 30s, pravděpodobně chyba
-                            if (distance > 10000) {
-                                console.warn(`Podezrělý skok v pozici: ${distance}m - ignoruji`);
-                                return;
-                            }
-                        }
-                        
-                        updateOwnLocation(lat, lng);
-                        
-                        // Necentruj mapu automaticky - nech uživatele prohlížet
-                        
-                        document.getElementById('coordsText').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                        document.getElementById('gpsCoords').style.display = 'block';
-                    },
-                    function(error) {
-                        console.error('Chyba při sledování:', error);
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
                     }
-                );
-                
-                isTracking = true;
-                const btn = document.getElementById('trackingBtn');
-                btn.innerHTML = '⏹️ Zastavit sledování';
-                btn.title = 'Zastaví sledování GPS polohy';
-            },
-            function(error) {
-                console.error('Chyba při získávání polohy:', error);
-                document.getElementById('gpsCoords').style.display = 'none';
-            },
-            {
-                enableHighAccuracy: false,
-                timeout: 15000,
-                maximumAge: 300000
+                    
+                    // Kontrola rozumné vzdálenosti
+                    if (userMarker) {
+                        const lastPos = userMarker.getLatLng();
+                        const distance = map.distance([lat, lng], [lastPos.lat, lastPos.lng]);
+                        
+                        if (distance > 10000) {
+                            console.warn(`⚠️ Podezřelý skok: ${distance}m - ignoruji`);
+                            return;
+                        }
+                    }
+                    
+                    updateOwnLocation(lat, lng);
+                },
+                function(error) {
+                    console.error('❌ GPS sledování chyba:', error.message);
+                    alert(`❌ GPS chyba: ${error.message}`);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 30000
+                }
+            );
+            
+            isTracking = true;
+            const btn = document.getElementById('trackingBtn');
+            btn.innerHTML = '⏹️ Zastavit sledování';
+            btn.title = 'Zastaví sledování GPS polohy';
+            
+            console.log('✅ GPS sledování aktivní');
+        },
+        function(error) {
+            console.error('❌ GPS inicializace chyba:', error.message);
+            let errorMsg = 'Chyba GPS: ';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMsg += 'Povolení GPS bylo zamítnuto. Povolte GPS v nastavení prohlížeče.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMsg += 'GPS není dostupné. Zkuste to venku nebo u okna.';
+                    break;
+                case error.TIMEOUT:
+                    errorMsg += 'GPS timeout. Zkuste to znovu.';
+                    break;
+                default:
+                    errorMsg += error.message;
             }
-        );
-    }
+            alert(errorMsg);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 60000
+        }
+    );
 }
 
 // Zastavit sledování polohy
@@ -842,13 +859,15 @@ function stopTracking() {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
     }
-    document.getElementById('gpsCoords').style.display = 'none';
+    
     isTracking = false;
     
     // Změní tlačítko zpět
     const btn = document.getElementById('trackingBtn');
     btn.innerHTML = '📍 Najít mě a sledovat';
     btn.title = 'Spustí sledování vaší GPS polohy a vycentruje mapu na vaši pozici';
+    
+    console.log('Sledování GPS zastaveno');
 }
 
 // Přepínání levého panelu
