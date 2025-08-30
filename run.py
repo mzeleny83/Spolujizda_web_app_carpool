@@ -1,0 +1,1 @@
+import click\nfrom app import create_app, db\n\napp = create_app()\n\n@app.cli.command("init-db")\ndef init_db_command():\n    """Clear existing data and create new tables."""\n    db.create_all()\n    click.echo("Initialized the database.")\n\nif __name__ == '__main__':\n    app.run(debug=True)\n

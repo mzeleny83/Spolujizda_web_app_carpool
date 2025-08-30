@@ -1,0 +1,644 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: white;
+    min-height: 100vh;
+    overflow-x: auto;
+}
+
+.container {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    min-width: 320px;
+}
+
+header {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 0;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 80px;
+}
+
+header h1 {
+    color: #333;
+    font-size: 2.5em;
+}
+
+.user-info {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-info input {
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.main-content {
+    display: flex;
+    gap: 0;
+    flex: 1;
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    min-width: 300px;
+    flex-shrink: 0;
+}
+
+.left-panel {
+    width: 100%;
+    min-width: 280px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 0;
+    padding: 15px;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+    height: calc(100vh - 80px);
+    flex-shrink: 0;
+}
+
+.left-column.hidden {
+    width: 0;
+    min-width: 0;
+    overflow: visible;
+    background: transparent;
+}
+
+.left-column.hidden .left-panel {
+    width: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    background: transparent;
+    box-shadow: none;
+}
+
+.left-column.hidden .panel-toggle {
+    position: fixed !important;
+    left: 0 !important;
+    top: 90px !important;
+    right: auto !important;
+    visibility: visible;
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .left-column.hidden {
+        height: 0;
+        overflow: hidden;
+    }
+    
+    .left-column.hidden .left-panel {
+        height: 0;
+    }
+}
+
+.panel-toggle {
+    background: white;
+    color: #333;
+    border: 1px solid #ddd;
+    width: 30px;
+    height: 40px;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+    transition: background 0.3s ease;
+    margin-bottom: 10px;
+    z-index: 1002;
+    position: absolute;
+    right: 0px;
+    top: 0;
+}
+
+.panel-toggle:hover {
+    background: #f8f9fa;
+    box-shadow: 3px 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.panel-content {
+    transition: opacity 0.3s ease;
+}
+
+.left-panel.hidden .panel-content {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.right-panel {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 0;
+    word-wrap: break-word;
+    white-space: normal;
+    flex-shrink: 0;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+button[style*="background: #6c757d"]:hover {
+    background: #5a6268 !important;
+}
+
+button[style*="background: #dc3545"]:hover {
+    background: #c82333 !important;
+}
+
+.form-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.form-container h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.form-container input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.form-container input:focus, .form-container select:focus {
+    border-color: #667eea;
+    outline: none;
+}
+
+.form-container select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+}
+
+.map-container {
+    flex: 1;
+    border-radius: 0;
+    overflow: hidden;
+    min-height: 500px;
+    position: relative;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 0;
+    min-height: 500px;
+    background: #f8f9fa;
+    position: relative;
+}
+
+
+
+.map-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    border-radius: 0;
+    background: white;
+}
+
+.fullscreen-toggle {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+    border: none !important;
+    padding: 12px 15px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    z-index: 99999 !important;
+    font-size: 16px !important;
+    font-weight: normal !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    transition: bottom 0.1s ease !important;
+    pointer-events: auto !important;
+}
+
+.fullscreen-toggle:hover {
+    background: rgba(255, 255, 255, 0.9) !important;
+    transform: none !important;
+}
+
+.leaflet-control-layers {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+}
+
+.leaflet-touch .leaflet-control-layers {
+    border: 2px solid rgba(0,0,0,0.2);
+}
+
+/* Skrytí Leaflet ovládacích prvků vlevo nahoře */
+.leaflet-top.leaflet-left {
+    display: none !important;
+}
+
+/* Zajištění správné pozice fullscreen tlačítka */
+.map-container .fullscreen-toggle {
+    display: block !important;
+}
+
+
+
+.results-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.ride-item {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.ride-item h4 {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.ride-item p {
+    color: #666;
+    margin-bottom: 3px;
+}
+
+footer {
+    margin-top: 20px;
+}
+
+.status-bar {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.status-bar .connected {
+    color: #28a745;
+}
+
+.status-bar .disconnected {
+    color: #dc3545;
+}
+
+.active-rides {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.active-rides h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Modal styly */
+.modal {
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 500px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.star-rating {
+    font-size: 30px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+.star {
+    cursor: pointer;
+    margin: 0 5px;
+    transition: all 0.2s;
+}
+
+.star:hover, .star.active {
+    transform: scale(1.2);
+    filter: brightness(1.2);
+}
+
+#ratingComment {
+    width: 100%;
+    height: 80px;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    resize: vertical;
+    margin-bottom: 15px;
+}
+
+.ride-rating {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 14px;
+}
+
+.filter-section {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+#userStats p {
+    margin: 5px 0;
+    padding: 8px;
+    background: #e8f4f8;
+    border-radius: 5px;
+    border-left: 4px solid #667eea;
+}
+
+/* Tooltip styly */
+[title] {
+    position: relative;
+    cursor: pointer;
+}
+
+
+
+/* Tooltip pozice pro levé tlačítka */
+.left-panel [title]:hover::after,
+.left-panel [title]:focus::after,
+.left-panel [title]:active::after {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 10px;
+}
+
+/* Tooltip pozice pro horní tlačítka */
+header [title]:hover::after,
+header [title]:focus::after,
+header [title]:active::after {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 10px;
+}
+
+
+
+button[title]:hover::after {
+    bottom: calc(100% + 10px);
+}
+
+input[title]:hover::after {
+    top: calc(100% + 10px);
+    bottom: auto;
+}
+
+input[title]:hover::before {
+    top: calc(100% + 5px);
+    bottom: auto;
+    border-top-color: transparent;
+    border-bottom-color: rgba(0, 0, 0, 0.9);
+    transform: translateX(-50%) translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0;
+        min-width: auto;
+    }
+    
+    header {
+        padding: 10px;
+        height: auto;
+        min-height: 60px;
+    }
+    
+    header h1 {
+        font-size: 1.5em;
+    }
+    
+    .main-content {
+        flex-direction: column;
+        gap: 0;
+        height: calc(100vh - 60px);
+    }
+    
+    .left-column {
+        width: 100%;
+        order: 2;
+        height: auto;
+        max-height: 40vh;
+        overflow-y: auto;
+    }
+    
+    .left-panel {
+        height: auto;
+        max-height: none;
+        padding: 10px;
+        border-radius: 0;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .panel-toggle {
+        display: none;
+    }
+    
+    .right-panel {
+        order: 1;
+        flex: 1;
+        min-height: 60vh;
+        position: relative;
+    }
+    
+    .map-container {
+        border-radius: 0;
+        min-height: 60vh;
+        position: relative;
+    }
+    
+    #map {
+        min-height: 60vh;
+        position: relative;
+    }
+    
+    .left-panel .fullscreen-toggle {
+        display: none !important;
+    }
+    
+    .map-container .fullscreen-toggle {
+        position: absolute !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        background: rgba(255, 255, 255, 0.8) !important;
+        color: #333 !important;
+        border: none !important;
+        padding: 15px !important;
+        border-radius: 8px !important;
+        cursor: pointer !important;
+        z-index: 9999 !important;
+        font-size: 18px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+        pointer-events: auto !important;
+    }
+    
+    button {
+        padding: 15px;
+        font-size: 16px;
+        margin-bottom: 8px;
+        min-height: 50px;
+        touch-action: manipulation;
+    }
+    
+    .buttons {
+        gap: 8px;
+    }
+    
+    .form-container {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .form-container input,
+    .form-container select {
+        font-size: 16px;
+        padding: 15px;
+        margin-bottom: 12px;
+        min-height: 50px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        padding: 15px;
+    }
+    
+    .star-rating {
+        font-size: 30px;
+    }
+    
+    .results-container {
+        max-height: 200px;
+    }
+    
+    .ride-item {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .ride-item button {
+        padding: 10px;
+        font-size: 14px;
+        margin: 3px;
+        min-height: 40px;
+    }
+    
+    .status-bar {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    
+    /* Skrytí tooltipů na mobilu */
+    [title]:hover::after,
+    [title]:hover::before {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .fullscreen-toggle {
+        position: absolute !important;
+        bottom: 15px !important;
+        right: 15px !important;
+        z-index: 9999 !important;
+    }
+}

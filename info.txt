@@ -1,0 +1,1563 @@
+PROJEKT: Spolujizda
+CESTA: /home/win/Desktop/Programování/PRÁCE/Spolujizda
+
+SOUBORY:
+
+=== SMS_SETUP.md ===
+# 📱 SMS ověření
+
+## Vonage SMS API:
+
+1. Registrujte se na https://www.vonage.com/
+2. Získejte API key a secret
+3. V `app.py` nahraďte:
+   - `api_key = "your_vonage_api_key"`
+   - `api_secret = "your_vonage_api_secret"`
+
+## Jak to funguje:
+1. Uživatel zadá své telefonní číslo
+2. Server pošle SMS s kódem na jeho telefon
+3. Uživatel zadá kód a dokončí registraci
+
+## Cena: ~0.05€ za SMS
+
+=== start.sh ===
+#!/bin/bash
+
+echo "🚀 Spouštím Spolujízda server..."
+
+# Instaluje závislosti
+pip3 install -r requirements.txt --break-system-packages --quiet
+
+# Spustí aplikaci na pozadí
+python3 app.py &
+APP_PID=$!
+
+sleep 3
+
+# Spustí tunel bez keep-alive
+ssh -o StrictHostKeyChecking=no -o TCPKeepAlive=no -o ServerAliveInterval=0 -R 80:localhost:8080 nokey@localhost.run 2>&1 | tee /tmp/tunnel_output &
+TUNNEL_PID=$!
+
+sleep 5
+
+# Získá URL jen jednou
+URL=$(grep -o 'https://[a-zA-Z0-9-]*\.lhr\.life' /tmp/tunnel_output | head -1)
+
+if [ ! -z "$URL" ]; then
+    echo ""
+    echo "============================================================"
+    echo "🚀 SPOLUJÍZDA SERVER SPUŠTĚN!"
+    echo "============================================================"
+    echo "🌍 VEŘEJNÁ ADRESA: $URL"
+    echo "📤 POŠLETE TENTO ODKAZ KAMARÁDOVI:"
+    echo "   $URL"
+    echo "============================================================"
+    echo ""
+fi
+
+# Čeká na ukončení
+wait $APP_PID
+
+=== permanent_tunnel.py ===
+#!/usr/bin/env python3
+import subprocess
+import time
+import hashlib
+import os
+
+def generate_fixed_subdomain():
+    """Generuje vždy stejnou subdoménu z MAC adresy"""
+    try:
+        # Získá MAC adresu
+        mac = subprocess.check_output("cat /sys/class/net/*/address | head -1", shell=True).decode().strip()
+        # Vytvoří hash pro konzistentní subdoménu
+        hash_obj = hashlib.md5(mac.encode())
+        subdomain = hash_obj.hexdigest()[:12]  # Prvních 12 znaků
+        return subdomain
+    except:
+        return "spolujizda2024"
+
+def start_tunnel():
+    """Spustí tunnel s fixní subdoménou"""
+    subdomain = generate_fixed_subdomain()
+    
+    print(f"🚀 Spouštím tunnel s fixní subdoménou: {subdomain}")
+    
+    # Pokusí se o vlastní subdoménu přes SSH port forwarding
+    cmd = f"ssh -o StrictHostKeyChecking=no -R {subdomain}:80:localhost:5000 serveo.net"
+    
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    
+    time.slee
+
+=== requirements.txt ===
+Flask==2.3.3
+flask-cors==4.0.0
+flask-socketio==5.3.6
+requests==2.31.0
+
+=== project_analysis.json ===
+{
+  "project_info": {
+    "name": "User Registration API",
+    "language": "python",
+    "description": "A simple Flask API to handle user registration, storing user data in a SQLite database.",
+    "main_purpose": "Provide a functional POST endpoint /api/users/register for new user registration.",
+    "technologies": [
+      "Python",
+      "Flask",
+      "SQLite",
+      "Werkzeug"
+    ]
+  },
+  "files_to_create": [
+    {
+      "path": "app.py",
+      "content": "import sqlite3\\nfrom flask import Flask, request, jsonify\\nfrom werkzeug.security import generate_password_hash, check_password_hash\\nimport os\\n\\napp = Flask(__name__)\\napp.config['SECRET_KEY'] = os.urandom(24).hex() # A simple secret key for Flask\\nDATABASE = 'users.db'\\n\\ndef get_db_connection():\\n    conn = sqlite3.connect(DATABASE)\\n    conn.row_factory = sqlite3.Row # This allows access to columns by name\\n    return conn\\n\\ndef init_db():\\n    if not os.path.exists(DATABASE):\\n        conn = get_db_conne
+
+=== redirect_server.py ===
+#!/usr/bin/env python3
+from flask import Flask, redirect, request
+import subprocess
+import re
+import time
+import threading
+
+app = Flask(__name__)
+current_tunnel_url = None
+
+def update_tunnel():
+    """Aktualizuje tunnel URL"""
+    global current_tunnel_url
+    try:
+        # Spustí serveo a získá URL
+        process = subprocess.Popen([
+            'ssh', '-o', 'StrictHostKeyChecking=no', 
+            '-R', '80:localhost:5001', 'serveo.net'  # Port 5001 pro redirect
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        
+        time.sleep(5)
+        output, _ = process.communicate(timeout=10)
+        
+        match = re.search(r'https://[a-zA-Z0-9]+\.serveo\.net', output)
+        if match:
+            current_tunnel_url = match.group(0)
+            print(f"✅ Tunnel aktualizován: {current_tunnel_url}")
+            return True
+    except Exception as e:
+        print(f"❌ Chyba tunnel: {e}")
+    return False
+
+@app.route('/')
+def redirect_to_tunnel():
+    """Přesměr
+
+=== main.py ===
+import requests\nimport sys\n\ndef get_random_quote():\n    """Fetches a random quote from the Quotable API."""\n    api_url = "https://api.quotable.io/random"\n    try:\n        response = requests.get(api_url, timeout=10) # 10 second timeout\n        response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)\n        data = response.json()\n        \n        quote_content = data.get('content')\n        quote_author = data.get('author')\n        \n        if quote_content and quote_author:\n            # Formats the quote with double quotes around the content\n            return f'\"'{quote_content}\" - {quote_author}'\n        else:\n            return "Error: Could not parse quote content or author from the API response."\n            \n    except requests.exceptions.Timeout:\n        return "Error: The request timed out. Please check your internet connection."\n    except requests.exceptions.ConnectionError:\n        return "Error: Could not connect to the API. P
+
+=== app.py ===
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit, join_room, leave_room
+import sqlite3
+import hashlib
+import datetime
+import os
+import json
+import signal
+import sys
+import requests
+
+app = Flask(__name__)
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Slovník pro ukládání pozic uživatelů
+user_locations = {}
+
+
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/api/status')
+def api_status():
+    return jsonify({
+        'message': 'Spolujízda API server běží!',
+        'endpoints': [
+            'POST /api/users/register',
+            'POST /api/users/login', 
+            'POST /api/rides/offer',
+            'GET /api/rides/search',
+            'WebSocket /socket.io - real-time lokalizace'
+        ]
+    })
+
+DATABASE = 'spolujizda.db'
+
+def init_db():
+    try:
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        
+        # Tabulka uživatelů
+
+
+=== config_production.py ===
+import os
+from datetime import timedelta
+
+class ProductionConfig:
+    """Produkční konfigurace aplikace Spolujízda"""
+    
+    # Základní nastavení
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-super-secret-production-key-change-this'
+    DEBUG = False
+    TESTING = False
+    
+    # Databáze
+    DATABASE_URL = os.environ.get('DATABASE_URL') or 'sqlite:///production_spolujizda.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
+    
+    # Session management
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # CORS nastavení
+    CORS_ORIGINS = [
+        'https://yourdomain.com',
+        'https://www.yourdomain.com'
+    ]
+    
+    # SocketIO
+    SOCKETIO_ASYNC_MODE = 'threading'
+    SOCKETIO_CORS_ALLOWED_ORIGINS = CORS_ORIGINS
+    
+    # SMS API (Twilio example)
+    SMS_ACCOU
+
+=== start_public.py ===
+#!/usr/bin/env python3
+import subprocess
+import threading
+import time
+import requests
+import json
+
+# Import z hlavního app.py souboru
+exec(open('app.py').read())
+# Nyní máme přístup k app, socketio, init_db
+
+def start_ngrok():
+    """Spustí ngrok a získá veřejnou URL"""
+    try:
+        # Spustí ngrok na pozadí
+        subprocess.Popen(['/snap/bin/ngrok', 'http', '5000'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        # Počká na spuštění ngrok
+        time.sleep(5)
+        
+        # Získá veřejnou URL z ngrok API
+        for attempt in range(10):
+            try:
+                response = requests.get('http://127.0.0.1:4040/api/tunnels', timeout=2)
+                tunnels = response.json()['tunnels']
+                
+                if tunnels:
+                    public_url = tunnels[0]['public_url']
+                    print("\n" + "="*60)
+                    print("🚀 SPOLUJÍZDA SERVER SPUŠTĚN!")
+                    print("="*60)
+                    print(f"
+
+=== SPUŠTĚNÍ_A_POUŽITÍ.md ===
+# 🚗 Spolujízda - Návod na spuštění a použití
+
+## 🚀 Jak spustit aplikaci
+
+### 1. Instalace závislostí
+```bash
+cd /home/win/Desktop/Programování/AI-Editor/Projekt
+pip install -r requirements.txt
+sudo snap install ngrok  # Pro veřejný přístup
+```
+
+### 2. Spuštění s veřejným odkazem (DOPORUČENO)
+```bash
+./start.sh
+```
+**NEBO**
+```bash
+python3 start_public.py
+```
+
+**Výstup bude:**
+```
+============================================================
+🚀 SPOLUJÍZDA SERVER SPUŠTĚN!
+============================================================
+📱 Lokální přístup: http://127.0.0.1:5000
+🌍 Veřejný odkaz:   https://abc123.ngrok.io
+============================================================
+📤 Pošlete tento odkaz kamarádovi:
+   https://abc123.ngrok.io
+============================================================
+```
+
+### 3. Spuštění pouze lokálně
+```bash
+python app.py
+```
+
+## 📱 Jak používat aplikaci
+
+### 1. Základní nastavení
+1. Otevřete aplikaci v prohlížeči
+2. **Zadejte své jméno** do pole "Vaše jméno"
+3. 
+
+=== config.py ===
+import os\n\nclass Config:\n    SECRET_KEY = os.environ.get('SECRET_KEY') or 'a_very_secret_key_for_dev'\n    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'books.sqlite')\n    SQLALCHEMY_TRACK_MODIFICATIONS = False\n
+
+=== requirements_production.txt ===
+# Základní Flask stack
+Flask==2.3.3
+Flask-SocketIO==5.3.6
+Flask-CORS==4.0.0
+Flask-Limiter==3.5.0
+Flask-Caching==2.1.0
+Flask-Mail==0.9.1
+
+# Databáze a ORM
+SQLAlchemy==2.0.23
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+psycopg2-binary==2.9.9  # Pro PostgreSQL
+
+# WebSocket a async
+python-socketio==5.10.0
+eventlet==0.33.3
+gevent==23.9.1
+
+# Redis pro cache a session
+redis==5.0.1
+Flask-Session==0.5.0
+
+# Bezpečnost
+bcrypt==4.1.2
+PyJWT==2.8.0
+cryptography==41.0.8
+Werkzeug==2.3.7
+
+# HTTP a API
+requests==2.31.0
+urllib3==2.1.0
+
+# Validace a formuláře
+WTForms==3.1.1
+Flask-WTF==1.2.1
+email-validator==2.1.0
+
+# SMS a notifikace
+twilio==8.10.3
+pyfcm==1.5.4
+
+# Monitoring a logy
+sentry-sdk[flask]==1.38.0
+python-dotenv==1.0.0
+
+# Geografické funkce
+geopy==2.4.1
+folium==0.15.0
+
+# Utility
+python-dateutil==2.8.2
+pytz==2023.3
+click==8.1.7
+
+# Produkční server
+gunicorn==21.2.0
+nginx==1.25.3  # Pokud používáte nginx jako reverse proxy
+
+# Testování (volitelné)
+pytest==7.4.3
+pytest-flask==1.3.0
+pytest-cov==4.1.0
+
+
+=== README.md ===
+# Spolujízda - Aplikace pro sdílení jízd
+
+Mobilní a webová aplikace pro každodenní dojíždění a sdílení jízd mezi obyvateli města.
+
+## Funkce
+
+- 📱 **Multiplatformní** - Android, iOS, Web
+- 🚗 **Nabídka jízd** - Nabídněte volná místa ve svém autě
+- 🔍 **Hledání jízd** - Najděte spolujízdu na vaší trase
+- 💬 **Chat** - Komunikace mezi řidiči a spolucestujícími
+- 📍 **Geolokace** - Automatické určení polohy
+- 🔔 **Notifikace** - Upozornění na nové shody
+
+## Technologie
+
+- **Frontend**: Flutter (Dart)
+- **Backend**: Python Flask
+- **Databáze**: SQLite
+- **Mapy**: Google Maps API
+- **Notifikace**: Firebase Cloud Messaging
+
+## Instalace a spuštění
+
+### Požadavky
+- Flutter SDK 3.0+
+- Python 3.8+
+- Android Studio (pro Android)
+- Xcode (pro iOS)
+
+### Spuštění Flutter aplikace
+
+```bash
+# Instalace závislostí
+flutter pub get
+
+# Spuštění na webu
+flutter run -d chrome
+
+# Spuštění na Android
+flutter run -d android
+
+# Spuštění na iOS
+flutter run -d ios
+```
+
+### Spuštění backend serveru
+
+```bash
+# Instalace
+
+=== NÁVOD.md ===
+# 🚗 Spolujízda - Návod k použití
+
+## 📋 Jak spustit aplikaci
+
+### 1. Spuštění backend serveru
+```bash
+cd /home/win/Desktop/Programování/AI-Editor/Projekt
+pip install -r requirements.txt
+python app.py
+```
+Server poběží na: http://localhost:5000
+
+### 2. Spuštění Flutter aplikace
+
+#### 🌐 Webová verze (nejjednodušší)
+```bash
+flutter pub get
+flutter run -d chrome
+```
+
+#### 📱 Android verze
+```bash
+flutter run -d android
+```
+
+#### 🍎 iOS verze
+```bash
+flutter run -d ios
+```
+
+## 🎯 Jak používat aplikaci
+
+### 1. **Registrace a přihlášení**
+- Otevřete aplikaci
+- Klikněte "Registrovat se"
+- Vyplňte jméno, email, telefon, heslo
+- Přihlaste se pomocí emailu a hesla
+
+### 2. **Hlavní menu (5 možností)**
+- 🚗 **Nabídnout jízdu** - Pokud jedete autem
+- 🔍 **Hledat jízdu** - Pokud potřebujete svézt
+- 👥 **Moje shody** - Nalezené spolujízdy
+- 💬 **Zprávy** - Chat s ostatními
+- 🗺️ **Mapa řidičů** - **NOVÁ FUNKCE!**
+
+### 3. **🗺️ Mapa řidičů - Hlavní funkce**
+
+#### Jak funguje mapa:
+1. **Klikněte na "Mapa řidičů"*
+
+=== github_redirect.py ===
+#!/usr/bin/env python3
+import subprocess
+import time
+import requests
+import json
+import os
+
+def create_github_redirect():
+    """Vytvoří GitHub Pages redirect"""
+    
+    # Vytvoří HTML redirect stránku
+    html_content = '''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Spolujízda - Přesměrování</title>
+    <script>
+        // Získá aktuální tunnel URL z API
+        fetch('https://api.github.com/gists/anonymous')
+        .then(response => response.json())
+        .then(data => {
+            // Přesměruje na aktuální tunnel
+            const tunnelUrl = localStorage.getItem('spolujizda_url') || 'https://github.com';
+            window.location.href = tunnelUrl;
+        })
+        .catch(() => {
+            document.body.innerHTML = '<h1>Server se spouští...</h1><p>Zkuste za chvíli</p>';
+        });
+    </script>
+</head>
+<body>
+    <h1>🚗 Spolujízda</h1>
+    <p>Přesměrovávám na server...</p>
+</body>
+</html>'''
+    
+    # Uloží HTML soubor
+    with open('/tmp/redirect
+
+=== server.py ===
+import socket\nimport threading\nimport sys\n\nHOST = '127.0.0.1'  # Standard loopback interface address (localhost)\nPORT = 65432        # Port to listen on (non-privileged ports are > 1023)\n\nserver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\ntry:\n    server.bind((HOST, PORT))\n    server.listen()\nexcept OSError as e:\n    print(f"Chyba při spuštění serveru: {e}. Ujistěte se, že port {PORT} není již používán.")\n    sys.exit(1)\n\nclients = []\nnicknames = []\n\nprint(f"Server spuštěn a naslouchá na {HOST}:{PORT}")\n\ndef broadcast(message, _client=None):\n    """Odešle zprávu všem připojeným klientům, kromě odesílatele."""\n    for client in clients:\n        try:\n            # Pokud je zpráva od konkrétního klienta, neposílejte ji zpět jemu samotnému\n            if client != _client:\n                client.send(message)\n        except:\n            # Pokud dojde k chybě při odesílání, klient se pravděpodobně odpojil\n            if client in clients:\n            
+
+=== requirements_fixed.txt ===
+Flask==2.0.3
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.1
+Werkzeug==2.0.3
+
+=== permanent_url.py ===
+#!/usr/bin/env python3
+import subprocess
+import time
+import requests
+import json
+import os
+
+def get_current_tunnel():
+    """Získá aktuální tunnel URL"""
+    try:
+        with open('/tmp/current_tunnel.txt', 'r') as f:
+            return f.read().strip()
+    except:
+        return None
+
+def update_redirect(tunnel_url):
+    """Aktualizuje redirect na is.gd"""
+    try:
+        # Vytvoří krátký odkaz který přesměruje na aktuální tunnel
+        response = requests.post('https://is.gd/create.php', data={
+            'format': 'simple',
+            'url': tunnel_url,
+            'shorturl': 'spolujizda2024'
+        })
+        
+        if response.status_code == 200:
+            short_url = response.text.strip()
+            print(f"✅ Redirect aktualizován: {short_url}")
+            return short_url
+        else:
+            print("❌ Chyba při vytváření redirectu")
+            return None
+    except Exception as e:
+        print(f"❌ Chyba: {e}")
+        return None
+
+def start_tunnel():
+    """
+
+=== pubspec.yaml ===
+name: spolujizda
+description: Aplikace pro sdílení jízd - web, Android, iOS
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  http: ^1.1.0
+  shared_preferences: ^2.2.2
+  geolocator: ^10.1.0
+  google_maps_flutter: ^2.5.0
+  flutter_local_notifications: ^16.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: fonts/Roboto-Regular.ttf
+        - asset: fonts/Roboto-Bold.ttf
+          weight: 700
+
+=== client.py ===
+import socket\nimport threading\nimport sys\n\nHOST = '127.0.0.1' # Adresa serveru\nPORT = 65432        # Port serveru\n\nclient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\ntry:\n    client.connect((HOST, PORT))\nexcept ConnectionRefusedError:\n    print("Nelze se připojit k serveru. Ujistěte se, že server běží a je dostupný.")\n    sys.exit(1)\nexcept Exception as e:\n    print(f"Došlo k chybě při připojování: {e}")\n    sys.exit(1)\n\n\nnickname = input("Zvolte si přezdívku: ")\n\ndef receive():\n    """Stará se o příjem zpráv ze serveru."""\n    while True:\n        try:\n            message = client.recv(1024).decode('utf-8')\n            if message == 'NICK':\n                client.send(nickname.encode('utf-8'))\n            else:\n                print(message)\n        except:\n            # Zpracování odpojení klienta (např. server spadl nebo klienta vyhodil)\n            print("Nastala chyba nebo jste byli odpojeni ze serveru!")\n            client.close()\n       
+
+=== register_serveo.sh ===
+#!/bin/bash
+
+echo "🔑 REGISTRACE PRO STÁLOU ADRESU"
+echo "================================"
+echo ""
+echo "1. Otevřete v prohlížeči:"
+echo "   https://serveo.net/verify/google?fp=SHA256%3Addf9i48nYnjuEGEO4GXgzVxWTwCxHddXbCK9eTKDdgY"
+echo ""
+echo "2. Přihlaste se Google účtem"
+echo ""
+echo "3. Po registraci spusťte: ./start_permanent.sh"
+echo ""
+echo "Pak budete mít STÁLOU adresu: https://spolujizda.serveo.net"
+
+=== proxy_server.py ===
+#!/usr/bin/env python3
+from flask import Flask, request, Response
+import requests
+import subprocess
+import re
+import time
+import threading
+import os
+
+app = Flask(__name__)
+current_target = "http://localhost:5000"
+
+def update_target():
+    """Neustále aktualizuje cílový server"""
+    global current_target
+    while True:
+        try:
+            # Test jestli lokální server běží
+            response = requests.get("http://localhost:5000", timeout=2)
+            if response.status_code == 200:
+                current_target = "http://localhost:5000"
+        except:
+            current_target = "http://localhost:5000"
+        time.sleep(10)
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def proxy(path):
+    """Proxy všechny požadavky na lokální server"""
+    try:
+        url = f"{current_target}/{path}"
+        
+        # Přepošle požadavek
+        if request.method == 'GET':
+            resp = requests.get(url, params=request.args, headers=dict(request.headers), timeo
+
+=== run.py ===
+import click\nfrom app import create_app, db\n\napp = create_app()\n\n@app.cli.command("init-db")\ndef init_db_command():\n    """Clear existing data and create new tables."""\n    db.create_all()\n    click.echo("Initialized the database.")\n\nif __name__ == '__main__':\n    app.run(debug=True)\n
+
+=== README_PRODUCTION.md ===
+# 🚗 Spolujízda - Plnohodnotná aplikace
+
+## 📋 Přehled funkcí
+
+### ✅ Implementované funkce:
+- **👤 Kompletní autentizace** - registrace, přihlášení, SMS ověření
+- **⭐ Hodnocení uživatelů** - hvězdičkové hodnocení s komentáři
+- **🚫 Blokování uživatelů** - ochrana před problematickými uživateli
+- **📱 PWA aplikace** - instalovatelná jako mobilní app
+- **🔔 Push notifikace** - real-time upozornění
+- **📱 Offline režim** - základní funkce bez internetu
+- **🗺️ Pokročilá navigace** - hlasové pokyny, dopravní info
+- **💬 Real-time chat** - komunikace mezi uživateli
+- **📍 Sdílení polohy** - live tracking
+- **🔍 Pokročilé filtry** - cena, hodnocení, vzdálenost
+- **🔄 Pravidelné jízdy** - opakující se cesty
+- **📊 Statistiky** - CO2, peníze, vzdálenost
+- **🎨 Responzivní design** - mobilní optimalizace
+
+## 🚀 Spuštění aplikace
+
+### Požadavky:
+```bash
+Python 3.8+
+Flask
+Flask-SocketIO
+Flask-CORS
+SQLite3
+```
+
+### Instalace:
+```bash
+cd /home/win/Desktop/Programování/PRÁCE/Spolujizda/
+pip install -r requirements
+
+=== main.js ===
+console.log('Hello World');
+
+=== SPUŠTĚNÍ.md ===
+# 🚀 Jak spustit Spolujízda aplikaci
+
+## ✅ Backend server je spuštěný!
+Server běží na: http://127.0.0.1:5000
+
+## 📱 Spuštění Flutter aplikace
+
+### 1. Instalace Flutter (pokud nemáte)
+```bash
+# Stáhněte Flutter z: https://flutter.dev/docs/get-started/install
+# Nebo použijte snap:
+sudo snap install flutter --classic
+```
+
+### 2. Spuštění aplikace
+```bash
+cd /home/win/Desktop/Programování/AI-Editor/Projekt
+
+# Instalace závislostí
+flutter pub get
+
+# Spuštění na webu (nejjednodušší)
+flutter run -d chrome
+
+# Nebo spuštění na Android
+flutter run -d android
+```
+
+## 🔧 Pokud Flutter nefunguje
+
+### Alternativa 1: Použijte online Flutter editor
+1. Jděte na: https://dartpad.dev
+2. Zkopírujte obsah z `lib/main.dart`
+3. Spusťte online
+
+### Alternativa 2: Instalace Flutter přes snap
+```bash
+sudo snap install flutter --classic
+flutter doctor
+```
+
+### Alternativa 3: Ruční instalace
+```bash
+# Stáhněte Flutter SDK
+wget https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3
+
+=== docker-compose.yml ===
+version: '3.8'
+
+services:
+  # Hlavní aplikace
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://spolujizda:password@db:5432/spolujizda
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:-your-super-secret-production-key}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_FROM_NUMBER=${TWILIO_FROM_NUMBER}
+      - FIREBASE_SERVER_KEY=${FIREBASE_SERVER_KEY}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./logs:/app/logs
+      - ./static/uploads:/app/static/uploads
+    restart: unless-stopped
+    networks:
+      - spolujizda-network
+
+  # PostgreSQL databáze
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=spolujizda
+      - POSTGRES_USER=spolujizda
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+   
+
+=== start_permanent.sh ===
+#!/bin/bash
+
+echo "🚀 Spouštím se STÁLOU adresou..."
+
+# Serveo s registrovaným klíčem
+ssh -i ~/.ssh/serveo_key -o StrictHostKeyChecking=no -R spolujizda:80:localhost:5000 serveo.net 2>&1 | tee /tmp/serveo_output &
+SSH_PID=$!
+sleep 5
+
+echo ""
+echo "============================================================"
+echo "🚀 SPOLUJÍZDA SERVER SPUŠTĚN!"
+echo "============================================================"
+echo "🌍 STÁLÁ ADRESA: https://spolujizda.serveo.net"
+echo "📤 POŠLETE TENTO ODKAZ KAMARÁDOVI:"
+echo "   https://spolujizda.serveo.net"
+echo "============================================================"
+echo "✅ Tato adresa bude VŽDY STEJNÁ!"
+echo "============================================================"
+echo ""
+
+# Spustí Flask server
+python3 app.py
+
+=== src/__init__.py ===
+# This file makes 'src' a Python package.
+
+=== src/task_manager.py ===
+import json\nimport os\n\n# The tasks.json file will be created in the project root directory\nTASKS_FILE = 'tasks.json'\n\ndef _load_tasks():\n    """Loads tasks from the JSON file. Returns an empty list if file doesn't exist."""\n    if not os.path.exists(TASKS_FILE) or os.path.getsize(TASKS_FILE) == 0:\n        return []\n    with open(TASKS_FILE, 'r', encoding='utf-8') as f:\n        try:\n            return json.load(f)\n        except json.JSONDecodeError:\n            # Handle case where file is corrupted or empty but exists\n            return []\n\ndef _save_tasks(tasks):\n    """Saves tasks to the JSON file."""\n    with open(TASKS_FILE, 'w', encoding='utf-8') as f:\n        json.dump(tasks, f, indent=4)\n\ndef add_task(description):\n    """Adds a new task to the list."""\n    tasks = _load_tasks()\n    # Generate a new ID, starting from 1 or max existing ID + 1\n    new_id = 1 if not tasks else max(task['id'] for task in tasks) + 1\n    tasks.append({'id': new_id, 'descript
+
+=== src/matching.py ===
+from typing import List, Tuple\nfrom src.models import UserRequest\nfrom src.utils import haversine_distance, time_difference_minutes\n\nclass MatchingEngine:\n    """\n    Core engine for finding carpool matches among a list of user requests.\n    """\n    def __init__(self, user_requests: List[UserRequest], distance_radius_km: float, time_tolerance_minutes: float):\n        self.user_requests = user_requests\n        self.distance_radius_km = distance_radius_km\n        self.time_tolerance_minutes = time_tolerance_minutes\n\n    def find_matches(self) -> List[Tuple[UserRequest, UserRequest, float, float, float]]:\n        """\n        Finds potential carpool matches based on geographical proximity of start/end\n        points and temporal proximity of departure times.\n\n        A match is suggested if:\n        1. The straight-line (Haversine) distance between their start points\n           is within `distance_radius_km`.\n        2. The straight-line (Haversine) distance between th
+
+=== src/app.py ===
+import tkinter as tk\nfrom tkinter import ttk\n\nclass TextTransformerApp:\n    """Třída reprezentující hlavní GUI aplikaci pro transformaci textu."""\n    def __init__(self, master):\n        self.master = master\n        master.title("Jednoduchý Textový Transformátor")\n        master.geometry("500x300") # Nastaví pevnou velikost okna pro konzistentní UI\n        master.resizable(False, False) # Zakáže změnu velikosti okna uživatelem\n\n        # Použití ttk.Style pro modernější vzhled widgetů\n        self.style = ttk.Style()\n        # Zkusíme použít 'clam' téma, které je obecně čisté. Další možnosti: 'alt', 'default', 'classic'\n        self.style.theme_use('clam') \n\n        # Konfigurace stylů pro jednotlivé widgety pro jednotný a čistý vzhled\n        self.style.configure('TFrame', background='#e0e0e0') # Světle šedé pozadí pro rámy\n        self.style.configure('TLabel', background='#e0e0e0', font=('Arial', 10))\n        self.style.configure('TButton', font=('Arial', 10, 'bol
+
+=== src/models.py ===
+import datetime\n\nclass UserRequest:\n    """\n    Represents a user's request for a ride, including start/end geographical points\n    and a departure time.\n    """\n    def __init__(self, user_id: str, start_lat: float, start_lon: float,\n                 end_lat: float, end_lon: float, departure_time_str: str):\n        self.id = user_id\n        self.start_lat = start_lat\n        self.start_lon = start_lon\n        self.end_lat = end_lat\n        self.end_lon = end_lon\n        # Parse the time string into a datetime object for easier comparison\n        self.departure_time = datetime.datetime.strptime(departure_time_str, "%Y-%m-%d %H:%M")\n\n    def __repr__(self):\n        return (\n            f"UserRequest(ID='{self.id}', "\n            f"Start=({self.start_lat:.4f},{self.start_lon:.4f}), "\n            f"End=({self.end_lat:.4f},{self.end_lon:.4f}), "\n            f"Departure='{self.departure_time.strftime('%Y-%m-%d %H:%M')}')"\n        )\n
+
+=== src/utils.py ===
+import math\nimport datetime\n\n# Earth's mean radius in kilometers (used for Haversine formula)\nEARTH_RADIUS_KM = 6371\n\ndef haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:\n    """\n    Calculates the Haversine (great-circle) distance between two points on Earth\n    given their latitudes and longitudes. Returns distance in kilometers.\n    """\n    lat1_rad = math.radians(lat1)\n    lon1_rad = math.radians(lon1)\n    lat2_rad = math.radians(lat2)\n    lon2_rad = math.radians(lon2)\n\n    dlon = lon2_rad - lon1_rad\n    dlat = lat2_rad - lat1_rad\n\n    a = math.sin(dlat / 2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2)**2\n    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))\n\n    distance = EARTH_RADIUS_KM * c\n    return distance\n\ndef time_difference_minutes(dt1: datetime.datetime, dt2: datetime.datetime) -> float:\n    """\n    Calculates the difference in minutes between two datetime objects.\n    The result can be pos
+
+=== src/manager.py ===
+import os\nimport subprocess\nimport sys\nimport shutil\nimport json\nimport argparse\n\nNODE_APP_DIR = "node_app"\nSERVER_FILE = "server.js"\nPACKAGE_JSON_FILE = "package.json"\nPORT = 3000\n\n# Templates for Node.js files - embedded for simplicity\nSERVER_JS_TEMPLATE = """\nconst express = require('express');\nconst app = express();\nconst port = process.env.PORT || %d;\n\napp.get('/', (req, res) => {\n  res.send('Hello from Express.js! This server was set up by a Python script.');\n});\n\napp.get('/api', (req, res) => {\n  res.json({ message: 'This is an API endpoint from Express.js!' });\n});\n\napp.listen(port, () => {\n  console.log(`Express.js server listening at http://localhost:${port}`);\n});\n""" % PORT\n\nPACKAGE_JSON_TEMPLATE = """\n{\n  "name": "my-express-app",\n  "version": "1.0.0",\n  "description": "A simple Express.js application, managed by a Python script.",\n  "main": "%s",\n  "scripts": {\n    "start": "node %s"\n  },\n  "keywords": [\n    "express",\n    "node",
+
+=== app/__init__.py ===
+import os\nfrom flask import Flask\nfrom flask_sqlalchemy import SQLAlchemy\nfrom flask_marshmallow import Marshmallow\n\ndb = SQLAlchemy()\nma = Marshmallow()\n\ndef create_app():\n    app = Flask(__name__, instance_relative_config=True)\n    app.config.from_object('config.Config')\n\n    # Ensure the instance folder exists for SQLite DB\n    try:\n        os.makedirs(app.instance_path)\n    except OSError:\n        pass\n\n    db.init_app(app)\n    ma.init_app(app)\n\n    # Register blueprints (API routes)\n    from .routes import api_bp\n    app.register_blueprint(api_bp, url_prefix='/api')\n\n    return app\n
+
+=== app/database.py ===
+from sqlalchemy import create_engine\nfrom sqlalchemy.ext.declarative import declarative_base\nfrom sqlalchemy.orm import sessionmaker\nfrom pydantic_settings import BaseSettings\n\nclass Settings(BaseSettings):\n    database_url: str = "sqlite:///./sql_app.db" # Default to SQLite in current dir\n\n    class Config:\n        env_file = ".env"\n\nsettings = Settings()\n\nSQLALCHEMY_DATABASE_URL = settings.database_url\n\n# SQLite's connect_args={'check_same_thread': False} is needed for SQLAlchemy to work with multiple threads (FastAPI's default)\nengine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})\nSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)\n\nBase = declarative_base()\n\n# Dependency to get a DB session\ndef get_db():\n    db = SessionLocal()\n    try:\n        yield db\n    finally:\n        db.close()
+
+=== app/routes.py ===
+from flask import Blueprint, request, jsonify\nfrom . import db\nfrom .models import Book\nfrom .schemas import BookSchema\n\napi_bp = Blueprint('api', __name__)\n\nbook_schema = BookSchema()\nbooks_schema = BookSchema(many=True)\n\n@api_bp.route('/books', methods=['POST'])\ndef add_book():\n    json_data = request.get_json()\n    if not json_data:\n        return jsonify({"message": "No input data provided"}), 400\n    try:\n        # Load data into a Book model instance\n        book = book_schema.load(json_data)\n        db.session.add(book)\n        db.session.commit()\n        return jsonify(book_schema.dump(book)), 201\n    except Exception as e:\n        db.session.rollback()\n        return jsonify({"message": f"Error creating book: {e}"}), 400\n\n@api_bp.route('/books', methods=['GET'])\ndef get_books():\n    all_books = Book.query.all()\n    result = books_schema.dump(all_books)\n    return jsonify(result)\n\n@api_bp.route('/books/<int:book_id>', methods=['GET'])\ndef get_boo
+
+=== app/main.py ===
+from fastapi import FastAPI, Depends, HTTPException, status\nfrom sqlalchemy.orm import Session\nfrom typing import List\n\nfrom . import models, schemas\nfrom .database import engine, get_db\n\n# Create database tables upon application startup\nmodels.Base.metadata.create_all(bind=engine)\n\napp = FastAPI(\n    title="Simple To-Do API",\n    description="A basic REST API for managing To-Do items.",\n    version="1.0.0"\n)\n\n# API Endpoints\n\n@app.post("/todos/", response_model=schemas.Todo, status_code=status.HTTP_201_CREATED)\ndef create_todo(todo: schemas.TodoCreate, db: Session = Depends(get_db)):\n    db_todo = models.Todo(**todo.model_dump())\n    db.add(db_todo)\n    db.commit()\n    db.refresh(db_todo)\n    return db_todo\n\n@app.get("/todos/", response_model=List[schemas.Todo])\ndef read_todos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):\n    todos = db.query(models.Todo).offset(skip).limit(limit).all()\n    return todos\n\n@app.get("/todos/{todo_id}", re
+
+=== app/models.py ===
+from . import db\n\nclass Book(db.Model):\n    id = db.Column(db.Integer, primary_key=True)\n    title = db.Column(db.String(120), unique=True, nullable=False)\n    author = db.Column(db.String(80), nullable=False)\n\n    def __repr__(self):\n        return f'<Book {self.title}>'\n
+
+=== app/schemas.py ===
+from . import ma, db\nfrom .models import Book\n\nclass BookSchema(ma.SQLAlchemyAutoSchema):\n    class Meta:\n        model = Book\n        load_instance = True\n        sqla_session = db.session\n
+
+=== app/src/main/AndroidManifest.xml ===
+<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n    package="com.weatherapp">\n\n    <!-- Internet permission to make API calls -->\n    <uses-permission android:name="android.permission.INTERNET" />\n\n    <application\n        android:allowBackup="true"\n        android:icon="@mipmap/ic_launcher"\n        android:label="Weather App API"\n        android:roundIcon="@mipmap/ic_launcher_round"\n        android:supportsRtl="true"\n        android:theme="@style/Theme.AppCompat.Light.NoActionBar">\n        <activity\n            android:name=".MainActivity"\n            android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n\n</manifest>
+
+=== app/src/main/java/com/carpooling/MainActivity.kt ===
+package com.carpooling\n\nimport android.os.Bundle\nimport androidx.activity.ComponentActivity\nimport androidx.activity.compose.setContent\nimport androidx.compose.foundation.layout.*\nimport androidx.compose.material3.*\nimport androidx.compose.runtime.*\nimport androidx.compose.ui.Modifier\nimport androidx.compose.ui.tooling.preview.Preview\nimport androidx.compose.ui.unit.dp\nimport androidx.compose.ui.text.font.FontWeight\nimport com.carpooling.ui.theme.CarpoolingAppTheme\n\nclass MainActivity : ComponentActivity() {\n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        setContent {\n            CarpoolingAppTheme {\n                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {\n                    CarpoolingScreen()\n                }\n            }\n        }\n    }\n}\n\ndata class RideOffer(\n    val driverName: String,\n    val origin: String,\n    val destination: String,\n 
+
+=== app/src/main/java/com/carpooling/ui/theme/Color.kt ===
+package com.carpooling.ui.theme\n\nimport androidx.compose.ui.graphics.Color\n\nval Purple80 = Color(0xFFD0BCFF)\nval PurpleGrey80 = Color(0xFFCCC2DC)\nval Pink80 = Color(0xFFEFB8C8)\n\nval Purple40 = Color(0xFF6650a4)\nval PurpleGrey40 = Color(0xFF625b71)\nval Pink40 = Color(0xFF7D5260)
+
+=== app/src/main/java/com/carpooling/ui/theme/Theme.kt ===
+package com.carpooling.ui.theme\n\nimport android.app.Activity\nimport android.os.Build\nimport androidx.compose.foundation.isSystemInDarkTheme\nimport androidx.compose.material3.MaterialTheme\nimport androidx.compose.material3.darkColorScheme\nimport androidx.compose.material3.dynamicDarkColorScheme\nimport androidx.compose.material3.dynamicLightColorScheme\nimport androidx.compose.material3.lightColorScheme\nimport androidx.compose.runtime.Composable\nimport androidx.compose.runtime.SideEffect\nimport androidx.compose.ui.graphics.toArgb\nimport androidx.compose.ui.platform.LocalContext\nimport androidx.compose.ui.platform.LocalView\nimport androidx.core.view.WindowCompat\n\nprivate val DarkColorScheme = darkColorScheme(\n    primary = Purple80,\n    secondary = PurpleGrey80,\n    tertiary = Pink80\n)\n\nprivate val LightColorScheme = lightColorScheme(\n    primary = Purple40,\n    secondary = PurpleGrey40,\n    tertiary = Pink40\n\n    /* Other default colors to override\n    backgro
+
+=== app/src/main/java/com/carpooling/ui/theme/Type.kt ===
+package com.carpooling.ui.theme\n\nimport androidx.compose.material3.Typography\nimport androidx.compose.ui.text.TextStyle\nimport androidx.compose.ui.text.font.FontFamily\nimport androidx.compose.ui.text.font.FontWeight\nimport androidx.compose.ui.unit.sp\n\n// Set of Material typography styles to start with\nval Typography = Typography(\n    bodyLarge = TextStyle(\n        fontFamily = FontFamily.Default,\n        fontWeight = FontWeight.Normal,\n        fontSize = 16.sp,\n        lineHeight = 24.sp,\n        letterSpacing = 0.5.sp\n    )\n    /* Other default text styles to override\n    titleLarge = TextStyle(\n        fontFamily = FontFamily.Default,\n        fontWeight = FontWeight.Normal,\n        fontSize = 22.sp,\n        lineHeight = 28.sp,\n        letterSpacing = 0.sp\n    ),\n    labelSmall = TextStyle(\n        fontFamily = FontFamily.Default,\n        fontWeight = FontWeight.Medium,\n        fontSize = 11.sp,\n        lineHeight = 16.sp,\n        letterSpacing = 0.5.sp\n
+
+=== app/src/main/java/com/weatherapp/MainActivity.kt ===
+package com.weatherapp\n\nimport android.os.Bundle\nimport android.view.View\nimport android.widget.Toast\nimport androidx.activity.viewModels\nimport androidx.appcompat.app.AppCompatActivity\nimport com.weatherapp.api.WeatherApiService\nimport com.weatherapp.databinding.ActivityMainBinding\nimport java.text.DecimalFormat\n\n/**\n * MainActivity is the primary entry point of the application. It sets up the UI,\n * observes LiveData from the WeatherViewModel, and displays weather information.\n */\nclass MainActivity : AppCompatActivity() {\n\n    // View Binding instance for easier UI element access\n    private lateinit var binding: ActivityMainBinding\n\n    // ViewModel instance, created using a factory to provide the WeatherApiService dependency\n    private val weatherViewModel: WeatherViewModel by viewModels {\n        WeatherViewModel.Factory(WeatherApiService.create())\n    }\n\n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)
+
+=== app/src/main/java/com/weatherapp/WeatherRepository.kt ===
+package com.weatherapp\n\nimport com.weatherapp.api.WeatherApiService\nimport com.weatherapp.model.WeatherResponse\nimport retrofit2.Response\n\n/**\n * WeatherRepository acts as a single source of truth for weather data.\n * It abstracts the data source (in this case, WeatherApiService) from the ViewModel.\n */\nclass WeatherRepository(private val apiService: WeatherApiService) {\n\n    /**\n     * Fetches current weather data for a specified city.\n     * @param city The name of the city for which to retrieve weather data.\n     * @return A Retrofit Response object containing WeatherResponse or an error.\n     */\n    suspend fun getWeather(city: String): Response<WeatherResponse> {\n        // Calls the API service with the city name and the predefined API key.\n        // The units parameter is set to "metric" for Celsius temperatures.\n        return apiService.getCurrentWeather(city, WeatherApiService.API_KEY, "metric")\n    }\n}
+
+=== app/src/main/java/com/weatherapp/WeatherViewModel.kt ===
+package com.weatherapp\n\nimport androidx.lifecycle.LiveData\nimport androidx.lifecycle.MutableLiveData\nimport androidx.lifecycle.ViewModel\nimport androidx.lifecycle.ViewModelProvider\nimport androidx.lifecycle.viewModelScope\nimport com.weatherapp.api.WeatherApiService\nimport com.weatherapp.model.WeatherResponse\nimport kotlinx.coroutines.launch\n\n/**\n * WeatherViewModel handles the logic for fetching weather data and exposing it to the UI.\n * It interacts with WeatherRepository to get data and uses LiveData to notify UI of changes.\n */\nclass WeatherViewModel(private val repository: WeatherRepository) : ViewModel() {\n\n    // MutableLiveData for holding weather data, exposed as immutable LiveData to UI\n    private val _weatherData = MutableLiveData<WeatherResponse?>()\n    val weatherData: LiveData<WeatherResponse?> = _weatherData\n\n    // MutableLiveData for managing loading state\n    private val _isLoading = MutableLiveData<Boolean>()\n    val isLoading: LiveData<Boolean
+
+=== app/src/main/java/com/weatherapp/model/WeatherResponse.kt ===
+package com.weatherapp.model\n\nimport com.squareup.moshi.Json\nimport com.squareup.moshi.JsonClass\n\n/**\n * Data classes representing the structure of the JSON response from OpenWeatherMap API.\n * Annotations like @Json and @JsonClass are used by Moshi for proper JSON parsing.\n */\n\n@JsonClass(generateAdapter = true)\ndata class WeatherResponse(\n    val coord: Coord? = null,\n    val weather: List<Weather>? = null, // List of weather conditions\n    val base: String? = null,\n    val main: Main? = null, // Main weather parameters (temperature, humidity, etc.)\n    val visibility: Int? = null,\n    val wind: Wind? = null,\n    val clouds: Clouds? = null,\n    val dt: Long? = null, // Time of data calculation, unix, UTC\n    val sys: Sys? = null,\n    val timezone: Int? = null, // Shift in seconds from UTC\n    val id: Long? = null, // City ID\n    val name: String? = null, // City name\n    val cod: Int? = null // Internal parameter\n)\n\n@JsonClass(generateAdapter = true)\ndata 
+
+=== app/src/main/java/com/weatherapp/api/WeatherApiService.kt ===
+package com.weatherapp.api\n\nimport com.weatherapp.model.WeatherResponse\nimport retrofit2.Response\nimport retrofit2.Retrofit\nimport retrofit2.converter.moshi.MoshiConverterFactory\nimport retrofit2.http.GET\nimport retrofit2.http.Query\n\n/**\n * Retrofit interface for the OpenWeatherMap API.\n * Defines the endpoint for fetching current weather data.\n */\ninterface WeatherApiService {\n\n    @GET("weather")\n    suspend fun getCurrentWeather(\n        @Query("q") city: String, // City name (e.g., "London")\n        @Query("appid") apiKey: String, // Your OpenWeatherMap API key\n        @Query("units") units: String = "metric" // Units for temperature (e.g., "metric" for Celsius)\n    ): Response<WeatherResponse>\n\n    companion object {\n        // Base URL for the OpenWeatherMap API\n        private const val BASE_URL = "https://api.openweathermap.org/data/2.5/"\n\n        // !!! IMPORTANT: REPLACE WITH YOUR ACTUAL OPENWEATHERMAP API KEY !!!\n        // You can get one by regis
+
+=== app/src/main/res/layout/activity_main.xml ===
+<?xml version="1.0" encoding="utf-8"?>\n<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"\n    xmlns:app="http://schemas.android.com/apk/res-auto"\n    xmlns:tools="http://schemas.android.com/tools"\n    android:layout_width="match_parent"\n    android:layout_height="match_parent"\n    android:padding="16dp"\n    tools:context=".MainActivity">\n\n    <TextView\n        android:id="@+id/cityTextView"\n        android:layout_width="wrap_content"\n        android:layout_height="wrap_content"\n        android:text="Načítám počasí..."\n        android:textSize="28sp"\n        android:textStyle="bold"\n        app:layout_constraintEnd_toEndOf="parent"\n        app:layout_constraintStart_toStartOf="parent"\n        app:layout_constraintTop_toTopOf="parent"\n        android:layout_marginTop="32dp" />\n\n    <TextView\n        android:id="@+id/temperatureTextView"\n        android:layout_width="wrap_content"\n        android:layout_hei
+
+=== app/src/main/res/values/themes.xml ===
+<?xml version="1.0" encoding="utf-8"?>\n<resources>\n\n    <style name="Theme.CarpoolingApp" parent="android:Theme.Material.Light.NoActionBar" />\n</resources>
+
+=== lib/main.dart ===
+import 'package:flutter/material.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/offer_ride_screen.dart';
+import 'screens/find_ride_screen.dart';
+import 'screens/matches_screen.dart';
+import 'screens/chat_screen.dart';
+import 'screens/map_screen.dart';
+
+void main() {
+  runApp(const SpolujizdaApp());
+}
+
+class SpolujizdaApp extends StatelessWidget {
+  const SpolujizdaApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Spolujízda',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/offer': (context) => const OfferRideScreen(),
+        '/find': (context) => con
+
+=== lib/screens/login_screen.dart ===
+import 'package:flutter/material.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Přihlášení')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Spolujízda', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 40),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputD
+
+=== lib/screens/register_screen.dart ===
+import 'package:flutter/material.dart';
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Registrace')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const Text('Vytvořit účet', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 32),
+
+
+=== lib/screens/matches_screen.dart ===
+import 'package:flutter/material.dart';
+
+class MatchesScreen extends StatelessWidget {
+  const MatchesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final matches = [
+      {'name': 'Jan Novák', 'from': 'Brno', 'to': 'Praha', 'time': '08:00', 'price': '200 Kč'},
+      {'name': 'Marie Svobodová', 'from': 'Ostrava', 'to': 'Brno', 'time': '07:30', 'price': '150 Kč'},
+      {'name': 'Petr Dvořák', 'from': 'Praha', 'to': 'Plzeň', 'time': '09:00', 'price': '180 Kč'},
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Nalezené jízdy')),
+      body: ListView.builder(
+        itemCount: matches.length,
+        itemBuilder: (context, index) {
+          final match = matches[index];
+          return Card(
+            margin: const EdgeInsets.all(8.0),
+            child: ListTile(
+              leading: const CircleAvatar(
+                child: Icon(Icons.person),
+              ),
+              title: Text(match['name']!),
+              subtitle: Co
+
+=== lib/screens/chat_screen.dart ===
+import 'package:flutter/material.dart';
+
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({super.key});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final _messageController = TextEditingController();
+  final List<Map<String, dynamic>> _messages = [
+    {'text': 'Ahoj, máte ještě volné místo?', 'isMe': true, 'time': '10:30'},
+    {'text': 'Ano, mám ještě 2 místa volná.', 'isMe': false, 'time': '10:32'},
+    {'text': 'Skvělé! Kde se sejdeme?', 'isMe': true, 'time': '10:33'},
+  ];
+
+  void _sendMessage() {
+    if (_messageController.text.isNotEmpty) {
+      setState(() {
+        _messages.add({
+          'text': _messageController.text,
+          'isMe': true,
+          'time': TimeOfDay.now().format(context),
+        });
+      });
+      _messageController.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ch
+
+=== lib/screens/map_screen.dart ===
+import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+
+class MapScreen extends StatefulWidget {
+  const MapScreen({super.key});
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  GoogleMapController? mapController;
+  LatLng _currentPosition = const LatLng(49.1951, 16.6068); // Brno
+  Set<Marker> _markers = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+    _loadDrivers();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.whileInUse || 
+          permission == LocationPermission.always) {
+        Position position =
+
+=== lib/screens/home_screen.dart ===
+import 'package:flutter/material.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Spolujízda'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text('Vítejte v aplikaci Spolujízda!', 
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 40),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: [
+                  _buildMenuCard(
+                    context,
+  
+
+=== lib/screens/find_ride_screen.dart ===
+import 'package:flutter/material.dart';
+
+class FindRideScreen extends StatefulWidget {
+  const FindRideScreen({super.key});
+
+  @override
+  State<FindRideScreen> createState() => _FindRideScreenState();
+}
+
+class _FindRideScreenState extends State<FindRideScreen> {
+  final _fromController = TextEditingController();
+  final _toController = TextEditingController();
+  final _timeController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Hledat jízdu')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _fromController,
+              decoration: const InputDecoration(
+                labelText: 'Odkud',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.location_on),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFo
+
+=== lib/screens/offer_ride_screen.dart ===
+import 'package:flutter/material.dart';
+
+class OfferRideScreen extends StatefulWidget {
+  const OfferRideScreen({super.key});
+
+  @override
+  State<OfferRideScreen> createState() => _OfferRideScreenState();
+}
+
+class _OfferRideScreenState extends State<OfferRideScreen> {
+  final _fromController = TextEditingController();
+  final _toController = TextEditingController();
+  final _timeController = TextEditingController();
+  final _seatsController = TextEditingController();
+  final _priceController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Nabídnout jízdu')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _fromController,
+                decoration: const InputDecoration(
+                  labelText: 'Odkud',
+                  border: 
+
+=== templates/index.html ===
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiM2NjdlZWEiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xOC45MiA2LjAxQzE4LjcyIDUuNDIgMTguMTYgNSAxNy41IDVIMTVWM0gxM1Y1SDExVjNIOVY1SDYuNUM1Ljg0IDUgNS4yOCA1LjQyIDUuMDggNi4wMUwzIDEyVjIwQzMgMjAuNTUgMy40NSAyMSA0IDIxSDVDNS41NSAyMSA2IDIwLjU1IDYgMjBWMTlIMThWMjBDMTggMjAuNTUgMTguNDUgMjEgMTkgMjFIMjBD
+
+=== templates/index_fixed.html ===
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiM2NjdlZWEiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xOC45MiA2LjAxQzE4LjcyIDUuNDIgMTguMTYgNSAxNy41IDVIMTVWM0gxM1Y1SDExVjNIOVY1SDYuNUM1Ljg0IDUgNS4yOCA1LjQyIDUuMDggNi4wMUwzIDEyVjIwQzMgMjAuNTUgMy40NSAyMSA0IDIxSDVDNS41NSAyMSA2IDIwLjU1IDYgMjBWMTlIMThWMjBDMTggMjAuNTUgMTguNDUgMjEgMTkgMjFIMjBD
+
+=== web/index.html ===
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spolujízda</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <script src="main.dart.js" type="application/javascript"></script>
+</body>
+</html>
+
+=== web/manifest.json ===
+{
+    "name": "Spolujízda",
+    "short_name": "Spolujízda",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "Aplikace pro sdílení jízd",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
+
+=== android/app/src/main/AndroidManifest.xml ===
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    
+    <application
+        android:label="Spolujízda"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        
+        <meta-data android:name="com.google.android.geo.API_KEY"
+                   android:value="YOUR_GOOGLE_MAPS_API_KEY"/>
+        
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screen
+
+=== static/manifest.json ===
+{
+  "name": "Spolujízda",
+  "short_name": "Spolujízda",
+  "description": "Aplikace pro sdílení jízd",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiM2NjdlZWEiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xOC45MiA2LjAxQzE4LjcyIDUuNDIgMTguMTYgNSAxNy41IDVIMTVWM0gxM1Y1SDExVjNIOVY1SDYuNUM1Ljg0IDUgNS4yOCA1LjQyIDUuMDggNi4wMUwzIDEyVjIwQzMgMjAuNTUgMy40NSAyMSA0IDIxSDVDNS41NSAyMSA2IDIwLjU1IDYgMjBWMTlIMThWMjBDMTggMjAuNTUgMTguNDUgMjEgMTkgMjFIMjBDMjAuNTUgMjEgMjEgMjAuNTUgMjEgMjBWMTJMMTguOTIgNi4wMVpNNi41IDE2QzUuNjcgMTYgNSAxNS4zMyA1IDE0LjVTNS42NyAxMyA2LjUgMTMgOCAxMy42NyA4IDE0LjUgNy4zMyAxNiA2LjUgMTZaTTE3LjUgMTZDMTYuNjcgMTY
+
+=== static/sw.js ===
+const CACHE_NAME = 'spolujizda-v2';
+const urlsToCache = [
+  '/',
+  '/static/css/style.css',
+  '/static/js/script.js',
+  '/static/js/navigation.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+];
+
+const API_CACHE = 'api-cache-v1';
+const OFFLINE_DATA = 'offline-data';
+
+// Instalace service workeru
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+// Obsluha požadavků s offline podporou
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // API požadavky - cache first s fallback
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      caches.open(API_CACHE).then(cache => {
+        return cache.match(request).then(cachedResponse => {
+          const fetchPromise = fetch(request).then(networkResponse => {
+            if (networkResponse.ok) {
+              cac
+
+=== static/js/script.js ===
+// Globální proměnné
+let socket;
+let map;
+let userMarker;
+let userMarkers = {};
+let watchId;
+let currentUserId;
+let isTracking = false;
+let routeWaypoints = [];
+let routeMarkers = [];
+let routeLine = null;
+let isRoutePlanning = false;
+
+// Inicializace při načtení stránky
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSocket();
+    initializeMap();
+    setupEventListeners();
+    initializePWA();
+    checkUserLogin();
+    
+    // Zpoždění před vyžádáním notifikací
+    setTimeout(() => {
+        requestNotificationPermission();
+    }, 2000);
+    
+    // Přizpůsobí mapu při změně velikosti okna
+    window.addEventListener('resize', function() {
+        if (map) {
+            setTimeout(() => map.invalidateSize(), 100);
+        }
+    });
+});
+
+// Zkontroluje, zda je uživatel přihlášen
+function checkUserLogin() {
+    const userId = localStorage.getItem('user_id');
+    const userName = localStorage.getItem('user_name');
+    const userPhone = localStorage.getItem('user
+
+=== static/js/offline.js ===
+// Offline režim pro základní funkce
+class OfflineManager {
+    constructor() {
+        this.isOnline = navigator.onLine;
+        this.offlineData = {
+            rides: [],
+            messages: [],
+            locations: {}
+        };
+        this.init();
+    }
+
+    init() {
+        // Poslouchá změny připojení
+        window.addEventListener('online', () => this.handleOnline());
+        window.addEventListener('offline', () => this.handleOffline());
+        
+        // Načte offline data z localStorage
+        this.loadOfflineData();
+        
+        // Zobrazí status připojení
+        this.updateConnectionStatus();
+    }
+
+    handleOnline() {
+        this.isOnline = true;
+        this.updateConnectionStatus();
+        this.syncOfflineData();
+        this.showNotification('✅ Připojení obnoveno', 'Synchronizuji offline data...');
+    }
+
+    handleOffline() {
+        this.isOnline = false;
+        this.updateConnectionStatus();
+        this.showNotification('⚠️ Offline režim', 'Někter
+
+=== static/js/navigation.js ===
+// Navigační funkce
+let navigationActive = false;
+let currentRoute = null;
+
+// Spustí navigaci
+function startNavigation(waypoints) {
+    if (!waypoints || waypoints.length < 2) {
+        alert('Nedostatek bodů pro navigaci');
+        return;
+    }
+    
+    navigationActive = true;
+    currentRoute = waypoints;
+    
+    // Vytvoří navigační panel
+    createNavigationPanel();
+    
+    // Spustí sledování pozice pro navigaci
+    if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+            updateNavigationPosition,
+            handleNavigationError,
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 1000 }
+        );
+    }
+    
+    alert('🧭 Navigace spuštěna!');
+}
+
+// Vytvoří navigační panel
+function createNavigationPanel() {
+    const navPanel = document.createElement('div');
+    navPanel.id = 'navigationPanel';
+    navPanel.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        back
+
+=== static/js/traffic.js ===
+// Dopravní informace jen při plánování trasy
+class TrafficManager {
+    constructor() {
+        this.trafficLayer = null;
+        this.isRoutePlanning = false;
+    }
+
+    // Zobrazí dopravní úseky pro konkrétní trasu
+    showTrafficForRoutePlanning(fromLocation, toLocation) {
+        if (!map) return;
+        
+        this.isRoutePlanning = true;
+        this.trafficLayer = L.layerGroup();
+        
+        // Přidá dopravní úseky podle zadané trasy
+        this.addTrafficSegments(fromLocation, toLocation);
+        
+        this.trafficLayer.addTo(map);
+    }
+    
+    // Skryje dopravní vrstvu
+    hideTrafficLayer() {
+        if (this.trafficLayer) {
+            map.removeLayer(this.trafficLayer);
+            this.trafficLayer = null;
+        }
+        this.isRoutePlanning = false;
+    }
+
+    // Přidá dopravní úseky podle zadané trasy
+    addTrafficSegments(fromLocation, toLocation) {
+        if (!this.isRoutePlanning) return;
+        
+        // Získá dopravní data podle trasy
+       
+
+=== static/css/style.css ===
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: white;
+    min-height: 100vh;
+    overflow-x: auto;
+}
+
+.container {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    min-width: 900px;
+}
+
+header {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 0;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 80px;
+}
+
+header h1 {
+    color: #333;
+    font-size: 2.5em;
+}
+
+.user-info {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-info input {
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.main-content {
+    display: flex;
+    gap: 0;
+    flex: 1;
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    

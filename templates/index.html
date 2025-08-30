@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#667eea">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiM2NjdlZWEiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xOC45MiA2LjAxQzE4LjcyIDUuNDIgMTguMTYgNSAxNy41IDVIMTVWM0gxM1Y1SDExVjNIOVY1SDYuNUM1Ljg0IDUgNS4yOCA1LjQyIDUuMDggNi4wMUwzIDEyVjIwQzMgMjAuNTUgMy40NSAyMSA0IDIxSDVDNS41NSAyMSA2IDIwLjU1IDYgMjBWMTlIMThWMjBDMTggMjAuNTUgMTguNDUgMjEgMTkgMjFIMjBDMjAuNTUgMjEgMjEgMjAuNTUgMjEgMjBWMTJMMTguOTIgNi4wMVpNNi41IDE2QzUuNjcgMTYgNSAxNS4zMyA1IDE0LjVTNS42NyAxMyA2LjUgMTMgOCAxMy42NyA4IDE0LjUgNy4zMyAxNiA2LjUgMTZaTTE3LjUgMTZDMTYuNjcgMTYgMTYgMTUuMzMgMTYgMTQuNVMxNi42NyAxMyAxNy41IDEzIDE5IDEzLjY3IDE5IDE0LjUgMTguMzMgMTYgMTcuNSAxNlpNNSAxMUwxOSAxMUwxNy4zIDdINi43TDUgMTFaIi8+Cjwvc3ZnPgo8L3N2Zz4K">
+    <title>Spolujízda - Sdílení jízd s mapou</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/validation.css">
+    <link rel="stylesheet" href="/static/css/slider.css">
+    <link rel="stylesheet" href="/static/css/rides.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/navigation.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="/static/js/traffic.js"></script>
+    <script src="/static/js/offline.js"></script>
+    <script src="/static/js/edit-ride.js"></script>
+    
+    <style>
+        /* Mobilní opravy */
+        @media (max-width: 768px) {
+            body { -webkit-text-size-adjust: 100%; }
+            input, textarea, select { font-size: 16px !important; }
+            .main-content { flex-direction: column !important; }
+            .left-column { width: 100% !important; order: 2; }
+            .right-panel { width: 100% !important; height: 50vh !important; order: 1; }
+            #map { height: 50vh !important; min-height: 300px !important; }
+            .panel-toggle { display: none !important; }
+            .modal-content { margin: 5% auto !important; width: 95% !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Spolujízda</h1>
+            <div class="user-info">
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="left-column">
+                <button class="panel-toggle" id="panelToggle" onclick="togglePanel()" title="Skrýt menu">◀</button>
+                <div class="left-panel" id="leftPanel">
+                <div class="buttons">
+                    <div id="welcomeMessage" style="display: none; padding: 10px; background: #e8f5e8; border-radius: 8px; margin-bottom: 10px; text-align: center; font-weight: bold; color: #2d5a2d;"></div>
+                    <div id="loginButtons" style="display: flex; gap: 5px;">
+                        <button onclick="showQuickLogin()" title="Rychlé přihlášení uživatele" style="flex: 1;">🔑 Přihlášení</button>
+                        <button onclick="showQuickRegister()" title="Rychlá registrace nového uživatele" style="flex: 1;">📝 Registrace</button>
+                    </div>
+                    <button id="trackingBtn" onclick="toggleTracking()" title="Spustí/zastaví sledování vaší GPS polohy a vycentruje mapu na vaši pozici">📍 Najít mě a sledovat</button>
+                    <hr style="margin: 15px 0; border: 1px solid #ddd;">
+                    <button onclick="toggleOfferForm()" title="Vytvoří novou nabídku jízdy s možností plánování trasy, nastavení ceny a počtu míst">🚗 Nabídnout jízdu</button>
+                    <div id="editRideOption" style="display: none; margin-top: 5px;">
+                        <button onclick="editLastRide()" style="background: #ffc107; color: #000;" title="Upravit poslední nabídnutou jízdu">✏️ Upravit poslední jízdu</button>
+                    </div>
+                    <div id="offerForm" class="form-container" style="display: none;">
+                        <h2>Nabídnout jízdu</h2>
+                        <form id="rideOfferForm">
+                            <input type="text" id="fromOffer" placeholder="Odkud *" required data-search-type="places">
+                            <input type="text" id="toOffer" placeholder="Kam *" required data-search-type="places">
+                            <input type="datetime-local" id="departureOffer" required title="Datum a čas odjezdu *">
+                            <input type="number" id="seatsOffer" placeholder="Počet míst *" min="1" max="8" required>
+                            <input type="number" id="priceOffer" placeholder="Cena za osobu (Kč) *" min="0" required>
+                            <div style="display: flex; gap: 5px; margin: 10px 0;">
+                                <button type="button" onclick="planRouteFromLocation()" style="flex: 1; font-size: 12px;" title="Začne plánování od vaší aktuální polohy">📍 Od mé polohy</button>
+                                <button type="button" onclick="planRouteManual()" style="flex: 1; font-size: 12px;" title="Ruční plánování klikáním na mapu - klikejte na mapu pro přidání bodů trasy">🗺️ Ručně na mapě</button>
+                            </div>
+                            <div id="routeWaypoints"></div>
+                            <button type="submit" title="Uloží vaši nabídku jízdy do databáze a zobrazí ji ostatním uživatelům">Nabídnout jízdu</button>
+                            <button type="button" onclick="clearRoute()" style="background: #dc3545; color: white; width: 100%; margin: 5px 0;" title="Vymaže celou naplánovanou trasu">🗑️ Vymazat trasu</button>
+                        </form>
+                        
+                        <!-- Možnost úpravy poslední jízdy -->
+                        <div id="editRideOption" style="display: none; margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+                            <h4 style="margin: 0 0 10px 0; color: #856404;">✏️ Upravit poslední jízdu</h4>
+                            <p style="margin: 0 0 10px 0; font-size: 14px; color: #856404;">Můžete upravit svou poslední nabídnutou jízdu:</p>
+                            <button onclick="loadRideForEdit()" style="background: #ffc107; color: #212529; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;" title="Načte údaje poslední jízdy pro úpravu">✏️ Upravit jízdu</button>
+                            <button onclick="hideEditRideOption()" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 10px;" title="Skryje možnost úpravy jízdy">Skrýt</button>
+                        </div>
+                    </div>
+                    
+                    <button onclick="toggleSearchForm()" title="Vyhledá dostupné jízdy podle zadaných kritérií s možností filtrování podle ceny a hodnocení">🔍 Hledat jízdu</button>
+                    <div id="searchForm" class="form-container" style="display: none;">
+                        <h2>Hledat jízdu</h2>
+                        
+                        <!-- Rozsah hledání -->
+                        <div style="margin-bottom: 15px; padding: 10px; background: #f0f8ff; border-radius: 8px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">📍 Rozsah hledání: <span id="rangeValue">10</span> km</label>
+                            <input type="range" id="searchRange" min="1" max="100" value="10" 
+                                   style="width: 100%; margin-bottom: 5px;" 
+                                   oninput="updateRangeValue(this.value)" 
+                                   onchange="autoSearchAllRides()" 
+                                   title="Nastaví rozsah hledání jízd kolem vaší polohy">
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666;">
+                                <span>1 km</span>
+                                <span>50 km</span>
+                                <span>100 km</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="showAllRides()" style="width: 100%; margin-bottom: 15px; background: #28a745;" title="Zobrazí všechny dostupné jízdy">🔍 Zobrazit všechny jízdy</button>
+                        
+                        <form id="rideSearchForm">
+                            <input type="text" id="fromSearch" placeholder="Odkud (volitelné)" title="Zadejte výchozí místo - necháte-li prázdné, hledá se kolem vaší polohy" data-search-type="places">
+                            <input type="text" id="toSearch" placeholder="Kam (volitelné)" title="Zadejte cílové místo - necháte-li prázdné, hledá se kolem vaší polohy" data-search-type="places">
+                            
+                            <h4>🔍 Filtry</h4>
+                            <input type="number" id="maxPrice" placeholder="Max. cena (Kč)" min="0">
+
+                            <button type="submit" title="Vyhledá dostupné jízdy podle zadaných kritérií a zobrazí je seřazené podle vzdálenosti">Hledat s filtry</button>
+                        </form>
+                    </div>
+                    
+                    <button onclick="toggleUserSearch()" title="Vyhledá uživatele podle emailu nebo telefonu a zobrazí ho na mapě">👤 Hledat uživatele</button>
+                    <div id="userSearchForm" class="form-container" style="display: none;">
+                        <h2>Hledat uživatele</h2>
+                        <input type="text" id="userSearchInput" placeholder="Email nebo telefon" title="Zadejte email nebo telefon uživatele">
+                        <button onclick="searchUser()" title="Vyhledá uživatele a zobrazí ho na mapě">Vyhledat</button>
+                        <div id="userSearchResults"></div>
+                    </div>
+                    
+                    <button onclick="toggleRecurringForm()" title="Vytvoří pravidelnou jízdu pro vybrané dny v týdnu, která se automaticky opakuje">🔁 Pravidelné jízdy</button>
+                    <div id="recurringForm" class="form-container" style="display: none;">
+                        <h2>🔁 Pravidelné jízdy</h2>
+                        <form id="recurringRideForm">
+                            <input type="text" id="fromRecurring" placeholder="Odkud *" required data-search-type="places">
+                            <input type="text" id="toRecurring" placeholder="Kam *" required data-search-type="places">
+                            <input type="time" id="timeRecurring" required title="Čas odjezdu *">
+                            
+                            <h4>Dny v týdnu: *</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0;">
+                                <label><input type="checkbox" value="1"> Pondělí</label>
+                                <label><input type="checkbox" value="2"> Úterý</label>
+                                <label><input type="checkbox" value="3"> Středa</label>
+                                <label><input type="checkbox" value="4"> Čtvrtek</label>
+                                <label><input type="checkbox" value="5"> Pátek</label>
+                                <label><input type="checkbox" value="6"> Sobota</label>
+                                <label><input type="checkbox" value="0"> Neděle</label>
+                            </div>
+                            
+                            <input type="number" id="seatsRecurring" placeholder="Počet míst *" min="1" max="8" required>
+                            <input type="number" id="priceRecurring" placeholder="Cena za osobu (Kč) *" min="0" required>
+                            <button type="submit" title="Vytvoří pravidelnou jízdu pro vybrané dny v týdnu, která se automaticky opakuje">Vytvořit pravidelnou jízdu</button>
+                        </form>
+                        
+                        <div id="recurringRidesList"></div>
+                    </div>
+                    
+                    <button onclick="toggleActiveRides()" title="Zobrazí seznam všech aktivních jízd na mapě s možností kontaktování řidičů">📊 Aktivní jízdy</button>
+                    <div id="activeRides" class="active-rides" style="display: none;">
+                        <h3>Aktivní jízdy na mapě</h3>
+                        <div id="ridesList"></div>
+                    </div>
+                    
+                    <button onclick="toggleSettings()" title="Otevře nastavení aplikace, registraci, přihlášení a statistiky uživatele">⚙️ Nastavení</button>
+                    <div id="settingsForm" class="form-container" style="display: none;">
+                        <h2>⚙️ Nastavení</h2>
+                        
+                        <div id="userSection">
+                            <h3>👤 Uživatelský profil</h3>
+                            <div id="notLoggedIn">
+                                <p>Pro přístup k profilu se přihlaste pomocí tlačítek v menu.</p>
+                            </div>
+                            
+                            <div id="userProfile" style="display: none;">
+                                <h4>👤 Váš profil</h4>
+                                <p id="userNameProfile"></p>
+                                <p id="userPhoneProfile"></p>
+                                <p id="userRatingProfile"></p>
+                                <button onclick="logoutUser()">🚪 Odhlásit se</button>
+                            </div>
+                        </div>
+                        
+                        <hr style="margin: 20px 0;">
+                        
+                        <div id="appSection">
+                            <h3>📱 Mobilní aplikace</h3>
+                            <p>Nainstalujte si Spolujízdu jako mobilní aplikaci pro lepší zážitek!</p>
+                            <button id="installAppBtn" onclick="installApp()" style="display: none;" title="Nainstaluje aplikaci jako PWA (Progressive Web App) pro offline použití">📱 Nainstalovat aplikaci</button>
+                            <p id="installStatus">Aplikace je již nainstalována nebo není podporována</p>
+                            
+                            <h4>🔔 Notifikace</h4>
+                            <button onclick="enableNotifications()" title="Povolí push notifikace pro upozornění na nové jízdy a zprávy">🔔 Povolit notifikace</button>
+                            <p id="notificationStatus">Stav notifikací: Nepovoleny</p>
+                            
+                            <h4>📊 Statistiky</h4>
+                            <div id="userStats">
+                                <p id="totalRides">Celkem jízd: 0</p>
+                                <p id="co2Saved">Ušetřeno CO2: 0 kg</p>
+                                <p id="moneySaved">Ušetřeno peněz: 0 Kč</p>
+                            </div>
+                            <button onclick="loadUserStats()" title="Načte aktuální statistiky uživatele (počet jízd, ušetřené CO2 a peníze)">Aktualizovat statistiky</button>
+                        </div>
+                    </div>
+                    
+                    <hr style="margin: 20px 0; border: 1px solid #ddd;">
+                    <h4 style="margin-bottom: 10px; color: #333;">🗺️ Ovládání mapy</h4>
+
+
+                    <button onclick="clearRideMarkers()" style="background: #6c757d;" title="Odstraní všechny markery jízd z mapy pro lepší přehlednost">🧽 Vymazat jízdy</button>
+                    <button onclick="stopVoiceGuidance()" style="background: #dc3545;" title="Zastaví hlasovou navigaci a všechny aktivní hlasové pokyny">🔇 Stop navigace</button>
+                    
+                    <div id="logoutButton" style="display: none;">
+                        <hr style="margin: 15px 0; border: 1px solid #ddd;">
+                        <button onclick="logoutUser()" style="background: #dc3545; color: white;" title="Odhlásí uživatele a vrátí na přihlasovací obrazovku">🚺 Odhlásit se</button>
+                    </div>
+                </div>
+
+                
+                <div id="results" class="results-container"></div>
+            
+            <!-- Modal pro hodnocení -->
+            <div id="ratingModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closeRatingModal()">&times;</span>
+                    <h3>⭐ Ohodnotit uživatele</h3>
+                    <div id="ratingForm">
+                        <p id="ratingUserName"></p>
+                        <div class="star-rating">
+                            <span class="star" data-rating="0.5">⭐</span>
+                            <span class="star" data-rating="1">⭐</span>
+                            <span class="star" data-rating="1.5">⭐</span>
+                            <span class="star" data-rating="2">⭐</span>
+                            <span class="star" data-rating="2.5">⭐</span>
+                            <span class="star" data-rating="3">⭐</span>
+                            <span class="star" data-rating="3.5">⭐</span>
+                            <span class="star" data-rating="4">⭐</span>
+                            <span class="star" data-rating="4.5">⭐</span>
+                            <span class="star" data-rating="5">⭐</span>
+                        </div>
+                        <textarea id="ratingComment" placeholder="Komentář (volitelný)"></textarea>
+                        <button onclick="submitRating()">Odeslat hodnocení</button>
+                    </div>
+                </div>
+            </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="map-container">
+                    <div id="map">
+                        <button class="fullscreen-toggle" onclick="toggleFullscreen()" title="Celá obrazovka">⛶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat modal -->
+        <div id="chatModal" class="modal" style="display: none;">
+            <div class="modal-content" style="height: 70%; max-height: 500px;">
+                <span class="close" onclick="closeChatModal()">&times;</span>
+                <h3 id="chatTitle">💬 Chat jízdy</h3>
+                <div id="chatMessages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0; background: #f9f9f9;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="chatInput" placeholder="Napište zprávu..." style="flex: 1;" onkeypress="if(event.key==='Enter') sendChatMessage()" title="Zadejte text zprávy a stiskněte Enter nebo klikněte na Odeslat">
+                    <button onclick="sendChatMessage()" title="Odešle napsanou zprávu do chatu v reálném čase">📨 Odeslat</button>
+                    <button onclick="shareLocation()" style="background: #28a745;" title="Sdílí vaši aktuální GPS polohu s ostatními účastníky chatu">📍 Sdílet polohu</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Login modal -->
+        <div id="loginModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;" onclick="closeLoginModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="position: relative; margin: 15% auto; max-width: 400px; background: white; border-radius: 10px; padding: 20px; max-height: 80vh; overflow-y: auto;">
+                <span class="close" onclick="closeLoginModal()">&times;</span>
+                <h3>🔑 Přihlášení</h3>
+                <div id="loginRequiredMessage" style="display: none; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 10px; margin: 10px 0; color: #856404; text-align: center;">
+                    ⚠️ Je nejprve nutné se přihlásit pro používání této aplikace
+                </div>
+                <input type="text" id="modalLoginPhone" placeholder="Telefon (123456789) nebo email" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;" onkeypress="if(event.key==='Enter') modalLoginUser()">
+                <div style="position: relative; margin: 10px 0;">
+                    <input type="password" id="modalLoginPassword" placeholder="Heslo" style="width: 100%; padding: 12px 45px 12px 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;" onkeypress="if(event.key==='Enter') modalLoginUser()">
+                    <button type="button" onclick="togglePasswordVisibility('modalLoginPassword', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px;">👁️</button>
+                </div>
+                <button onclick="modalLoginUser()" style="width: 100%; padding: 12px; margin: 10px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">🔑 Přihlásit se</button>
+                <p style="text-align: center; margin: 10px 0;">Nemáte účet? <a href="#" onclick="closeLoginModal(); showQuickRegister()" style="color: #667eea;">Registrujte se</a></p>
+            </div>
+        </div>
+        
+        <!-- Register modal -->
+        <div id="registerModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;" onclick="closeRegisterModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="position: relative; margin: 5% auto; max-width: 500px; background: white; border-radius: 10px; padding: 20px; max-height: 90vh; overflow-y: auto;">
+                <span class="close" onclick="closeRegisterModal()">&times;</span>
+                <h3>📝 Registrace</h3>
+                <input type="text" id="modalRegName" placeholder="Vaše jméno *" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                <input type="tel" id="modalRegPhone" placeholder="Telefonní číslo (9 číslic) *" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                <input type="email" id="modalRegEmail" placeholder="Email (volitelný)" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                <div style="position: relative; margin: 10px 0;">
+                    <input type="password" id="modalRegPassword" placeholder="Heslo *" style="width: 100%; padding: 12px 45px 12px 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    <button type="button" onclick="togglePasswordVisibility('modalRegPassword', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px;">👁️</button>
+                </div>
+                <div style="position: relative; margin: 10px 0;">
+                    <input type="password" id="modalRegPasswordConfirm" placeholder="Potvrdit heslo *" style="width: 100%; padding: 12px 45px 12px 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    <button type="button" onclick="togglePasswordVisibility('modalRegPasswordConfirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px;">👁️</button>
+                </div>
+                
+                <!-- Podmínky používání -->
+                <label style="display: flex; align-items: flex-start; margin: 10px 0; font-size: 13px; cursor: pointer; line-height: 1.3;">
+                    <input type="checkbox" id="modalRegTerms" style="margin-right: 8px; margin-top: 2px; transform: scale(1.1);" required>
+                    <span>* Souhlasím s <a href="#" onclick="showTermsModal()" style="color: #007bff; text-decoration: underline;">podmínkami používání</a></span>
+                </label>
+                
+                <!-- Ochrana osobních údajů -->
+                <label style="display: flex; align-items: flex-start; margin: 10px 0; font-size: 13px; cursor: pointer; line-height: 1.3;">
+                    <input type="checkbox" id="modalRegPrivacy" style="margin-right: 8px; margin-top: 2px; transform: scale(1.1);" required>
+                    <span>* Souhlasím se <a href="#" onclick="showPrivacyModal()" style="color: #007bff; text-decoration: underline;">zpracováním osobních údajů</a></span>
+                </label>
+                
+                <!-- Věkové omezení -->
+                <label style="display: flex; align-items: flex-start; margin: 10px 0; font-size: 13px; cursor: pointer; line-height: 1.3;">
+                    <input type="checkbox" id="modalRegAge" style="margin-right: 8px; margin-top: 2px; transform: scale(1.1);" required>
+                    <span>* Potvrzuji, že jsem starší 18 let</span>
+                </label>
+                
+                <!-- Marketingové komunikace (volitelné) -->
+                <label style="display: flex; align-items: flex-start; margin: 10px 0; font-size: 13px; cursor: pointer; line-height: 1.3;">
+                    <input type="checkbox" id="modalRegMarketing" style="margin-right: 8px; margin-top: 2px; transform: scale(1.1);">
+                    <span>Souhlasím s posíláním informací o nových funkcích (volitelné)</span>
+                </label>
+                
+                <button onclick="modalRegisterUser()" style="width: 100%; padding: 12px; margin: 10px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">✅ Registrovat</button>
+                <p style="text-align: center; margin: 10px 0;">Už máte účet? <a href="#" onclick="closeRegisterModal(); showQuickLogin()" style="color: #667eea;">Přihlaste se</a></p>
+            </div>
+        </div>
+        
+        <!-- Terms modal -->
+        <div id="termsModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; overflow-y: auto;" onclick="closeTermsModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="position: relative; margin: 5% auto; max-width: 600px; background: white; border-radius: 10px; padding: 20px; max-height: 90vh; overflow-y: auto;">
+                <span class="close" onclick="closeTermsModal()" style="position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                <h3>📋 Podmínky používání a prohlášení o odpovědnosti</h3>
+                <div style="font-size: 14px; line-height: 1.5; color: #333;">
+                    <p><strong>1. OMEZENÍ ODPOVĚDNOSTI:</strong> Vývojáři a provozovatelé aplikace Spolujízda nenesou žádnou odpovědnost za škody, zranění, ztráty nebo jiné následky vzniklé v souvislosti s používáním této aplikace a službami sdílení jízd.</p>
+                    
+                    <p><strong>2. RIZIKA SPOLUJÍZDY:</strong> Uživatel si je vědom, že sdílení jízd s neznámými osobami může představovat rizika včetně, ale neomezeně na: krádež, násilí, nehody, poškození majetku, nebo jiné trestné činy. Poskytovatel neověřuje totožnost ani spolehlivost uživatelů.</p>
+                    
+                    <p><strong>3. VLASTNÍ ODPOVĚDNOST:</strong> Každý uživatel jedná na vlastní riziko a odpovědnost. Před každou jízdou si ověřte totožnost spolucestujících, informujte blízké o své cestě a dodržujte základní bezpečnostní opatření.</p>
+                    
+                    <p><strong>4. ZÁVAZEK UŽIVATELE:</strong> Registrací se zavazuji:<br>
+                    • Chovat se slušně a zodpovědně<br>
+                    • Nepoužívat aplikaci k nezákonným účelům<br>
+                    • Respektovat ostatní uživatele<br>
+                    • Neposkytovat nepravdivé informace<br>
+                    • Dodržovat platné zákony a předpisy</p>
+                    
+                    <p><strong>5. VYLOUČENÍ NÁROKŮ:</strong> Uživatel se vzdává všech nároků vůči Poskytovateli a souhlasí, že nebude Poskytovatele žalovat ani jinak právně stíhat za jakékoliv škody vzniklé používáním aplikace.</p>
+                    
+                    <p><strong>6. OCHRANA OSOBNÍCH ÚdAJŮ:</strong> Vaše registrační údaje (jméno, telefon, email) jsou chráněny a nebudou sdíleny, prodávány ani poskytovány žádným třetím stranám. Údaje jsou použity pouze pro fungování aplikace a komunikaci mezi uživateli.</p>
+                    
+                    <p><strong>7. PLATNOST:</strong> Tyto podmínky jsou nedílnou součástí smlouvy o používání aplikace. Pokračováním v registraci vyjadřujete souhlas se všemi uvedenými podmínkami.</p>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeTermsModal()" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Rozumím</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Privacy modal -->
+        <div id="privacyModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; overflow-y: auto;" onclick="closePrivacyModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="position: relative; margin: 5% auto; max-width: 600px; background: white; border-radius: 10px; padding: 20px; max-height: 90vh; overflow-y: auto;">
+                <span class="close" onclick="closePrivacyModal()" style="position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                <h3>🔒 Zpracování osobních údajů (GDPR)</h3>
+                <div style="font-size: 14px; line-height: 1.5; color: #333;">
+                    <p><strong>1. SPRÁVCE ÚdAJŮ:</strong> Správcem vašich osobních údajů je provozovatel aplikace Spolujízda.</p>
+                    
+                    <p><strong>2. ZPRACOVÁVANÉ ÚdAJE:</strong> Zpracováváme: jméno, telefonni číslo, email, GPS polohu (při používání aplikace).</p>
+                    
+                    <p><strong>3. ÚČEL ZPRACOVÁNÍ:</strong> Údaje používáme pro: registraci účtu, komunikaci mezi uživateli, zobrazení jizd, bezpečnost aplikace.</p>
+                    
+                    <p><strong>4. PRÁVNÍ ZÁKLAD:</strong> Zpracování je založeno na vašem souhlasu a plnění smlouvy o poskytování služeb.</p>
+                    
+                    <p><strong>5. SDÍLENÍ ÚdAJŮ:</strong> Vaše údaje NESDÍLÍME s třetími stranami. Jsou použity pouze pro fungování aplikace.</p>
+                    
+                    <p><strong>6. DOBA UCHOVÁNÍ:</strong> Údaje uchováváme po dobu používání aplikace + 1 rok po skončení.</p>
+                    
+                    <p><strong>7. VAŠE PRÁVA:</strong> Máte právo na přístup, opravu, vymazání, přenositelnost údajů a odvolnání souhlasu.</p>
+                    
+                    <p><strong>8. KONTAKT:</strong> Pro otázky ohledně GDPR nás kontaktujte přes aplikaci.</p>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closePrivacyModal()" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Rozumím</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="gpsCoords" style="position: absolute; top: 5px; right: 5px; font-size: 14px; z-index: 1000; display: none;">
+            <span id="coordsText" style="color: #333; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">GPS: Neaktivní</span>
+            <button onclick="copyCoords()" style="margin-left: 8px; font-size: 21px; background: none; color: #333; border: none; cursor: pointer; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">⧉</button>
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+    <script src="/static/js/notifications.js"></script>
+    <script src="/static/js/user-search.js"></script>
+    <script src="/static/js/advanced-search.js"></script>
+    <script src="/static/js/search-integration.js"></script>
+</body>
+</html>

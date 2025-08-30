@@ -1,0 +1,1 @@
+from . import db\n\nclass Book(db.Model):\n    id = db.Column(db.Integer, primary_key=True)\n    title = db.Column(db.String(120), unique=True, nullable=False)\n    author = db.Column(db.String(80), nullable=False)\n\n    def __repr__(self):\n        return f'<Book {self.title}>'\n

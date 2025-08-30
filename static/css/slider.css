@@ -1,0 +1,58 @@
+/* Styly pro posuvníky - přesně od začátku do konce */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #667eea 0%, #667eea 0%, #ddd 0%, #ddd 100%);
+    outline: none;
+    margin: 5px 0;
+    padding: 0;
+    border: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: none;
+    margin-top: -6px;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: none;
+    margin-top: -6px;
+}
+
+input[type="range"]::-webkit-slider-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: transparent;
+    border: none;
+}
+
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #ddd;
+    border: none;
+}
+
+/* Modrá čára pro Firefox */
+input[type="range"]::-moz-range-progress {
+    background: #667eea;
+    height: 6px;
+    border-radius: 3px;
+}

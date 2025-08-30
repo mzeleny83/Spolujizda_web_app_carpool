@@ -1,0 +1,10 @@
+/* Styly pro barevné označení jízd */
+.ride-item.own-ride {
+    background-color: #d4edda !important;
+    border-color: #28a745 !important;
+}
+
+.ride-item.reserved-ride {
+    background-color: #cce7ff !important;
+    border-color: #007bff !important;
+}
