@@ -41,6 +41,24 @@ def api_status():
         ]
     })
 
+@app.route('/api/cities', methods=['GET'])
+def get_cities():
+    """Vrací seznam měst pro autocomplete"""
+    cities = [
+        'Praha', 'Brno', 'Ostrava', 'Plzeň', 'Liberec', 'Olomouc', 'Ústí nad Labem',
+        'České Budějovice', 'Hradec Králové', 'Pardubice', 'Zlín', 'Havířov',
+        'Kladno', 'Most', 'Opava', 'Frýdek-Místek', 'Karviná', 'Jihlava',
+        'Teplice', 'Děčín', 'Karlovy Vary', 'Jablonec nad Nisou', 'Mladá Boleslav',
+        'Prostějov', 'Přerov', 'Česká Lípa', 'Třebíč', 'Třinec', 'Tábor',
+        'Znojmo', 'Příbram', 'Cheb', 'Trutnov', 'Chomutov', 'Kolín', 'Písek'
+    ]
+    return jsonify(cities)
+
+@app.route('/api/users/locations', methods=['GET'])
+def get_user_locations():
+    """Vrací aktuální polohy uživatelů"""
+    return jsonify(user_locations)
+
 @app.route('/api/users/list', methods=['GET'])
 def list_users():
     try:
@@ -960,8 +978,11 @@ if __name__ == '__main__':
         print("Databáze inicializována")
         
         # Přidání pokročilých search API routes
-        create_search_routes(app)
-        print("Pokročilé vyhledávání aktivováno")
+        try:
+            create_search_routes(app)
+            print("Pokročilé vyhledávání aktivováno")
+        except Exception as e:
+            print(f"Chyba při aktivaci pokročilého vyhledávání: {e}")
         
         # Přidá HTTPS hlavičky pro mobilní zařízení
         @app.after_request
@@ -991,7 +1012,8 @@ if __name__ == '__main__':
         except:
             pass
         
-        socketio.run(app, debug=False, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
+        port = int(os.environ.get('PORT', 8080))
+        socketio.run(app, debug=False, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
     except KeyboardInterrupt:
         signal_handler(signal.SIGINT, None)
     except Exception as e:
