@@ -738,6 +738,8 @@ function setupEventListeners() {
 function toggleTracking() {
     if (!checkLoginRequired()) return;
     
+    console.log('Toggle tracking - current state:', isTracking);
+    
     if (isTracking) {
         stopTracking();
     } else {
@@ -760,6 +762,12 @@ function startTracking() {
     
     if (!navigator.geolocation) {
         alert('❌ GPS není podporováno vaším prohlížečem');
+        return;
+    }
+    
+    // Kontrola HTTPS na mobilních zařízeních
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        alert('⚠️ GPS vyžaduje HTTPS připojení. Použijte https:// nebo localhost');
         return;
     }
     
@@ -814,8 +822,8 @@ function startTracking() {
                     alert(`❌ GPS chyba: ${error.message}`);
                 },
                 {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
+                    enableHighAccuracy: false,
+                    timeout: 15000,
                     maximumAge: 0
                 }
             );
@@ -824,11 +832,23 @@ function startTracking() {
             const btn = document.getElementById('trackingBtn');
             btn.innerHTML = '⏹️ Zastavit sledování';
             btn.title = 'Zastaví sledování GPS polohy';
+            btn.disabled = false;
             
-            console.log('✅ GPS sledování aktivní');
+            console.log('✅ GPS sledování aktivní - watchId:', watchId);
         },
         function(error) {
             console.error('❌ GPS inicializace chyba:', error.message);
+            
+            // Reset stavu při chybě
+            isTracking = false;
+            watchId = null;
+            currentUserId = null;
+            
+            const btn = document.getElementById('trackingBtn');
+            btn.innerHTML = '📍 Najít mě a sledovat';
+            btn.title = 'Spustí sledování vaší GPS polohy a vycentruje mapu na vaši pozici';
+            btn.disabled = false;
+            
             let errorMsg = 'Chyba GPS: ';
             switch(error.code) {
                 case error.PERMISSION_DENIED:
@@ -846,8 +866,8 @@ function startTracking() {
             alert(errorMsg);
         },
         {
-            enableHighAccuracy: true,
-            timeout: 10000,
+            enableHighAccuracy: false,
+            timeout: 30000,
             maximumAge: 0
         }
     );
@@ -855,19 +875,29 @@ function startTracking() {
 
 // Zastavit sledování polohy
 function stopTracking() {
+    console.log('Stopping tracking - watchId:', watchId);
+    
     if (watchId) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
+        console.log('GPS watch cleared');
+    }
+    
+    // Odpoj socket události
+    if (socket && currentUserId) {
+        socket.emit('stop_location_updates', { user_id: currentUserId });
     }
     
     isTracking = false;
+    currentUserId = null;
     
     // Změní tlačítko zpět
     const btn = document.getElementById('trackingBtn');
     btn.innerHTML = '📍 Najít mě a sledovat';
     btn.title = 'Spustí sledování vaší GPS polohy a vycentruje mapu na vaši pozici';
+    btn.disabled = false;
     
-    console.log('Sledování GPS zastaveno');
+    console.log('✅ Sledování GPS úplně zastaveno');
 }
 
 // Přepínání levého panelu
