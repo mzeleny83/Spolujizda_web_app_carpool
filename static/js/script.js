@@ -815,8 +815,8 @@ function startTracking() {
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 30000
+                    timeout: 10000,
+                    maximumAge: 0
                 }
             );
             
@@ -847,8 +847,8 @@ function startTracking() {
         },
         {
             enableHighAccuracy: true,
-            timeout: 20000,
-            maximumAge: 60000
+            timeout: 10000,
+            maximumAge: 0
         }
     );
 }
