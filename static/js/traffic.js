@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Počká na inicializaci mapy
     setTimeout(() => {
         if (typeof map !== 'undefined' && map) {
-            trafficManager.addTrafficLayer();
+            
         }
     }, 2000);
 });

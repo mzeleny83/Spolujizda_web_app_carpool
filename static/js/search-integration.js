@@ -1,3 +1,4 @@
+(function() {
 // Integrace pokročilého vyhledávání do webové aplikace
 class SearchIntegration {
     constructor() {
@@ -173,89 +174,13 @@ class SearchIntegration {
 }
 
 // CSS styly
-const searchStyles = `
-<style>
-.advanced-search-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.search-results-container {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 1000;
-    margin-top: 4px;
-}
-
-.search-result-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background-color 0.2s;
-}
-
-.search-result-item:hover {
-    background-color: #f8f9fa;
-}
-
-.search-result-item:last-child {
-    border-bottom: none;
-}
-
-.search-result-icon {
-    font-size: 18px;
-    margin-right: 12px;
-    width: 20px;
-    text-align: center;
-}
-
-.search-result-content {
-    flex: 1;
-}
-
-.search-result-text {
-    font-weight: 500;
-    color: #333;
-}
-
-.search-result-subtitle {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
-}
-
-.search-loading, .search-error, .search-no-results {
-    padding: 16px;
-    text-align: center;
-    color: #666;
-}
-
-.search-error {
-    color: #dc3545;
-}
-
-mark {
-    background-color: #fff3cd;
-    padding: 0 2px;
-    border-radius: 2px;
-}
-</style>
+const integrationSearchStyles = `
 `;
 
 if (!document.querySelector('#search-integration-styles')) {
     const styleElement = document.createElement('div');
     styleElement.id = 'search-integration-styles';
-    styleElement.innerHTML = searchStyles;
+    styleElement.innerHTML = integrationSearchStyles;
     document.head.appendChild(styleElement);
 }
 
@@ -266,3 +191,4 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SearchIntegration;
 }
+})();

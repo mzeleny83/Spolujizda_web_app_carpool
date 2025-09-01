@@ -1,6 +1,7 @@
+(function() {
 // Hledání uživatelů a GPS navigace
 
-let navigationActive = false;
+let userSearchNavigationActive = false;
 let navigationInterval = null;
 let targetUser = null;
 
@@ -179,3 +180,4 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
 }
+})();

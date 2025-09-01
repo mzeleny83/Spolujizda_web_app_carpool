@@ -1,3 +1,4 @@
+(function() {
 // Pokročilý vyhledávací systém inspirovaný Waze
 class AdvancedSearch {
     constructor() {
@@ -461,7 +462,7 @@ class AdvancedSearch {
 window.advancedSearch = new AdvancedSearch();
 
 // CSS styly
-const searchStyles = `
+const advancedSearchStyles = `
 <style>
 .search-container {
     position: relative;
@@ -562,6 +563,7 @@ mark {
 if (!document.querySelector('#advanced-search-styles')) {
     const styleElement = document.createElement('div');
     styleElement.id = 'advanced-search-styles';
-    styleElement.innerHTML = searchStyles;
+    styleElement.innerHTML = advancedSearchStyles;
     document.head.appendChild(styleElement);
 }
+})();

@@ -1,5 +1,6 @@
+(function() {
 // Navigační funkce
-let navigationActive = false;
+let navJsNavigationActive = false;
 let currentRoute = null;
 
 // Spustí navigaci
@@ -153,3 +154,4 @@ function handleNavigationError(error) {
     console.error('Navigační chyba:', error);
     document.getElementById('navInstruction').textContent = '❌ Chyba GPS';
 }
+})();

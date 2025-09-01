@@ -1,1 +1,26 @@
-import os\nfrom flask import Flask\nfrom flask_sqlalchemy import SQLAlchemy\nfrom flask_marshmallow import Marshmallow\n\ndb = SQLAlchemy()\nma = Marshmallow()\n\ndef create_app():\n    app = Flask(__name__, instance_relative_config=True)\n    app.config.from_object('config.Config')\n\n    # Ensure the instance folder exists for SQLite DB\n    try:\n        os.makedirs(app.instance_path)\n    except OSError:\n        pass\n\n    db.init_app(app)\n    ma.init_app(app)\n\n    # Register blueprints (API routes)\n    from .routes import api_bp\n    app.register_blueprint(api_bp, url_prefix='/api')\n\n    return app\n
+import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+
+db = SQLAlchemy()
+ma = Marshmallow()
+
+def create_app():
+    app = Flask(__name__, instance_relative_config=True)
+    app.config.from_object('config.Config')
+
+    # Ensure the instance folder exists for SQLite DB
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
+
+    db.init_app(app)
+    ma.init_app(app)
+
+    # Register blueprints (API routes)
+    from .routes import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
+
+    return app

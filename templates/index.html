@@ -42,6 +42,7 @@
         <header>
             <h1>🚗 Spolujízda</h1>
             <div class="user-info">
+                <span id="connectionStatus" class="disconnected">Odpojeno</span>
             </div>
         </header>
         
@@ -107,6 +108,7 @@
                         </div>
                         
                         <button onclick="showAllRides()" style="width: 100%; margin-bottom: 15px; background: #28a745;" title="Zobrazí všechny dostupné jízdy">🔍 Zobrazit všechny jízdy</button>
+                        <div id="results" class="results-container"></div>
                         
                         <form id="rideSearchForm">
                             <input type="text" id="fromSearch" placeholder="Odkud (volitelné)" title="Zadejte výchozí místo - necháte-li prázdné, hledá se kolem vaší polohy" data-search-type="places">
@@ -214,8 +216,6 @@
                     </div>
                 </div>
 
-                
-                <div id="results" class="results-container"></div>
             
             <!-- Modal pro hodnocení -->
             <div id="ratingModal" class="modal" style="display: none;">
@@ -380,7 +380,7 @@
                     
                     <p><strong>6. DOBA UCHOVÁNÍ:</strong> Údaje uchováváme po dobu používání aplikace + 1 rok po skončení.</p>
                     
-                    <p><strong>7. VAŠE PRÁVA:</strong> Máte právo na přístup, opravu, vymazání, přenositelnost údajů a odvolnání souhlasu.</p>
+                    <p><strong>7. VAŠE PRÁVA:</strong> Máte právo na přístup, opravu, vymazání, přenositelnost údajů a odvolání souhlasu.</p>
                     
                     <p><strong>8. KONTAKT:</strong> Pro otázky ohledně GDPR nás kontaktujte přes aplikaci.</p>
                 </div>

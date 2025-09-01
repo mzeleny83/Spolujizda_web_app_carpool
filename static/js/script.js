@@ -13,7 +13,14 @@ let isRoutePlanning = false;
 
 // Inicializace při načtení stránky
 document.addEventListener('DOMContentLoaded', function() {
-    initializeSocket();
+    // Delay socket initialization to ensure DOM is ready
+    setTimeout(() => {
+        const connectionStatusElement = document.getElementById('connectionStatus');
+        if (connectionStatusElement) {
+            initializeSocket();
+        }
+    }, 100); // Small delay to ensure DOM is rendered
+
     initializeMap();
     setupEventListeners();
     initializePWA();
@@ -35,8 +42,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const toggleBtn = document.getElementById('panelToggle');
         if (window.innerWidth <= 768) {
             toggleBtn.style.display = 'none';
-        } else {
-            toggleBtn.style.display = 'block';
         }
     });
 });
@@ -586,13 +591,19 @@ function initializeSocket() {
     socket = io();
     
     socket.on('connect', function() {
-        document.getElementById('connectionStatus').textContent = 'Připojeno';
-        document.getElementById('connectionStatus').className = 'connected';
+        const statusEl = document.getElementById('connectionStatus');
+        if (statusEl) {
+            statusEl.textContent = 'Připojeno';
+            statusEl.className = 'connected';
+        }
     });
     
     socket.on('disconnect', function() {
-        document.getElementById('connectionStatus').textContent = 'Odpojeno';
-        document.getElementById('connectionStatus').className = 'disconnected';
+        const statusEl = document.getElementById('connectionStatus');
+        if (statusEl) {
+            statusEl.textContent = 'Odpojeno';
+            statusEl.className = 'disconnected';
+        }
     });
     
     socket.on('location_updated', function(data) {
@@ -1670,14 +1681,20 @@ async function autoSearchAllRides() {
 
 // Zobrazí všechny jízdy bez GPS
 async function showAllRides() {
+    console.log("showAllRides called");
     const resultsDiv = document.getElementById('results');
-    if (!resultsDiv) return;
+    console.log("resultsDiv is:", resultsDiv);
+    if (!resultsDiv) {
+        console.error("Could not find element with id 'results'");
+        alert("Critical error: Could not find the results container on the page.");
+        return;
+    }
     
     resultsDiv.innerHTML = '<h3>Všechny dostupné jízdy:</h3><p>Načítám...</p>';
     
     try {
         const userId = localStorage.getItem('user_id') || '0';
-        const response = await fetch(`/api/rides/search?from=&to=&lat=0&lng=0&user_id=${userId}&range=1000&include_own=true`);
+        const response = await fetch(`/api/rides/all?user_id=${userId}`);
         
         if (!response.ok) {
             throw new Error(`HTTP chyba: ${response.status}`);
