@@ -69,6 +69,7 @@ def search_rides():
             return R * c
         
         result = []
+        print(f"[Debug] Searching with location: ({user_lat}, {user_lng}) and range: {search_range}km")
         for ride in rides:
             try:
                 waypoints = json.loads(ride.route_waypoints) if ride.route_waypoints else []
@@ -88,10 +89,12 @@ def search_rides():
                 
                 if min_distance != float('inf'):
                     distance = min_distance
+                print(f"[Debug] Ride ID: {ride.id}, Min distance to waypoints: {distance:.2f}km")
             else:
                 distance = 0
             
             if user_lat and user_lng and distance > search_range:
+                print(f"[Debug] Skipping Ride ID: {ride.id}, Name: {ride.from_location} -> {ride.to_location}. Distance {distance:.2f}km > Range {search_range}km")
                 continue
             
             is_own = (user_id > 0 and ride.user_id == user_id)

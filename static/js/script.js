@@ -10,6 +10,7 @@ let routeWaypoints = [];
 let routeMarkers = [];
 let routeLine = null;
 let isRoutePlanning = false;
+let searchDebounceTimeout;
 
 // Inicializace při načtení stránky
 document.addEventListener('DOMContentLoaded', function() {
@@ -358,8 +359,8 @@ function planRouteFromLocation() {
             document.getElementById('fromOffer').value = 'GPS nedostupné';
         }, {
             enableHighAccuracy: true,
-            timeout: 30000,
-            maximumAge: 0
+            timeout: 20000,
+            maximumAge: 300000 // Allow cached position for 5 minutes
         });
     } else {
         document.getElementById('fromOffer').value = 'GPS nepodporováno';
@@ -833,7 +834,7 @@ function startTracking() {
                     alert(`❌ GPS chyba: ${error.message}`);
                 },
                 {
-                    enableHighAccuracy: false,
+                    enableHighAccuracy: true,
                     timeout: 15000,
                     maximumAge: 0
                 }
@@ -879,7 +880,7 @@ function startTracking() {
             alert(errorMsg);
         },
         {
-            enableHighAccuracy: false,
+            enableHighAccuracy: true,
             timeout: 30000,
             maximumAge: 0
         }
@@ -1085,14 +1086,17 @@ function toggleOfferForm() {
 
 function toggleSearchForm() {
     const form = document.getElementById('searchForm');
+    const resultsDiv = document.getElementById('results');
     if (form.style.display === 'block') {
         form.style.display = 'none';
-        document.getElementById('results').innerHTML = '';
+        resultsDiv.style.display = 'none';
+        resultsDiv.innerHTML = '';
+        clearRideMarkers(); // Clear markers when closing
     } else {
         hideAllForms();
         form.style.display = 'block';
-        updateSliderBackground('searchRange', 10, 1, 100);
-        showAllRides();
+        resultsDiv.style.display = 'block';
+        updateSliderBackground('searchRange', document.getElementById('searchRange').value, 1, 100);
     }
 }
 
@@ -1158,6 +1162,7 @@ function hideAllForms() {
     document.getElementById('activeRides').style.display = 'none';
     document.getElementById('settingsForm').style.display = 'none';
     document.getElementById('results').innerHTML = '';
+    document.getElementById('results').style.display = 'none'; // Hide results div
 }
 
 // Plánování trasy
@@ -1537,6 +1542,11 @@ async function offerRide() {
 function updateRangeValue(value) {
     document.getElementById('rangeValue').textContent = value;
     updateSliderBackground('searchRange', value, 1, 100);
+
+    clearTimeout(searchDebounceTimeout);
+    searchDebounceTimeout = setTimeout(() => {
+        searchRides();
+    }, 500); // Debounce 500ms
 }
 
 // Aktualizace hodnoty hodnocení
@@ -1673,7 +1683,7 @@ async function autoSearchAllRides() {
         },
         {
             enableHighAccuracy: true,
-            timeout: 10000,
+            timeout: 20000, // Increased timeout
             maximumAge: 0
         }
     );
@@ -1694,6 +1704,7 @@ async function showAllRides() {
     
     try {
         const userId = localStorage.getItem('user_id') || '0';
+        console.log("Fetching all rides for user_id:", userId);
         const response = await fetch(`/api/rides/all?user_id=${userId}`);
         
         if (!response.ok) {
@@ -1701,6 +1712,7 @@ async function showAllRides() {
         }
         
         const rides = await response.json();
+        console.log("Received rides:", rides);
         displayAllRides(rides);
         addRideMarkersToMap(rides);
         
@@ -1771,76 +1783,62 @@ function displayAllRides(rides) {
 
 // Hledat jízdy s filtry
 async function searchRides() {
+    console.log("searchRides called");
+    const resultsDiv = document.getElementById('results');
+    if (!resultsDiv) {
+        console.error("Could not find element with id 'results' in searchRides");
+        alert("Critical error: Could not find the results container on the page.");
+        return;
+    }
+    resultsDiv.innerHTML = '<h3>Hledám jízdy:</h3><p>Načítám...</p>';
     const from = document.getElementById('fromSearch').value;
     const to = document.getElementById('toSearch').value;
     const maxPrice = document.getElementById('maxPrice').value;
-    const minRating = 0;
-    
-    let userLat = 0, userLng = 0;
+    const searchRange = document.getElementById('searchRange').value;
+
+    let userLat = 0,
+        userLng = 0;
     if (navigator.geolocation) {
         try {
             const position = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject);
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 20000,
+                    maximumAge: 60000
+                });
             });
             userLat = position.coords.latitude;
             userLng = position.coords.longitude;
-        } catch (e) {
-            console.log('GPS nedostupné');
+        } catch (error) {
+            console.error('GPS chyba v searchRides:', error.message);
+            resultsDiv.innerHTML = `<p>Nepodařilo se získat polohu: ${error.message}. Zkuste to znovu, nebo zadejte místo odjezdu ručně.</p>`;
+            if (!from) {
+                return;
+            }
         }
     }
-    
+
     try {
         const userId = localStorage.getItem('user_id') || '0';
-        let url = `/api/rides/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&lat=${userLat}&lng=${userLng}&user_id=${userId}&include_own=true`;
+        let url = `/api/rides/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&lat=${userLat}&lng=${userLng}&user_id=${userId}&include_own=true&range=${searchRange}`;
         if (maxPrice) url += `&max_price=${maxPrice}`;
-        // Hodnocení odstraňeno z filtrace
-        
+
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Server error: ${response.status}`);
         }
         const rides = await response.json();
-        
-        const resultsContainer = document.getElementById('results');
-        
-        if (!rides || rides.length === 0) {
-            resultsContainer.innerHTML = '<p>Žádné jízdy nebyly nalezeny.</p>';
-            return;
-        }
-        
-        let html = '<h3>Nalezené jízdy (seřazeno podle vzdálenosti):</h3>';
-        rides.forEach(ride => {
-            const distanceText = ride.distance > 0 ? `<p><strong>Vzdálenost:</strong> ${ride.distance} km</p>` : '';
-            const waypointsText = ride.route_waypoints && ride.route_waypoints.length > 0 ? 
-                `<p><strong>Zastávky:</strong> ${ride.route_waypoints.length} zastávek na trase</p>` : '';
-            const ratingStars = '⭐'.repeat(Math.floor(ride.driver_rating));
-            
-            html += `
-                <div class="ride-item">
-                    <h4>🚗 ${ride.driver_name} <span class="ride-rating">${ratingStars} (${ride.driver_rating.toFixed(1)})</span></h4>
-                    <p><strong>Trasa:</strong> ${ride.from_location} → ${ride.to_location}</p>
-                    <p><strong>Odjezd:</strong> ${new Date(ride.departure_time).toLocaleString('cs-CZ')}</p>
-                    <p><strong>Volná místa:</strong> ${ride.available_seats}</p>
-                    <p><strong>Cena:</strong> ${ride.price_per_person} Kč</p>
-                    ${distanceText}
-                    ${waypointsText}
-                    <button onclick="showRideRoute(${ride.id}, ${JSON.stringify(ride.route_waypoints).replace(/"/g, '&quot;')})" title="Zobrazí kompletní trasu jízdy s všemi zastávkami na mapě">Zobrazit trasu</button>
-                    <button onclick="startNavigation(${JSON.stringify(ride.route_waypoints).replace(/"/g, '&quot;')})" title="Spustí hlasovou navigaci s dopravními informacemi a alternativními trasami">🧭 Navigovat</button>
-                    <button onclick="reserveSeat(${ride.id}, '${ride.driver_name}')" title="Vytvoří rezervaci místa v této jízdě - čeká na potvrzení řidiče">Rezervovat místo</button>
-                    <button onclick="contactDriver('${ride.driver_name}', ${ride.id})" title="Odešle přímou zprávu řidiči této jízdy">Kontaktovat řidiče</button>
-                    <button onclick="openChatModal(${ride.id}, '${ride.driver_name}')" title="Otevře real-time chat pro tuto konkrétní jízdu">💬 Chat</button>
-                    <button onclick="openRatingModal(${ride.user_id}, '${ride.driver_name}', ${ride.id})" title="Ohodnotí řidiče hvězdičkami a napíše komentář">⭐ Ohodnotit</button>
-                    <button onclick="blockUser(${ride.user_id}, '${ride.driver_name}')" style="background: #dc3545;" title="Zablokuje tohoto uživatele - už se vám nebude zobrazovat">🚫 Blokovat</button>
-                </div>
-            `;
-        });
-        
-        resultsContainer.innerHTML = html;
-        
-        // Přidá markery jízd na mapu
+
+        displayAllRides(rides);
         addRideMarkersToMap(rides);
+
+        if (!rides || rides.length === 0) {
+            document.getElementById('results').innerHTML = '<p>Žádné jízdy nebyly nalezeny pro zadaná kritéria.</p>';
+        }
+
     } catch (error) {
-        alert('Chyba při hledání: ' + error.message);
+        console.error('Chyba při hledání jízd:', error);
+        document.getElementById('results').innerHTML = `<p>Chyba při hledání: ${error.message}</p>`;
     }
 }
 

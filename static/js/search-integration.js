@@ -2,6 +2,7 @@
 // Integrace pokročilého vyhledávání do webové aplikace
 class SearchIntegration {
     constructor() {
+        this.resultsContainer = document.getElementById('results'); // Get the existing results div
         this.initializeSearchFields();
         this.setupEventListeners();
     }
@@ -22,10 +23,9 @@ class SearchIntegration {
         field.parentNode.insertBefore(wrapper, field);
         wrapper.appendChild(field);
         
-        const resultsContainer = document.createElement('div');
-        resultsContainer.className = 'search-results-container';
-        resultsContainer.style.display = 'none';
-        wrapper.appendChild(resultsContainer);
+        // Removed: Creation of new resultsContainer
+        // resultsContainer.style.display = 'none'; // This line is no longer needed here
+        // wrapper.appendChild(resultsContainer); // This line is no longer needed here
         
         let debounceTimer;
         
@@ -33,22 +33,22 @@ class SearchIntegration {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 if (e.target.value.trim().length > 0) {
-                    this.performSearch(e.target.value, searchType, resultsContainer, field);
+                    this.performSearch(e.target.value, searchType, this.resultsContainer, field); // Pass this.resultsContainer
                 } else {
-                    resultsContainer.style.display = 'none';
+                    this.resultsContainer.style.display = 'none'; // Hide the results container
                 }
             }, 300);
         });
         
         field.addEventListener('focus', () => {
             if (field.value.trim() === '') {
-                this.showSuggestions(resultsContainer, searchType, field);
+                this.showSuggestions(this.resultsContainer, searchType, field); // Pass this.resultsContainer
             }
         });
         
         field.addEventListener('blur', (e) => {
             setTimeout(() => {
-                resultsContainer.style.display = 'none';
+                this.resultsContainer.style.display = 'none'; // Hide the results container
             }, 200);
         });
     }

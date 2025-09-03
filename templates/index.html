@@ -89,6 +89,7 @@
                     </div>
                     
                     <button onclick="toggleSearchForm()" title="Vyhledá dostupné jízdy podle zadaných kritérií s možností filtrování podle ceny a hodnocení">🔍 Hledat jízdu</button>
+                    <div id="results" class="results-container"></div> <!-- Moved here -->
                     <div id="searchForm" class="form-container" style="display: none;">
                         <h2>Hledat jízdu</h2>
                         
@@ -106,10 +107,6 @@
                                 <span>100 km</span>
                             </div>
                         </div>
-                        
-                        <button onclick="showAllRides()" style="width: 100%; margin-bottom: 15px; background: #28a745;" title="Zobrazí všechny dostupné jízdy">🔍 Zobrazit všechny jízdy</button>
-                        <div id="results" class="results-container"></div>
-                        
                         <form id="rideSearchForm">
                             <input type="text" id="fromSearch" placeholder="Odkud (volitelné)" title="Zadejte výchozí místo - necháte-li prázdné, hledá se kolem vaší polohy" data-search-type="places">
                             <input type="text" id="toSearch" placeholder="Kam (volitelné)" title="Zadejte cílové místo - necháte-li prázdné, hledá se kolem vaší polohy" data-search-type="places">
@@ -119,6 +116,7 @@
 
                             <button type="submit" title="Vyhledá dostupné jízdy podle zadaných kritérií a zobrazí je seřazené podle vzdálenosti">Hledat s filtry</button>
                         </form>
+                        <button onclick="showAllRides()" style="width: 100%; margin-bottom: 15px; background: #28a745; margin-top: 15px;" title="Zobrazí všechny dostupné jízdy">🔍 Zobrazit všechny jízdy</button>
                     </div>
                     
                     <button onclick="toggleUserSearch()" title="Vyhledá uživatele podle emailu nebo telefonu a zobrazí ho na mapě">👤 Hledat uživatele</button>
