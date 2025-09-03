@@ -1,0 +1,9 @@
+Flask
+Flask-Cors
+flask-socketio
+requests
+gunicorn
+eventlet
+Flask-SQLAlchemy
+SQLAlchemy
+werkzeug

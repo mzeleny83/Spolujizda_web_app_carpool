@@ -15,14 +15,17 @@ APP_PID=$!
 
 sleep 3
 
-# Spustí tunel bez keep-alive
-ssh -o StrictHostKeyChecking=no -o TCPKeepAlive=no -o ServerAliveInterval=0 -R 80:localhost:8080 nokey@localhost.run >/tmp/tunnel_output 2>&1 &
+# Spustí ngrok tunel místo localhost.run
+ngrok http 8080 --log=stdout > /tmp/tunnel_output 2>&1 &
 TUNNEL_PID=$!
 
 sleep 8
 
-# Získá URL jen jednou
-URL=$(grep -o 'https://[a-zA-Z0-9-]*\.lhr\.life' /tmp/tunnel_output 2>/dev/null | head -1)
+# Získá ngrok URL
+URL=$(grep -o 'https://[a-zA-Z0-9-]*\.ngrok-free\.app' /tmp/tunnel_output 2>/dev/null | head -1)
+if [ -z "$URL" ]; then
+    URL=$(grep -o 'https://[a-zA-Z0-9-]*\.ngrok\.io' /tmp/tunnel_output 2>/dev/null | head -1)
+fi
 
 if [ ! -z "$URL" ]; then
     echo ""
