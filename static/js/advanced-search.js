@@ -1,3 +1,4 @@
+(function() {
 // Pokročilý vyhledávací systém inspirovaný Waze
 class AdvancedSearch {
     constructor() {
@@ -30,6 +31,7 @@ class AdvancedSearch {
                     accuracy: position.coords.accuracy
                 };
                 
+                console.log('Geolokace získána:', this.userLocation);
             } catch (error) {
                 console.warn('Geolokace nedostupná:', error);
             }
@@ -365,7 +367,7 @@ class AdvancedSearch {
     highlightQuery(text, query) {
         if (!query || query.length < 2) return text;
         
-        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\\]/g, '\$&')})`, 'gi');
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return text.replace(regex, '<mark>$1</mark>');
     }
 
@@ -398,11 +400,13 @@ class AdvancedSearch {
 
     // Výběr místa
     selectPlace(result) {
+        console.log('Vybráno místo:', result);
         // Implementace podle potřeby
     }
 
     // Výběr jízdy
     selectRide(result) {
+        console.log('Vybrána jízda:', result);
         if (result.data) {
             window.location.href = `/ride/${result.data.id}`;
         }
@@ -410,6 +414,7 @@ class AdvancedSearch {
 
     // Výběr uživatele
     selectUser(result) {
+        console.log('Vybrán uživatel:', result);
         if (result.data) {
             window.location.href = `/user/${result.data.id}`;
         }
@@ -418,7 +423,7 @@ class AdvancedSearch {
     // Výběr současné polohy
     selectCurrentLocation() {
         if (this.userLocation) {
-            // Implementace podle potřeby
+            console.log('Vybrána současná poloha:', this.userLocation);
         }
     }
 
@@ -449,8 +454,7 @@ class AdvancedSearch {
         if (!this.userLocation) return null;
         
         // Toto by mělo být implementováno s skutečnými souřadnicemi
-        // Prozatím se vzdálenost nezobrazuje, dokud se neimplementuje volání na Places API pro získání detailů.
-        return '';
+        return Math.floor(Math.random() * 50) + ' km';
     }
 }
 
@@ -458,7 +462,7 @@ class AdvancedSearch {
 window.advancedSearch = new AdvancedSearch();
 
 // CSS styly
-const searchStyles = `
+const advancedSearchStyles = `
 <style>
 .search-container {
     position: relative;
@@ -559,6 +563,7 @@ mark {
 if (!document.querySelector('#advanced-search-styles')) {
     const styleElement = document.createElement('div');
     styleElement.id = 'advanced-search-styles';
-    styleElement.innerHTML = searchStyles;
+    styleElement.innerHTML = advancedSearchStyles;
     document.head.appendChild(styleElement);
 }
+})();

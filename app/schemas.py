@@ -1,0 +1,1 @@
+from . import ma, db\nfrom .models import Book\n\nclass BookSchema(ma.SQLAlchemyAutoSchema):\n    class Meta:\n        model = Book\n        load_instance = True\n        sqla_session = db.session\n

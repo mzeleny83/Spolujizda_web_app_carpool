@@ -1,0 +1,16 @@
+{
+  "name": "Spolujízda",
+  "short_name": "Spolujízda",
+  "description": "Aplikace pro sdílení jízd",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiM2NjdlZWEiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xOC45MiA2LjAxQzE4LjcyIDUuNDIgMTguMTYgNSAxNy41IDVIMTVWM0gxM1Y1SDExVjNIOVY1SDYuNUM1Ljg0IDUgNS4yOCA1LjQyIDUuMDggNi4wMUwzIDEyVjIwQzMgMjAuNTUgMy40NSAyMSA0IDIxSDVDNS41NSAyMSA2IDIwLjU1IDYgMjBWMTlIMThWMjBDMTggMjAuNTUgMTguNDUgMjEgMTkgMjFIMjBDMjAuNTUgMjEgMjEgMjAuNTUgMjEgMjBWMTJMMTguOTIgNi4wMVpNNi41IDE2QzUuNjcgMTYgNSAxNS4zMyA1IDE0LjVTNS42NyAxMyA2LjUgMTMgOCAxMy42NyA4IDE0LjUgNy4zMyAxNiA2LjUgMTZaTTE3LjUgMTZDMTYuNjcgMTYgMTYgMTUuMzMgMTYgMTQuNVMxNi42NyAxMyAxNy41IDEzIDE5IDEzLjY3IDE5IDE0LjUgMTguMzMgMTYgMTcuNSAxNlpNNSAxMUwxOSAxMUwxNy4zIDdINi43TDUgMTFaIi8+Cjwvc3ZnPgo8L3N2Zz4K",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
