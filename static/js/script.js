@@ -834,7 +834,7 @@ function startTracking() {
                     alert(`❌ GPS chyba: ${error.message}`);
                 },
                 {
-                    enableHighAccuracy: false,
+                    enableHighAccuracy: true,
                     timeout: 15000,
                     maximumAge: 0
                 }
@@ -880,7 +880,7 @@ function startTracking() {
             alert(errorMsg);
         },
         {
-            enableHighAccuracy: false,
+            enableHighAccuracy: true,
             timeout: 30000,
             maximumAge: 0
         }
@@ -1097,7 +1097,6 @@ function toggleSearchForm() {
         form.style.display = 'block';
         resultsDiv.style.display = 'block';
         updateSliderBackground('searchRange', document.getElementById('searchRange').value, 1, 100);
-        searchRides(); // Call searchRides instead of showAllRides
     }
 }
 
@@ -1804,8 +1803,8 @@ async function searchRides() {
             const position = await new Promise((resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
                     enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
+                    timeout: 20000,
+                    maximumAge: 60000
                 });
             });
             userLat = position.coords.latitude;
@@ -1821,8 +1820,10 @@ async function searchRides() {
 
     try {
         const userId = localStorage.getItem('user_id') || '0';
-        let url = `/api/rides/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&lat=${userLat}&lng=${userLng}&user_id=${userId}&include_own=true&range=${searchRange}`;
+        let url = `/api/rides/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&lat=${userLat}&lng=${userLng}&user_id=${userId}&include_own=true&range=${searchRange}&timestamp=${new Date().getTime()}`;
         if (maxPrice) url += `&max_price=${maxPrice}`;
+
+        console.log("Requesting URL:", url);
 
         const response = await fetch(url);
         if (!response.ok) {
