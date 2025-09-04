@@ -65,6 +65,7 @@
                     <div id="offerForm" class="form-container" style="display: none;">
                         <h2>Nabídnout jízdu</h2>
                         <form id="rideOfferForm">
+                            <button type="submit" title="Uloží vaši nabídku jízdy do databáze a zobrazí ji ostatním uživatelům" style="width: 100%; margin-bottom: 10px;">Nabídnout jízdu</button>
                             <input type="text" id="fromOffer" placeholder="Odkud *" required data-search-type="places">
                             <input type="text" id="toOffer" placeholder="Kam *" required data-search-type="places">
                             <input type="datetime-local" id="departureOffer" required title="Datum a čas odjezdu *">
@@ -75,7 +76,6 @@
                                 <button type="button" onclick="planRouteManual()" style="flex: 1; font-size: 12px;" title="Ruční plánování klikáním na mapu - klikejte na mapu pro přidání bodů trasy">🗺️ Ručně na mapě</button>
                             </div>
                             <div id="routeWaypoints"></div>
-                            <button type="submit" title="Uloží vaši nabídku jízdy do databáze a zobrazí ji ostatním uživatelům">Nabídnout jízdu</button>
                             <button type="button" onclick="clearRoute()" style="background: #dc3545; color: white; width: 100%; margin: 5px 0;" title="Vymaže celou naplánovanou trasu">🗑️ Vymazat trasu</button>
                         </form>
                         
