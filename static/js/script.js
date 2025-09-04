@@ -1820,8 +1820,10 @@ async function searchRides() {
 
     try {
         const userId = localStorage.getItem('user_id') || '0';
-        let url = `/api/rides/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&lat=${userLat}&lng=${userLng}&user_id=${userId}&include_own=true&range=${searchRange}`;
+        let url = `/api/rides/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&lat=${userLat}&lng=${userLng}&user_id=${userId}&include_own=true&range=${searchRange}&timestamp=${new Date().getTime()}`;
         if (maxPrice) url += `&max_price=${maxPrice}`;
+
+        console.log("Requesting URL:", url);
 
         const response = await fetch(url);
         if (!response.ok) {

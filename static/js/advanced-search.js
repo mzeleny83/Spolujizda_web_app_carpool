@@ -184,7 +184,8 @@ class AdvancedSearch {
                 q: query,
                 lat: this.userLocation?.lat || 0,
                 lng: this.userLocation?.lng || 0,
-                limit: 10
+                limit: 10,
+                timestamp: new Date().getTime()
             });
 
             const response = await fetch(`/api/rides/search-text?${params}`);

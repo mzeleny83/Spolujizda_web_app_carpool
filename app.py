@@ -20,7 +20,8 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spolujizda.db'
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'spolujizda.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your_secret_key'  # Add a secret key for session management
 
@@ -134,6 +135,10 @@ if __name__ == '__main__':
                     Ride(user_id=user5.id, from_location='Olomouc', to_location='Zlín', departure_time=tomorrow, available_seats=2, price_per_person=150, route_waypoints=json.dumps([
                         {'lat': 49.5938, 'lng': 17.2509, 'name': 'Olomouc centrum'},
                         {'lat': 49.2238, 'lng': 17.6696, 'name': 'Zlín centrum'}
+                    ])),
+                    Ride(user_id=user1.id, from_location='Brno', to_location='Praha', departure_time=tomorrow, available_seats=2, price_per_person=300, route_waypoints=json.dumps([
+                        {'lat': 49.1951, 'lng': 16.6068, 'name': 'Brno centrum'},
+                        {'lat': 50.0755, 'lng': 14.4378, 'name': 'Praha centrum'}
                     ]))
                 ]
                 db.session.bulk_save_objects(rides)
