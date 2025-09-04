@@ -2,6 +2,27 @@ from flask import Blueprint, request, jsonify
 from spolujizda_core.database import db
 from spolujizda_core.models import Ride, User, Reservation, Message, Rating, RecurringRide
 import json
+from sqlalchemy import and_
+import requests
+
+def geocode_location(location_name):
+    if not location_name:
+        return None, None
+    try:
+        # Using Nominatim OpenStreetMap for geocoding
+        url = f"https://nominatim.openstreetmap.org/search?q={location_name}&format=json&limit=1"
+        headers = {'User-Agent': 'SpolujizdaApp/1.0'} # Good practice to include a User-Agent
+        response = requests.get(url, headers=headers)
+        response.raise_for_status() # Raise an exception for HTTP errors
+        data = response.json()
+        if data and len(data) > 0:
+            lat = float(data[0]['lat'])
+            lon = float(data[0]['lon'])
+            return lat, lon
+        return None, None
+    except requests.exceptions.RequestException as e:
+        print(f"Geocoding error for {location_name}: {e}")
+        return None, None
 
 rides_bp = Blueprint('rides', __name__, url_prefix='/api')
 
@@ -45,21 +66,35 @@ def search_rides():
         user_id = int(request.args.get('user_id', 0))
         max_price = request.args.get('max_price')
         search_range = float(request.args.get('range', 50))
-        include_own = request.args.get('include_own', 'false').lower() == 'true'
         
         query = Ride.query.join(User).filter(User.id == Ride.user_id)
 
+        # --- Text-based filtering (first pass) ---
+        filters = []
+        if from_location:
+            filters.append(Ride.from_location.ilike(f"{from_location}%"))
+        if to_location:
+            filters.append(Ride.to_location.ilike(f"{to_location}%"))
         if max_price and str(max_price).isdigit():
-            query = query.filter(Ride.price_per_person <= int(max_price))
-
-        rides = query.all()
+            filters.append(Ride.price_per_person <= int(max_price))
         
-        reservations = []
-        if user_id > 0:
-            reservations = [r.ride_id for r in Reservation.query.filter_by(passenger_id=user_id, status='confirmed').all()]
+        if filters:
+            query = query.filter(and_(*filters))
+        
+        all_rides = query.all()
+        
+        # --- Location-based filtering (second pass) ---
+        search_lat, search_lng = None, None
+        if from_location:
+            search_lat, search_lng = geocode_location(from_location)
+        if not search_lat and user_lat and user_lng:
+            search_lat, search_lng = user_lat, user_lng
+
+        to_lat, to_lng = None, None
+        if to_location:
+            to_lat, to_lng = geocode_location(to_location)
 
         import math
-        
         def calculate_distance(lat1, lng1, lat2, lng2):
             R = 6371
             dlat = math.radians(lat2 - lat1)
@@ -67,39 +102,57 @@ def search_rides():
             a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2)**2
             c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
             return R * c
-        
+
+        rides = []
+        if search_lat and search_lng:
+            for ride in all_rides:
+                try:
+                    waypoints = json.loads(ride.route_waypoints) if ride.route_waypoints else []
+                except json.JSONDecodeError:
+                    waypoints = []
+
+                if not waypoints:
+                    continue
+
+                first_wp = waypoints[0]
+                if isinstance(first_wp, dict) and 'lat' in first_wp and 'lng' in first_wp:
+                    dist = calculate_distance(search_lat, search_lng, first_wp['lat'], first_wp['lng'])
+                    if dist <= search_range:
+                        # The ride starts near the search location.
+                        # Now, check the destination if provided.
+                        if to_lat and to_lng:
+                            has_to = False
+                            for wp in waypoints:
+                                if isinstance(wp, dict) and 'lat' in wp and 'lng' in wp:
+                                    to_dist = calculate_distance(to_lat, to_lng, wp['lat'], wp['lng'])
+                                    if to_dist <= search_range:
+                                        has_to = True
+                                        break
+                            if has_to:
+                                ride.distance = round(dist, 1)
+                                rides.append(ride)
+                        else:
+                            # No destination specified
+                            ride.distance = round(dist, 1)
+                            rides.append(ride)
+        else:
+            rides = all_rides
+
+        # --- Final processing ---
+        reservations = []
+        if user_id > 0:
+            reservations = [r.ride_id for r in Reservation.query.filter_by(passenger_id=user_id, status='confirmed').all()]
+
         result = []
-        print(f"[Debug] Searching with location: ({user_lat}, {user_lng}) and range: {search_range}km")
         for ride in rides:
-            try:
-                waypoints = json.loads(ride.route_waypoints) if ride.route_waypoints else []
-            except json.JSONDecodeError:
-                print(f"Chyba dekódování JSON pro jízdu ID: {ride.id}. Waypoints budou ignorovány.")
-                waypoints = []
-            
-            distance = search_range + 1
-            
-            if user_lat and user_lng:
-                min_distance = float('inf')
-                if waypoints:
-                    for waypoint in waypoints:
-                        if isinstance(waypoint, dict) and 'lat' in waypoint and 'lng' in waypoint:
-                            wp_distance = calculate_distance(user_lat, user_lng, waypoint['lat'], waypoint['lng'])
-                            min_distance = min(min_distance, wp_distance)
-                
-                if min_distance != float('inf'):
-                    distance = min_distance
-                print(f"[Debug] Ride ID: {ride.id}, Min distance to waypoints: {distance:.2f}km")
-            else:
-                distance = 0
-            
-            if user_lat and user_lng and distance > search_range:
-                print(f"[Debug] Skipping Ride ID: {ride.id}, Name: {ride.from_location} -> {ride.to_location}. Distance {distance:.2f}km > Range {search_range}km")
-                continue
-            
             is_own = (user_id > 0 and ride.user_id == user_id)
             is_reserved = (ride.id in reservations)
             
+            try:
+                waypoints = json.loads(ride.route_waypoints) if ride.route_waypoints else []
+            except json.JSONDecodeError:
+                waypoints = []
+
             result.append({
                 'id': ride.id,
                 'user_id': ride.user_id,
@@ -111,12 +164,16 @@ def search_rides():
                 'available_seats': ride.available_seats,
                 'price_per_person': ride.price_per_person,
                 'route_waypoints': waypoints,
-                'distance': round(distance, 1),
+                'distance': getattr(ride, 'distance', 0),
                 'is_own': is_own,
                 'is_reserved': is_reserved
             })
         
-        result.sort(key=lambda x: x['distance'])
+        if search_lat and search_lng:
+            result.sort(key=lambda x: x['distance'])
+        else:
+            result.sort(key=lambda x: x['departure_time'])
+
         return jsonify(result), 200
         
     except Exception as e:

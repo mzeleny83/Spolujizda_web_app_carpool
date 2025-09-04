@@ -68,15 +68,15 @@ class AdvancedSearchAPI:
             conn = sqlite3.connect(self.database_path)
             c = conn.cursor()
             
-            # Vyhledávání v from_location a to_location
+            # Vyhledávání v from_location
             c.execute('''
                 SELECT r.*, u.name, u.rating 
                 FROM rides r 
                 LEFT JOIN users u ON r.user_id = u.id
-                WHERE r.from_location LIKE ? OR r.to_location LIKE ?
+                WHERE r.from_location LIKE ?
                 ORDER BY r.created_at DESC
                 LIMIT ?
-            ''', (f'%{query}%', f'%{query}%', limit * 2))
+            ''', (f'%{query}%', limit * 2))
             
             rides = c.fetchall()
             conn.close()
@@ -87,11 +87,8 @@ class AdvancedSearchAPI:
                 from_match = self.fuzzy_match(query, ride[2])  # from_location
                 to_match = self.fuzzy_match(query, ride[3])    # to_location
                 
-                if from_match or to_match:
-                    confidence = max(
-                        self.calculate_confidence(query, ride[2]),
-                        self.calculate_confidence(query, ride[3])
-                    )
+                if from_match:
+                    confidence = self.calculate_confidence(query, ride[2])
                     
                     results.append({
                         'id': f'ride_{ride[0]}',

@@ -57,6 +57,10 @@ def add_test_data():
             Ride(user_id=user5.id, from_location='Olomouc', to_location='Zlín', departure_time=tomorrow, available_seats=2, price_per_person=150, route_waypoints=json.dumps([
                 {'lat': 49.5938, 'lng': 17.2509, 'name': 'Olomouc centrum'},
                 {'lat': 49.2238, 'lng': 17.6696, 'name': 'Zlín centrum'}
+            ])),
+            Ride(user_id=user1.id, from_location='Brno', to_location='Praha', departure_time=tomorrow, available_seats=2, price_per_person=300, route_waypoints=json.dumps([
+                {'lat': 49.1951, 'lng': 16.6068, 'name': 'Brno centrum'},
+                {'lat': 50.0755, 'lng': 14.4378, 'name': 'Praha centrum'}
             ]))
         ]
         
@@ -64,7 +68,7 @@ def add_test_data():
         db.session.commit()
 
         print("✅ Testovací data přidána do správné databáze!")
-        print("📍 Přidáno 5 uživatelů a 5 jízd s GPS souřadnicemi")
+        print("📍 Přidáno 6 uživatelů a 6 jízd s GPS souřadnicemi")
         print("🔑 Všichni uživatelé mají heslo: heslo123")
 
 if __name__ == '__main__':
