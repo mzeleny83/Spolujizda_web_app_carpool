@@ -30,6 +30,7 @@ db.init_app(app)
 # Register Blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(rides_bp)
+# Dummy comment to force Heroku rebuild
 
 # Slovník pro ukládání pozic uživatelů
 user_locations = {}
