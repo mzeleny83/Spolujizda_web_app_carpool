@@ -58,36 +58,6 @@
                     </div>
                     <button id="trackingBtn" onclick="toggleTracking()" title="Spustí/zastaví sledování vaší GPS polohy a vycentruje mapu na vaši pozici">📍 Najít mě a sledovat</button>
                     <hr style="margin: 15px 0; border: 1px solid #ddd;">
-                    <button onclick="toggleOfferForm()" title="Vytvoří novou nabídku jízdy s možností plánování trasy, nastavení ceny a počtu míst">🚗 Nabídnout jízdu</button>
-                    <div id="editRideOption" style="display: none; margin-top: 5px;">
-                        <button onclick="editLastRide()" style="background: #ffc107; color: #000;" title="Upravit poslední nabídnutou jízdu">✏️ Upravit poslední jízdu</button>
-                    </div>
-                    <div id="offerForm" class="form-container" style="display: none;">
-                        <h2>Nabídnout jízdu</h2>
-                        <form id="rideOfferForm">
-                            <button type="submit" title="Uloží vaši nabídku jízdy do databáze a zobrazí ji ostatním uživatelům" style="width: 100%; margin-bottom: 10px;">Nabídnout jízdu</button>
-                            <input type="text" id="fromOffer" placeholder="Odkud *" required data-search-type="places">
-                            <input type="text" id="toOffer" placeholder="Kam *" required data-search-type="places">
-                            <input type="datetime-local" id="departureOffer" required title="Datum a čas odjezdu *">
-                            <input type="number" id="seatsOffer" placeholder="Počet míst *" min="1" max="8" required>
-                            <input type="number" id="priceOffer" placeholder="Cena za osobu (Kč) *" min="0" required>
-                            <div style="display: flex; gap: 5px; margin: 10px 0;">
-                                <button type="button" onclick="planRouteFromLocation()" style="flex: 1; font-size: 12px;" title="Začne plánování od vaší aktuální polohy">📍 Od mé polohy</button>
-                                <button type="button" onclick="planRouteManual()" style="flex: 1; font-size: 12px;" title="Ruční plánování klikáním na mapu - klikejte na mapu pro přidání bodů trasy">🗺️ Ručně na mapě</button>
-                            </div>
-                            <div id="routeWaypoints"></div>
-                            <button type="button" onclick="clearRoute()" style="background: #dc3545; color: white; width: 100%; margin: 5px 0;" title="Vymaže celou naplánovanou trasu">🗑️ Vymazat trasu</button>
-                        </form>
-                        
-                        <!-- Možnost úpravy poslední jízdy -->
-                        <div id="editRideOption" style="display: none; margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
-                            <h4 style="margin: 0 0 10px 0; color: #856404;">✏️ Upravit poslední jízdu</h4>
-                            <p style="margin: 0 0 10px 0; font-size: 14px; color: #856404;">Můžete upravit svou poslední nabídnutou jízdu:</p>
-                            <button onclick="loadRideForEdit()" style="background: #ffc107; color: #212529; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;" title="Načte údaje poslední jízdy pro úpravu">✏️ Upravit jízdu</button>
-                            <button onclick="hideEditRideOption()" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 10px;" title="Skryje možnost úpravy jízdy">Skrýt</button>
-                        </div>
-                    </div>
-                    
                     <button onclick="toggleSearchForm()" title="Vyhledá dostupné jízdy podle zadaných kritérií s možností filtrování podle ceny a hodnocení">🔍 Hledat jízdu</button>
                     <div id="results" class="results-container"></div> <!-- Moved here -->
                     <div id="searchForm" class="form-container" style="display: none;">
@@ -116,6 +86,36 @@
                             <button type="submit" title="Vyhledá dostupné jízdy podle zadaných kritérií a zobrazí je seřazené podle vzdálenosti">Hledat s filtry</button>
                         </form>
                         <button onclick="showAllRides()" style="width: 100%; margin-bottom: 15px; background: #28a745; margin-top: 15px;" title="Zobrazí všechny dostupné jízdy">🔍 Zobrazit všechny jízdy</button>
+                    </div>
+
+                    <button onclick="toggleOfferForm()" title="Vytvoří novou nabídku jízdy s možností plánování trasy, nastavení ceny a počtu míst" style="width: 100%;">🚗 Nabídnout jízdu</button>
+                    <div id="editRideOption" style="display: none; margin-top: 5px;">
+                        <button onclick="editLastRide()" style="background: #ffc107; color: #000;" title="Upravit poslední nabídnutou jízdu">✏️ Upravit poslední jízdu</button>
+                    </div>
+                    <div id="offerForm" class="form-container" style="display: none;">
+                        <h2>Nabídnout jízdu</h2>
+                        <form id="rideOfferForm">
+                            <input type="text" id="fromOffer" placeholder="Odkud *" required data-search-type="places">
+                            <input type="text" id="toOffer" placeholder="Kam *" required data-search-type="places">
+                            <input type="datetime-local" id="departureOffer" required title="Datum a čas odjezdu *">
+                            <input type="number" id="seatsOffer" placeholder="Počet míst *" min="1" max="8" required>
+                            <input type="number" id="priceOffer" placeholder="Cena za osobu (Kč) *" min="0" required>
+                            <div style="display: flex; gap: 5px; margin: 10px 0;">
+                                <button type="button" onclick="planRouteFromLocation()" style="flex: 1; font-size: 12px;" title="Začne plánování od vaší aktuální polohy">📍 Od mé polohy</button>
+                                <button type="button" onclick="planRouteManual()" style="flex: 1; font-size: 12px;" title="Ruční plánování klikáním na mapu - klikejte na mapu pro přidání bodů trasy">🗺️ Ručně na mapě</button>
+                            </div>
+                            <div id="routeWaypoints"></div>
+                            <button type="submit" title="Uloží vaši nabídku jízdy do databáze a zobrazí ji ostatním uživatelům">Nabídnout jízdu</button>
+                            <button type="button" onclick="clearRoute()" style="background: #dc3545; color: white; width: 100%; margin: 5px 0;" title="Vymaže celou naplánovanou trasu">🗑️ Vymazat trasu</button>
+                        </form>
+                        
+                        <!-- Možnost úpravy poslední jízdy -->
+                        <div id="editRideOption" style="display: none; margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+                            <h4 style="margin: 0 0 10px 0; color: #856404;">✏️ Upravit poslední jízdu</h4>
+                            <p style="margin: 0 0 10px 0; font-size: 14px; color: #856404;">Můžete upravit svou poslední nabídnutou jízdu:</p>
+                            <button onclick="loadRideForEdit()" style="background: #ffc107; color: #212529; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;" title="Načte údaje poslední jízdy pro úpravu">✏️ Upravit jízdu</button>
+                            <button onclick="hideEditRideOption()" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 10px;" title="Skryje možnost úpravy jízdy">Skrýt</button>
+                        </div>
                     </div>
                     
                     <button onclick="toggleUserSearch()" title="Vyhledá uživatele podle emailu nebo telefonu a zobrazí ho na mapě">👤 Hledat uživatele</button>
