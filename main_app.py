@@ -362,7 +362,7 @@ def register():
             
             # Registruje uživatele
             db.session.execute(db.text('INSERT INTO users (name, phone, email, password_hash, rating, home_city, paypal_email) VALUES (:name, :phone_full, :email, :password_hash, :rating, :home_city, :paypal_email)'),
-                             {'name': name, 'phone_full': phone_full, 'email': email if email else None, 'password_hash': password_hash, 'rating': 5.0, 'home_city': home_city if home_city else None, 'paypal_email': paypal_email if paypal_email else None}))
+                             {'name': name, 'phone_full': phone_full, 'email': email if email else None, 'password_hash': password_hash, 'rating': 5.0, 'home_city': home_city if home_city else None, 'paypal_email': paypal_email if paypal_email else None})
             
             return jsonify({'message': 'Uživatel úspěšně registrován'}), 201
             
