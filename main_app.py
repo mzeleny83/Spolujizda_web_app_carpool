@@ -66,8 +66,8 @@ def rate_limit(max_requests=10, window=60):
     return decorator
 app.debug = True
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
-socketio = SocketIO(app, cors_allowed_origins="*")
+CORS(app, resources={'/*': {'origins': '*', 'methods': ['GET', 'POST', 'OPTIONS'], 'allow_headers': ['Content-Type']}})
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 # Stripe konfigurace
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_51QYOhzP8xJKqGzKvYourSecretKey')  # Nastav v produkci
@@ -282,8 +282,6 @@ def get_user_hash(phone):
             password_hash = db.session.execute(db.text('SELECT password_hash FROM users WHERE phone = :phone'), {'phone': phone}).fetchone()
         
         if password_hash:
-            return jsonify({'password_hash': password_hash[0]}), 200
-        else:
             return jsonify({'error': 'User not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -309,7 +307,7 @@ def register():
         # Input sanitization
         import re
         name = re.sub(r'[<"\'/]', '', name.strip())
-        phone = re.sub(r'[^+0-9\s-]', '', phone.strip())
+        phone = re.sub(r'[^+\d\s-]', '', phone.strip())
         
         if len(name) < 2:
             return jsonify({'error': 'Jméno musí mít alespoň 2 znaky'}), 400
@@ -1798,7 +1796,9 @@ def search_users():
             if payment_count == 0:
                 conn.close()
                 return jsonify({'error': 'Přístup pouze pro zaplacené uživatele'}), 403
-            conn.close()
+        
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
         
         query = request.args.get('q', '').strip()
         min_rating = request.args.get('min_rating', type=float)
@@ -1807,9 +1807,6 @@ def search_users():
         
         if not query and not city_filter:
             return jsonify({'error': 'Zadejte jméno nebo vyberte město'}), 400
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
         
         sql = '''
             SELECT u.id, u.name, u.rating, u.total_rides, u.verified, u.created_at, u.home_city
