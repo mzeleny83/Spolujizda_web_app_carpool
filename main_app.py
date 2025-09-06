@@ -568,7 +568,7 @@ def search_rides():
                 'driver_rating': ride[10] or 5.0,
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4].isoformat(),
+                'departure_time': ride[4],
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'route_waypoints': waypoints,
