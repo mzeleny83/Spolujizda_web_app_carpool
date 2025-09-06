@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, Response
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import sqlite3
 import hashlib
 import datetime
@@ -14,6 +16,13 @@ import stripe
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-in-production'
+
+# Configure SQLAlchemy
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///spolujizda.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Suppress a warning
+
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # ROBOTS.TXT - NEJVYŠŠÍ PRIORITA
 @app.route('/robots.txt')
@@ -141,7 +150,7 @@ def get_driver_rides(user_id):
                 'id': ride[0],
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4],
+                'departure_time': ride[4].isoformat(),
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'reservations_count': ride[9] or 0
@@ -238,7 +247,7 @@ def reservations_test(user_id):
                 'created_at': res[3],
                 'from_location': res[4],
                 'to_location': res[5],
-                'departure_time': res[6],
+                'departure_time': res[6].isoformat(),
                 'price_per_person': res[7],
                 'driver_name': res[8],
                 'driver_phone': res[9]
@@ -322,7 +331,7 @@ def init_db():
                   user_id INTEGER,
                   from_location TEXT NOT NULL,
                   to_location TEXT NOT NULL,
-                  departure_time TEXT NOT NULL,
+                  departure_time DATETIME NOT NULL,
                   available_seats INTEGER,
                   price_per_person INTEGER,
                   route_waypoints TEXT,
@@ -692,7 +701,7 @@ def offer_ride():
             return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
         from_location = data.get('from_location')
         to_location = data.get('to_location')
-        departure_time = data.get('departure_time')
+        departure_time = datetime.datetime.strptime(data.get('departure_time'), "%Y-%m-%dT%H:%M")
         available_seats = data.get('available_seats')
         price_per_person = data.get('price_per_person')
         route_waypoints = json.dumps(data.get('route_waypoints', []))
@@ -846,7 +855,7 @@ def search_rides():
                 'driver_rating': ride[10] or 5.0,
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4],
+                'departure_time': ride[4].isoformat(),
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'route_waypoints': waypoints,
@@ -922,7 +931,7 @@ def get_all_rides():
                 'driver_rating': (ride[10] if len(ride) > 10 else None) or 5.0,
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4],
+                'departure_time': ride[4].isoformat(),
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'route_waypoints': json.loads(ride[7]) if ride[7] else [],
@@ -1177,7 +1186,7 @@ def get_user_reservations_simple(user_id):
                 'created_at': res[3],
                 'from_location': res[4],
                 'to_location': res[5],
-                'departure_time': res[6],
+                'departure_time': res[6].isoformat(),
                 'price_per_person': res[7],
                 'driver_name': res[8],
                 'driver_phone': driver_phone,
@@ -1217,7 +1226,7 @@ def get_reservation_details(reservation_id):
             'status': reservation[4],
             'from_location': reservation[5],
             'to_location': reservation[6],
-            'departure_time': reservation[7],
+            'departure_time': reservation[7].isoformat(),
             'price_per_person': reservation[8]
         }), 200
         
@@ -1252,7 +1261,7 @@ def get_driver_reservations(driver_id):
                 'created_at': res[3],
                 'from_location': res[4],
                 'to_location': res[5],
-                'departure_time': res[6],
+                'departure_time': res[6].isoformat(),
                 'ride_id': res[7],
                 'passenger_name': res[8],
                 'passenger_id': res[9]
@@ -1493,7 +1502,7 @@ def create_recurring_ride():
             return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
         from_location = data.get('from_location')
         to_location = data.get('to_location')
-        departure_time = data.get('departure_time')
+        departure_time = datetime.datetime.strptime(data.get('departure_time'), "%Y-%m-%dT%H:%M")
         days_of_week = ','.join(data.get('days_of_week', []))
         available_seats = data.get('available_seats')
         price_per_person = data.get('price_per_person')
@@ -1963,7 +1972,7 @@ def get_user_profile(user_id):
             'recent_rides': [{
                 'from': ride[0],
                 'to': ride[1],
-                'date': ride[2],
+                'date': ride[2].isoformat(),
                 'status': ride[3],
                 'role': ride[4]
             } for ride in history]
@@ -2183,15 +2192,15 @@ def complete_ride(ride_id):
         # Přidej do historie pro řidiče
         c.execute('''
             INSERT INTO ride_history (ride_id, driver_id, from_location, to_location, departure_time, price_per_person)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (ride[0], ride[1], ride[2], ride[3], ride[4], ride[5]))
+            VALUES (?, ?, ?, ?, ?, ?) 
+        ''', (ride[0], ride[1], ride[2], ride[3], ride[4].isoformat(), ride[5]))
         
         # Přidej do historie pro každého pasažéra
         for passenger in passengers:
             c.execute('''
                 INSERT INTO ride_history (ride_id, driver_id, passenger_id, from_location, to_location, departure_time, price_per_person)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (ride[0], ride[1], passenger[0], ride[2], ride[3], ride[4], ride[5]))
+                VALUES (?, ?, ?, ?, ?, ?, ?) 
+            ''', (ride[0], ride[1], passenger[0], ride[2], ride[3], ride[4].isoformat(), ride[5]))
         
         # Aktualizuj počet jízd uživatelů
         c.execute('UPDATE users SET total_rides = total_rides + 1 WHERE id = ?', (ride[1],))
