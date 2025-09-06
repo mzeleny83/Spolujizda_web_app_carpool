@@ -18,7 +18,10 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-in-production'
 
 # Configure SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///spolujizda.db'
+db_url = os.environ.get('DATABASE_URL')
+if db_url and db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql+psycopg2://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'sqlite:///spolujizda.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Suppress a warning
 
 db = SQLAlchemy(app)
@@ -130,19 +133,15 @@ def api_status():
 @app.route('/api/rides/driver/<int:user_id>')
 def get_driver_rides(user_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT r.*, COUNT(res.id) as reservations_count
-            FROM rides r
-            LEFT JOIN reservations res ON r.id = res.ride_id AND res.status != 'cancelled'
-            WHERE r.user_id = ?
-            GROUP BY r.id
-            ORDER BY r.departure_time ASC
-        ''', (user_id,))
-        
-        rides = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            rides = db.session.execute(db.text('''
+                SELECT r.*, COUNT(res.id) as reservations_count
+                FROM rides r
+                LEFT JOIN reservations res ON r.id = res.ride_id AND res.status != 'cancelled'
+                WHERE r.user_id = :user_id
+                GROUP BY r.id
+                ORDER BY r.departure_time ASC
+            '''), {'user_id': user_id}).fetchall()
         
         result = []
         for ride in rides:
@@ -164,17 +163,13 @@ def get_driver_rides(user_id):
 @app.route('/api/rides/<int:ride_id>/reservations')
 def get_ride_reservations(ride_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT res.seats_reserved, u.name, u.phone
-            FROM reservations res
-            JOIN users u ON res.passenger_id = u.id
-            WHERE res.ride_id = ? AND res.status != 'cancelled'
-        ''', (ride_id,))
-        
-        reservations = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            reservations = db.session.execute(db.text('''
+                SELECT res.seats_reserved, u.name, u.phone
+                FROM reservations res
+                JOIN users u ON res.passenger_id = u.id
+                WHERE res.ride_id = :ride_id AND res.status != 'cancelled'
+            '''), {'ride_id': ride_id}).fetchall()
         
         result = []
         for res in reservations:
@@ -192,18 +187,14 @@ def get_ride_reservations(ride_id):
 @app.route('/api/rides/<int:ride_id>/messages')
 def get_ride_messages(ride_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT m.message, m.created_at, m.sender_id, u.name as sender_name
-            FROM messages m
-            JOIN users u ON m.sender_id = u.id
-            WHERE m.ride_id = ?
-            ORDER BY m.created_at ASC
-        ''', (ride_id,))
-        
-        messages = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            messages = db.session.execute(db.text('''
+                SELECT m.message, m.created_at, m.sender_id, u.name as sender_name
+                FROM messages m
+                JOIN users u ON m.sender_id = u.id
+                WHERE m.ride_id = :ride_id
+                ORDER BY m.created_at ASC
+            '''), {'ride_id': ride_id}).fetchall()
         
         result = []
         for msg in messages:
@@ -222,21 +213,17 @@ def get_ride_messages(ride_id):
 @app.route('/api/reservations/user/<int:user_id>')
 def reservations_test(user_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT res.id, res.seats_reserved, res.status, res.created_at,
-                   r.from_location, r.to_location, r.departure_time, r.price_per_person,
-                   u.name as driver_name, u.phone as driver_phone
-            FROM reservations res
-            JOIN rides r ON res.ride_id = r.id
-            JOIN users u ON r.user_id = u.id
-            WHERE res.passenger_id = ? AND res.status != 'cancelled'
-            ORDER BY r.departure_time ASC
-        ''', (user_id,))
-        
-        reservations = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            reservations = db.session.execute(db.text('''
+                SELECT res.id, res.seats_reserved, res.status, res.created_at,
+                       r.from_location, r.to_location, r.departure_time, r.price_per_person,
+                       u.name as driver_name, u.phone as driver_phone
+                FROM reservations res
+                JOIN rides r ON res.ride_id = r.id
+                JOIN users u ON r.user_id = u.id
+                WHERE res.passenger_id = :user_id AND res.status != 'cancelled'
+                ORDER BY r.departure_time ASC
+            '''), {'user_id': user_id}).fetchall()
         
         result = []
         for res in reservations:
@@ -261,11 +248,8 @@ def reservations_test(user_id):
 @app.route('/api/users/list', methods=['GET'])
 def list_users():
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('SELECT id, name, phone, password_hash, created_at FROM users ORDER BY created_at DESC')
-        users = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            users = db.session.execute(db.text('SELECT id, name, phone, password_hash, created_at FROM users ORDER BY created_at DESC')).fetchall()
         
         result = []
         for user in users:
@@ -294,11 +278,9 @@ def test_password_hash(password):
 @app.route('/api/users/get_hash/<phone>', methods=['GET'])
 def get_user_hash(phone):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('SELECT password_hash FROM users WHERE phone = ?', (phone,))
-        password_hash = c.fetchone()
-        conn.close()
+        with db.session.begin():
+            password_hash = db.session.execute(db.text('SELECT password_hash FROM users WHERE phone = :phone'), {'phone': phone}).fetchone()
+        
         if password_hash:
             return jsonify({'password_hash': password_hash[0]}), 200
         else:
@@ -306,258 +288,11 @@ def get_user_hash(phone):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-DATABASE = 'spolujizda.db'
+# Removed SQLite-specific database initialization. Database migrations are now handled by Alembic and PostgreSQL.
+# DATABASE = 'spolujizda.db'
+# def init_db():
+#    pass
 
-def init_db():
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Tabulka uživatelů
-        c.execute('''CREATE TABLE IF NOT EXISTS users
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  name TEXT NOT NULL,
-                  phone TEXT UNIQUE NOT NULL,
-                  email TEXT UNIQUE,
-                  password_hash TEXT NOT NULL,
-                  rating REAL DEFAULT 5.0,
-                  total_rides INTEGER DEFAULT 0,
-                  verified BOOLEAN DEFAULT 0,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-        
-        # Tabulka jízd
-        c.execute('''CREATE TABLE IF NOT EXISTS rides
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  user_id INTEGER,
-                  from_location TEXT NOT NULL,
-                  to_location TEXT NOT NULL,
-                  departure_time DATETIME NOT NULL,
-                  available_seats INTEGER,
-                  price_per_person INTEGER,
-                  route_waypoints TEXT,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (user_id) REFERENCES users (id))''')
-        
-        # Tabulka rezervací
-        c.execute('''CREATE TABLE IF NOT EXISTS reservations
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  ride_id INTEGER,
-                  passenger_id INTEGER,
-                  seats_reserved INTEGER DEFAULT 1,
-                  status TEXT DEFAULT 'pending',
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (ride_id) REFERENCES rides (id),
-                  FOREIGN KEY (passenger_id) REFERENCES users (id))''')
-        
-        # Tabulka zpráv
-        c.execute('''CREATE TABLE IF NOT EXISTS messages
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  ride_id INTEGER,
-                  sender_id INTEGER,
-                  message TEXT NOT NULL,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (ride_id) REFERENCES rides (id),
-                  FOREIGN KEY (sender_id) REFERENCES users (id))''')
-        
-        # Tabulka hodnocení
-        c.execute('''CREATE TABLE IF NOT EXISTS ratings
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  ride_id INTEGER,
-                  rater_id INTEGER,
-                  rated_id INTEGER,
-                  rating INTEGER CHECK(rating >= 1 AND rating <= 5),
-                  comment TEXT,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (ride_id) REFERENCES rides (id),
-                  FOREIGN KEY (rater_id) REFERENCES users (id),
-                  FOREIGN KEY (rated_id) REFERENCES users (id))''')
-        
-        # Tabulka blokovaných uživatelů
-        c.execute('''CREATE TABLE IF NOT EXISTS blocked_users
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  blocker_id INTEGER,
-                  blocked_id INTEGER,
-                  reason TEXT,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (blocker_id) REFERENCES users (id),
-                  FOREIGN KEY (blocked_id) REFERENCES users (id))''')
-        
-        # Tabulka pravidelných jízd
-        c.execute('''CREATE TABLE IF NOT EXISTS recurring_rides
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  user_id INTEGER,
-                  from_location TEXT NOT NULL,
-                  to_location TEXT NOT NULL,
-                  departure_time TEXT NOT NULL,
-                  days_of_week TEXT NOT NULL,
-                  available_seats INTEGER,
-                  price_per_person INTEGER,
-                  active BOOLEAN DEFAULT 1,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (user_id) REFERENCES users (id))''')
-        
-        # Tabulka statistik uživatelů
-        c.execute('''CREATE TABLE IF NOT EXISTS user_stats
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  user_id INTEGER UNIQUE,
-                  total_rides INTEGER DEFAULT 0,
-                  total_distance REAL DEFAULT 0,
-                  co2_saved REAL DEFAULT 0,
-                  money_saved REAL DEFAULT 0,
-                  FOREIGN KEY (user_id) REFERENCES users (id))''')
-        
-        # Tabulka SMS kódů
-        c.execute('''CREATE TABLE IF NOT EXISTS sms_codes
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  phone TEXT NOT NULL,
-                  code TEXT NOT NULL,
-                  expires_at TIMESTAMP NOT NULL,
-                  used BOOLEAN DEFAULT 0,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-        
-        # Tabulka historie jízd
-        c.execute('''CREATE TABLE IF NOT EXISTS ride_history
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  ride_id INTEGER,
-                  driver_id INTEGER,
-                  passenger_id INTEGER,
-                  from_location TEXT NOT NULL,
-                  to_location TEXT NOT NULL,
-                  departure_time TEXT NOT NULL,
-                  price_per_person INTEGER,
-                  status TEXT DEFAULT 'completed',
-                  completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (ride_id) REFERENCES rides (id),
-                  FOREIGN KEY (driver_id) REFERENCES users (id),
-                  FOREIGN KEY (passenger_id) REFERENCES users (id))''')
-        
-        # Tabulka oblíbených uživatelů
-        c.execute('''CREATE TABLE IF NOT EXISTS favorite_users
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  user_id INTEGER,
-                  favorite_user_id INTEGER,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (user_id) REFERENCES users (id),
-                  FOREIGN KEY (favorite_user_id) REFERENCES users (id))''')
-        
-        # Tabulka bankovních účtů řidičů
-        c.execute('''CREATE TABLE IF NOT EXISTS driver_accounts
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  user_id INTEGER UNIQUE,
-                  bank_account TEXT,
-                  iban TEXT,
-                  account_holder TEXT,
-                  verified BOOLEAN DEFAULT 0,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (user_id) REFERENCES users (id))''')
-        
-        # Tabulka plateb
-        c.execute('''CREATE TABLE IF NOT EXISTS payments
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  ride_id INTEGER,
-                  passenger_id INTEGER,
-                  driver_id INTEGER,
-                  amount INTEGER,
-                  commission INTEGER,
-                  driver_amount INTEGER,
-                  stripe_payment_id TEXT,
-                  status TEXT DEFAULT 'pending',
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  FOREIGN KEY (ride_id) REFERENCES rides (id),
-                  FOREIGN KEY (passenger_id) REFERENCES users (id),
-                  FOREIGN KEY (driver_id) REFERENCES users (id))''')
-        
-        # Rozšíření tabulky users o nové sloupce
-        try:
-            c.execute('ALTER TABLE users ADD COLUMN verified BOOLEAN DEFAULT 0')
-        except sqlite3.OperationalError:
-            pass
-        
-        try:
-            c.execute('ALTER TABLE users ADD COLUMN last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
-        except sqlite3.OperationalError:
-            pass
-        
-        try:
-            c.execute('ALTER TABLE users ADD COLUMN bio TEXT')
-        except sqlite3.OperationalError:
-            pass
-        
-        try:
-            c.execute('ALTER TABLE users ADD COLUMN home_city TEXT')
-        except sqlite3.OperationalError:
-            pass
-        
-        try:
-            c.execute('ALTER TABLE users ADD COLUMN paypal_email TEXT')
-        except sqlite3.OperationalError:
-            pass
-        
-        # Tabulka měst
-        c.execute('''CREATE TABLE IF NOT EXISTS cities
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  name TEXT UNIQUE NOT NULL,
-                  region TEXT,
-                  population INTEGER,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-        
-        # Naplnit tabulku měst českými městy
-        cities_data = [
-            ('Praha', 'Hlavní město Praha', 1300000),
-            ('Brno', 'Jihomoravský kraj', 380000),
-            ('Ostrava', 'Moravskoslezský kraj', 290000),
-            ('Plzeň', 'Plzeňský kraj', 170000),
-            ('Liberec', 'Liberecký kraj', 100000),
-            ('Olomouc', 'Olomoucký kraj', 100000),
-            ('Zlín', 'Zlínský kraj', 75000),
-            ('České Budějovice', 'Jihojihomoravský kraj', 95000),
-            ('Hradec Králové', 'Královéhradecký kraj', 95000),
-            ('Pardubice', 'Pardubický kraj', 90000),
-            ('Zlín', 'Zlínský kraj', 75000),
-            ('Havlíčkův Brod', 'Vysočina', 23000),
-            ('Kladno', 'Středočeský kraj', 70000),
-            ('Most', 'Ústecký kraj', 65000),
-            ('Opava', 'Moravskoslezský kraj', 57000),
-            ('Frýdek-Místek', 'Moravskoslezský kraj', 56000),
-            ('Karásek', 'Moravskoslezský kraj', 55000),
-            ('Jihlava', 'Vysočina', 50000),
-            ('Teplice', 'Ústecký kraj', 50000),
-            ('Česká Lípa', 'Ústecký kraj', 37000),
-            ('Prostějov', 'Olomoucký kraj', 44000),
-            ('Přerov', 'Olomoucký kraj', 42000),
-            ('Jablonec nad Nisou', 'Liberecký kraj', 45000),
-            ('Chomutov', 'Ústecký kraj', 48000),
-            ('Děčín', 'Ústecký kraj', 48000),
-            ('Kolín', 'Středočeský kraj', 31000),
-            ('Trhové Sviny', 'Jihojihomoravský kraj', 5000),
-            ('Rájec-Jestřebí', 'Jihomoravský kraj', 3000)
-        ]
-        
-        for city_data in cities_data:
-            try:
-                c.execute('INSERT OR IGNORE INTO cities (name, region, population) VALUES (?, ?, ?)', city_data)
-            except sqlite3.Error:
-                pass  # Město již existuje
-        
-        # Přidá chybějící sloupce do existujících tabulek
-        try:
-            c.execute('ALTER TABLE users ADD COLUMN rating REAL DEFAULT 5.0')
-        except sqlite3.OperationalError:
-            pass  # Sloupec už existuje
-        
-        try:
-            c.execute('ALTER TABLE users ADD COLUMN email TEXT UNIQUE')
-        except sqlite3.OperationalError:
-            pass  # Sloupec už existuje
-        
-        conn.commit()
-        conn.close()
-        print("Všechny tabulky vytvořeny")
-    except Exception as e:
-        print(f"Chyba při vytváření tabulek: {e}")
-        if 'conn' in locals():
-            conn.close()
-        raise
 
 @app.route('/api/users/register', methods=['POST'])
 @rate_limit(max_requests=5, window=300)  # Max 5 registrací za 5 minut
@@ -573,7 +308,7 @@ def register():
         
         # Input sanitization
         import re
-        name = re.sub(r'[<>"\'\/]', '', name.strip())
+        name = re.sub(r'[<"\'/]', '', name.strip())
         phone = re.sub(r'[^+0-9\s-]', '', phone.strip())
         
         if len(name) < 2:
@@ -613,36 +348,27 @@ def register():
         
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Zkontroluje existující telefon
-        c.execute('SELECT id FROM users WHERE phone = ?', (phone_full,))
-        if c.fetchone():
-            conn.close()
-            return jsonify({'error': 'Toto telefonní číslo je již registrováno'}), 409
-        
-        # Zkontroluje existující email pokud je zadán
-        if email:
-            c.execute('SELECT id FROM users WHERE email = ?', (email,))
-            if c.fetchone():
-                conn.close()
-                return jsonify({'error': 'Tento email je již registrován'}), 409
-        
-        try:
+        with db.session.begin():
+            # Zkontroluje existující telefon
+            existing_phone = db.session.execute(db.text('SELECT id FROM users WHERE phone = :phone'), {'phone': phone_full}).fetchone()
+            if existing_phone:
+                return jsonify({'error': 'Toto telefonní číslo je již registrováno'}), 409
+            
+            # Zkontroluje existující email pokud je zadán
+            if email:
+                existing_email = db.session.execute(db.text('SELECT id FROM users WHERE email = :email'), {'email': email}).fetchone()
+                if existing_email:
+                    return jsonify({'error': 'Tento email je již registrován'}), 409
+            
             # Registruje uživatele
-            c.execute('INSERT INTO users (name, phone, email, password_hash, rating, home_city, paypal_email) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                     (name, phone_full, email if email else None, password_hash, 5.0, home_city if home_city else None, paypal_email if paypal_email else None))
-            conn.commit()
-            conn.close()
+            db.session.execute(db.text('INSERT INTO users (name, phone, email, password_hash, rating, home_city, paypal_email) VALUES (:name, :phone_full, :email, :password_hash, :rating, :home_city, :paypal_email)'),
+                             {'name': name, 'phone_full': phone_full, 'email': email if email else None, 'password_hash': password_hash, 'rating': 5.0, 'home_city': home_city if home_city else None, 'paypal_email': paypal_email if paypal_email else None}))
             
             return jsonify({'message': 'Uživatel úspěšně registrován'}), 201
-        except sqlite3.Error as e:
-            conn.close()
-            return jsonify({'error': f'Chyba databáze: {str(e)}'}), 500
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/users/login', methods=['POST'])
 @rate_limit(max_requests=10, window=300)  # Max 10 přihlášení za 5 minut
@@ -657,26 +383,21 @@ def login():
         
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Zkusí přihlášení pomocí telefonu nebo emailu
-        if '@' in login_field:
-            # Přihlášení emailem
-            c.execute('SELECT id, name, rating FROM users WHERE email = ? AND password_hash = ?',
-                     (login_field, password_hash))
-        else:
-            # Přihlášení telefonem - normalizuj formát
-            phone_clean = ''.join(filter(str.isdigit, login_field))
-            if phone_clean.startswith('420'):
-                phone_clean = phone_clean[3:]
-            phone_full = f'+420{phone_clean}'
-            
-            c.execute('SELECT id, name, rating FROM users WHERE phone = ? AND password_hash = ?',
-                     (phone_full, password_hash))
-        
-        user = c.fetchone()
-        conn.close()
+        with db.session.begin():
+            # Zkusí přihlášení pomocí telefonu nebo emailu
+            if '@' in login_field:
+                # Přihlášení emailem
+                user = db.session.execute(db.text('SELECT id, name, rating FROM users WHERE email = :login_field AND password_hash = :password_hash'),
+                                         {'login_field': login_field, 'password_hash': password_hash}).fetchone()
+            else:
+                # Přihlášení telefonem - normalizuj formát
+                phone_clean = ''.join(filter(str.isdigit, login_field))
+                if phone_clean.startswith('420'):
+                    phone_clean = phone_clean[3:]
+                phone_full = f'+420{phone_clean}'
+                
+                user = db.session.execute(db.text('SELECT id, name, rating FROM users WHERE phone = :phone_full AND password_hash = :password_hash'),
+                                         {'phone_full': phone_full, 'password_hash': password_hash}).fetchone()
         
         if user:
             return jsonify({
@@ -706,16 +427,13 @@ def offer_ride():
         price_per_person = data.get('price_per_person')
         route_waypoints = json.dumps(data.get('route_waypoints', []))
         
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''INSERT INTO rides 
-                     (user_id, from_location, to_location, departure_time, available_seats, price_per_person, route_waypoints)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                 (user_id, from_location, to_location, departure_time, available_seats, price_per_person, route_waypoints))
-        conn.commit()
-        conn.close()
+        with db.session.begin():
+            result = db.session.execute(db.text('''INSERT INTO rides 
+                                                 (user_id, from_location, to_location, departure_time, available_seats, price_per_person, route_waypoints)
+                                                 VALUES (:user_id, :from_location, :to_location, :departure_time, :available_seats, :price_per_person, :route_waypoints)'''),
+                                     {'user_id': user_id, 'from_location': from_location, 'to_location': to_location, 'departure_time': departure_time, 'available_seats': available_seats, 'price_per_person': price_per_person, 'route_waypoints': route_waypoints})
+            ride_id = result.lastrowid
         
-        ride_id = c.lastrowid
         return jsonify({
             'message': 'Jízda úspěšně nabídnuta',
             'ride_id': ride_id
@@ -788,11 +506,8 @@ def search_rides():
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
 
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute(query, params)
-        rides = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            rides = db.session.execute(db.text(query), params).fetchall()
 
         # Města a jejich souřadnice pro výpočet vzdálenosti
         cities = {
@@ -883,18 +598,13 @@ def search_user():
         if not query:
             return jsonify({'error': 'Zadejte email nebo telefon'}), 400
         
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Hledání pouze podle emailu (telefon skryt)
-        if '@' in query:
-            c.execute('SELECT id, name, phone, email, rating FROM users WHERE email LIKE ?', (f'%{query}%',))
-        else:
-            # Hledání podle jména
-            c.execute('SELECT id, name, phone, email, rating FROM users WHERE name LIKE ?', (f'%{query}%',))
-        
-        user = c.fetchone()
-        conn.close()
+        with db.session.begin():
+            # Hledání pouze podle emailu (telefon skryt)
+            if '@' in query:
+                user = db.session.execute(db.text('SELECT id, name, phone, email, rating FROM users WHERE email LIKE :query'), {'query': f'%{query}%'}).fetchone()
+            else:
+                # Hledání podle jména
+                user = db.session.execute(db.text('SELECT id, name, phone, email, rating FROM users WHERE name LIKE :query'), {'query': f'%{query}%'}).fetchone()
         
         if not user:
             return jsonify({'error': 'Uživatel nenalezen'}), 404
@@ -902,7 +612,7 @@ def search_user():
         return jsonify({
             'id': user[0],
             'name': user[1],
-            'phone': '***-***-***',  # Skryj telefon
+            'phone': user[2],
             'email': user[3] or '',
             'rating': user[4] or 5.0
         }), 200
@@ -914,13 +624,10 @@ def search_user():
 def get_all_rides():
     import traceback
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''SELECT r.*, u.name, u.rating FROM rides r 
-                     LEFT JOIN users u ON r.user_id = u.id
-                     ORDER BY r.created_at DESC''')
-        rides = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            rides = db.session.execute(db.text('''SELECT r.*, u.name, u.rating FROM rides r 
+                                                 LEFT JOIN users u ON r.user_id = u.id
+                                                 ORDER BY r.created_at DESC''')).fetchall()
         
         result = []
         for ride in rides:
