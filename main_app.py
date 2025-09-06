@@ -536,6 +536,13 @@ def search_rides():
         for ride in rides:
             waypoints = json.loads(ride[7]) if ride[7] else []
             
+            # Get coordinates for from_location and to_location
+            from_city_name = ride[2].split(',')[0].strip()
+            to_city_name = ride[3].split(',')[0].strip()
+            
+            from_coords = cities.get(from_city_name)
+            to_coords = cities.get(to_city_name)
+            
             # Výpočet vzdálenosti od uživatele
             distance = 999  # Nastav na vysoké číslo jako výchozí
             if user_lat and user_lng and search_range:
@@ -574,7 +581,9 @@ def search_rides():
                 'route_waypoints': waypoints,
                 'distance': round(distance, 1),
                 'is_own': is_own,
-                'is_reserved': is_reserved
+                'is_reserved': is_reserved,
+                'from_coords': from_coords if from_coords else None,
+                'to_coords': to_coords if to_coords else None
             })
         
         # Seřadí podle vzdálenosti
