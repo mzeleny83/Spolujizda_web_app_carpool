@@ -96,11 +96,11 @@
             
             <div id="searchResults"></div>
 
-            <!-- Mapa pro vyhledávání -->
+            <!-- MAPA PRO VYHLEDÁVÁNÍ -->
             <div id="searchMap" style="width: 100%; height: 300px; border: 2px solid #ddd; border-radius: 8px; margin: 15px 0;"></div>
         </div>
 
-        <!-- Přihlášení -->
+        <!-- PŘIHLÁŠENÍ -->
         <div id="login" class="section">
             <h2>Přihlášení</h2>
             <div class="form-group">
@@ -114,7 +114,7 @@
             <button class="btn" onclick="login()">Přihlásit se</button>
         </div>
 
-        <!-- Registrace -->
+        <!-- REGISTRACE -->
         <div id="register" class="section">
             <h2>Registrace</h2>
             <div class="form-group">
@@ -155,7 +155,7 @@
             <button type="button" class="btn" onclick="register()">Registrovat se</button>
         </div>
 
-        <!-- Mapa jízd -->
+        <!-- MAPA JÍZD -->
         <div id="map" class="section">
             <h2>🗺️ Mapa jízd</h2>
             <div id="realMap" style="width: 100%; height: 500px; border: 2px solid #ddd; border-radius: 8px;"></div>
@@ -177,7 +177,7 @@
             <button class="btn" onclick="showAllUserLocations()" style="margin-top: 15px; margin-left: 10px;">👥 Zobrazit uživatele</button>
         </div>
 
-        <!-- Rezervované jízdy -->
+        <!-- REZERVAVOVANÉ JÍZDY -->
         <div id="reservations" class="section">
             <h2>🎫 Moje rezervace</h2>
             <div id="reservationsList">
@@ -186,7 +186,7 @@
             <button class="btn" onclick="loadReservations()" style="margin-top: 15px;">🔄 Aktualizovat</button>
         </div>
 
-        <!-- Moje jízdy (pro řidiče) -->
+        <!-- MOJE JÍZDY (PRO ŘIDIČE) -->
         <div id="my-rides" class="section">
             <h2>🚗 Moje jízdy</h2>
             <div id="myRidesList">
@@ -195,7 +195,7 @@
             <button class="btn" onclick="loadMyRides()" style="margin-top: 15px;">🔄 Aktualizovat</button>
         </div>
 
-        <!-- Chat -->
+        <!-- CHAT -->
         <div id="chat" class="section">
             <h2 id="chatTitle">💬 Chat</h2>
             <div id="chatMessages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin: 15px 0; background: #f9f9f9;">
@@ -209,7 +209,7 @@
             </div>
         </div>
 
-        <!-- Hodnocení -->
+        <!-- HODNOCENÍ -->
         <div id="rating" class="section">
             <h2 id="ratingTitle">⭐ Hodnocení</h2>
             <div id="ratingContent" style="text-align: center; padding: 30px;">
@@ -231,11 +231,11 @@
             </div>
         </div>
 
-        <!-- Seznam uživatelů -->
+        <!-- SEZNAM UŽIVATELŮ -->
         <div id="users" class="section">
             <h2>👥 Uživatelé</h2>
             
-            <!-- Vyhledávání uživatelů -->
+            <!-- VYHLEDÁVÁNÍ UŽIVATELŮ -->
             <div style="margin-bottom: 20px;">
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <input type="text" id="userSearchQuery" placeholder="Hledat uživatele podle jména..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
@@ -262,13 +262,13 @@
                 </div>
             </div>
             
-            <!-- Výsledky -->
+            <!-- VÝSLEDKY -->
             <div id="usersResults">
                 <p style="text-align: center; color: #666;">Použijte vyhledávání nebo klikněte na "Top uživatelé"</p>
             </div>
         </div>
         
-        <!-- Profil uživatele -->
+        <!-- PROFIL UŽIVATELE -->
         <div id="user-profile" class="section">
             <h2 id="userProfileTitle">👤 Profil uživatele</h2>
             <button class="btn" onclick="showSection('users')" style="margin-bottom: 20px;">← Zpět na seznam</button>
@@ -278,7 +278,7 @@
             </div>
         </div>
 
-        <!-- Nabídka jízdy -->
+        <!-- NABÍDKA JÍZDY -->
         <div id="offer" class="section">
             <h2>Nabídnout jízdu</h2>
             <div class="form-group">
@@ -316,7 +316,7 @@
             </div>
             <button class="btn btn-success" onclick="offerRide()">🚗 Nabídnout jízdu</button>
         </div>
-        <!-- Footer s právními informacemi -->
+        <!-- FOOTER S PRÁVNÍMI INFORMACEMI -->
         <footer style="margin-top: 50px; padding: 20px 0; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
             <div style="margin-bottom: 10px;">
                 <a href="/terms" target="_blank" style="color: #007bff; text-decoration: none; margin: 0 10px;">Obchodní podmínky</a> |
@@ -331,7 +331,7 @@
 
     
 
-    <!-- Plovoucí chat okno -->
+    <!-- PLOVOUCÍ CHAT OKNO -->
     <div id="floatingChat" style="display: none; position: fixed; bottom: 20px; right: 20px; width: 350px; height: 400px; background: white; border: 2px solid #007bff; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000;">
         <div style="background: #007bff; color: white; padding: 10px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
             <span id="floatingChatTitle">💬 Chat</span>
@@ -594,12 +594,8 @@
                 
                 if (rides.length === 0) {
                     results.innerHTML = '<div style="text-align:center;color:#666;margin:30px 0;">❌ Žádné jízdy nenalezeny</div>';
-                    document.getElementById('resultsArrow').style.display = 'none';
                     return;
                 }
-                
-                // Zobraz šipku upozorňující na výsledky
-                document.getElementById('resultsArrow').style.display = 'block';
                 
                 results.innerHTML = rides.map(ride => `
                     <div class="ride">
@@ -1451,7 +1447,7 @@
             }
         }
         
-        // Kontrola uloženého přihlášení
+        // KONTROLA ULOŽENÉHO PŘIHLÁŠENÍ
         function checkSavedLogin() {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
@@ -1729,7 +1725,7 @@
                     );
                 }, 10000); // Aktualizace každých 10 sekund
                 
-                showMessage('Sdílení polohy zapínuto');
+                showMessage('Sdílení polohy zapnuto');
             } else {
                 showMessage('GPS není podporováno', 'error');
             }
@@ -1805,7 +1801,7 @@
         
         
         
-        // Funkce pro práci s uživateli
+        // FUNKCE PRO PRÁCI S UŽIVATELI
         async function loadAllUsers() {
             const resultsDiv = document.getElementById('usersResults');
             resultsDiv.innerHTML = '⏳ Načítám nejlepší uživatele...';
@@ -2106,7 +2102,7 @@
             }
         }
         
-        // Načtení měst do registračního formuláře
+        // NAČTENÍ MĚST DO REGISTRAČNÍHO FORMULÁŘE
         async function loadCities() {
             try {
                 const response = await fetch('/api/cities');
@@ -2139,7 +2135,7 @@
             }
         }
         
-        // Funkce pro vymazání filtrů data a času
+        // FUNKCE PRO VYMAZÁNÍ FILTRŮ DATA A ČASU
         function clearDateTimeFilters() {
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
