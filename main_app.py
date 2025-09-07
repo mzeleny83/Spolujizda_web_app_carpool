@@ -149,7 +149,7 @@ def get_driver_rides(user_id):
                 'id': ride[0],
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4].isoformat(),
+                'departure_time': ride[4].isoformat() if ride[4] else None,
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'reservations_count': ride[9] or 0

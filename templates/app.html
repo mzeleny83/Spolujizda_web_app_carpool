@@ -624,8 +624,9 @@
                 const response = await fetch('/api/rides/search');
                 const rides = await response.json();
                 
-                // Zobraz šipku upozorňující na výsledky
-                if (rides.length > 0) {
+                if (rides.length === 0) {
+                    results.innerHTML = '<div style="text-align:center;color:#666;margin:30px 0;">❌ Žádné jízdy nenalezeny</div>';
+                    return;
                 }
                 
                 results.innerHTML = rides.map(ride => `
