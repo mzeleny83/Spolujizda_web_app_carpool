@@ -145,6 +145,8 @@ def get_driver_rides(user_id):
         
         result = []
         for ride in rides:
+            print(f"DEBUG: ride object: {ride}")
+            print(f"DEBUG: ride length: {len(ride)}")
             result.append({
                 'id': ride[0],
                 'from_location': ride[2],
