@@ -54,7 +54,7 @@ Disallow: /payment-*
 Disallow: /qr-payment
 
 Sitemap: https://www.sveztese.cz/sitemap.xml"""
-    return Response(content, mimetype='text/plain')
+        return Response(content, mimetype='text/plain')
 
 from collections import defaultdict
 from time import time
