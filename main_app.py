@@ -41,7 +41,7 @@ def parse_datetime_str(dt_str):
 
 @app.route('/robots.txt')
 def robots():
-    return '''User-agent: *
+    content = """User-agent: *
 Allow: /
 Allow: /search
 Allow: /terms
@@ -53,7 +53,8 @@ Disallow: /test
 Disallow: /payment-*
 Disallow: /qr-payment
 
-Sitemap: https://www.sveztese.cz/sitemap.xml''', 200, {'Content-Type': 'text/plain'})
+Sitemap: https://www.sveztese.cz/sitemap.xml"""
+    return Response(content, mimetype='text/plain'))
 
 from collections import defaultdict
 from time import time
