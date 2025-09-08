@@ -136,8 +136,9 @@ def get_driver_rides(user_id):
     try:
         with db.session.begin():
             rides = db.session.execute(db.text("""
-                SELECT r.*, COUNT(res.id) as reservations_count
+                SELECT r.*, u.name, u.rating, COUNT(res.id) as reservations_count
                 FROM rides r
+                LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN reservations res ON r.id = res.ride_id AND res.status != 'cancelled'
                 WHERE r.user_id = :user_id
                 GROUP BY r.id
@@ -154,7 +155,9 @@ def get_driver_rides(user_id):
                 'departure_time': departure_time_val.isoformat() if departure_time_val else None,
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
-                'reservations_count': ride[9] or 0
+                'driver_name': ride[9],
+                'driver_rating': ride[10] or 5.0,
+                'reservations_count': ride[11] or 0
             })
         
         return jsonify(result), 200
