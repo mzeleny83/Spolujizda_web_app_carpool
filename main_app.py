@@ -131,6 +131,10 @@ def api_status():
         ]
     })
 
+@app.route('/api/cities', methods=['GET'])
+def get_cities():
+    return jsonify([])
+
 @app.route('/api/rides/driver/<int:user_id>')
 def get_driver_rides(user_id):
     try:
