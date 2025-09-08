@@ -251,6 +251,10 @@ def reservations_test(user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/users/all', methods=['GET'])
+def get_all_users_redirect():
+    return redirect('/api/users/list', code=302)
+
 @app.route('/api/users/list', methods=['GET'])
 def list_users():
     try:
