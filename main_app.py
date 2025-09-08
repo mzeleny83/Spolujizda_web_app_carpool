@@ -3,7 +3,6 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-import sqlite3
 import hashlib
 import datetime
 import os
@@ -12,7 +11,7 @@ import signal
 import sys
 import requests
 import stripe
-# from backend_search_api import create_search_routes
+import traceback
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-in-production'
@@ -27,7 +26,19 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Suppress a warning
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-# ROBOTS.TXT - NEJVYŠŠÍ PRIORITA
+def parse_datetime_str(dt_str):
+    if not dt_str:
+        return None
+    if isinstance(dt_str, datetime.datetime):
+        return dt_str
+    try:
+        return datetime.datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
+    except (ValueError, TypeError):
+        try:
+            return datetime.datetime.fromisoformat(dt_str)
+        except (ValueError, TypeError):
+            return None
+
 @app.route('/robots.txt')
 def robots():
     return '''User-agent: *
@@ -42,9 +53,8 @@ Disallow: /test
 Disallow: /payment-*
 Disallow: /qr-payment
 
-Sitemap: https://www.sveztese.cz/sitemap.xml''', 200, {'Content-Type': 'text/plain'}
+Sitemap: https://www.sveztese.cz/sitemap.xml''', 200, {'Content-Type': 'text/plain'})
 
-# Rate limiting
 from collections import defaultdict
 from time import time
 request_counts = defaultdict(list)
@@ -54,9 +64,7 @@ def rate_limit(max_requests=10, window=60):
         def wrapper(*args, **kwargs):
             client_ip = request.remote_addr
             now = time()
-            # Vyčisti staré požadavky
             request_counts[client_ip] = [req_time for req_time in request_counts[client_ip] if now - req_time < window]
-            # Zkontroluj limit
             if len(request_counts[client_ip]) >= max_requests:
                 return jsonify({'error': 'Příliš mnoho požadavků'}), 429
             request_counts[client_ip].append(now)
@@ -69,21 +77,14 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 CORS(app, resources={'/*': {'origins': '*', 'methods': ['GET', 'POST', 'OPTIONS'], 'allow_headers': ['Content-Type']}})
 socketio = SocketIO(app, cors_allowed_origins='*')
 
-# Stripe konfigurace
-stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_51QYOhzP8xJKqGzKvYourSecretKey')  # Nastav v produkci
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_51QYOhzP8xJKqGzKvYourSecretKey')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'pk_test_51QYOhzP8xJKqGzKvYourPublishableKey')
+COMMISSION_RATE = 0.10
+YOUR_STRIPE_ACCOUNT_ID = 'acct_YourConnectedAccountId'
 
-# Konfigurace provize
-COMMISSION_RATE = 0.10  # 10% provize
-YOUR_STRIPE_ACCOUNT_ID = 'acct_YourConnectedAccountId'  # Váš Stripe Connect účet
-
-# Slovník pro ukládání pozic uživatelů
 user_locations = {}
 
-
 print("--- main_app.py is being loaded! ---")
-
-
 
 @app.route('/')
 def home():
@@ -99,7 +100,6 @@ def debug_panel():
 
 @app.route('/health')
 def health_check():
-    import datetime
     return jsonify({
         'status': 'OK',
         'timestamp': datetime.datetime.now().isoformat(),
@@ -123,7 +123,7 @@ def api_status():
         'sitemap_url': f'{request.host_url}sitemap.xml',
         'endpoints': [
             'POST /api/users/register',
-            'POST /api/users/login', 
+            'POST /api/users/login',
             'POST /api/rides/offer',
             'GET /api/rides/search',
             'WebSocket /socket.io - real-time lokalizace'
@@ -134,24 +134,23 @@ def api_status():
 def get_driver_rides(user_id):
     try:
         with db.session.begin():
-            rides = db.session.execute(db.text('''
+            rides = db.session.execute(db.text("""
                 SELECT r.*, COUNT(res.id) as reservations_count
                 FROM rides r
                 LEFT JOIN reservations res ON r.id = res.ride_id AND res.status != 'cancelled'
                 WHERE r.user_id = :user_id
                 GROUP BY r.id
                 ORDER BY r.departure_time ASC
-            '''), {'user_id': user_id}).fetchall()
+            """), {'user_id': user_id}).fetchall()
         
         result = []
         for ride in rides:
-            print(f"DEBUG: ride object: {ride}")
-            print(f"DEBUG: ride length: {len(ride)}")
+            departure_time_val = parse_datetime_str(ride[4])
             result.append({
                 'id': ride[0],
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4].isoformat() if ride[4] else None,
+                'departure_time': departure_time_val.isoformat() if departure_time_val else None,
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'reservations_count': ride[9] or 0
@@ -160,18 +159,19 @@ def get_driver_rides(user_id):
         return jsonify(result), 200
         
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/rides/<int:ride_id>/reservations')
 def get_ride_reservations(ride_id):
     try:
         with db.session.begin():
-            reservations = db.session.execute(db.text('''
+            reservations = db.session.execute(db.text("""
                 SELECT res.seats_reserved, u.name, u.phone
                 FROM reservations res
                 JOIN users u ON res.passenger_id = u.id
                 WHERE res.ride_id = :ride_id AND res.status != 'cancelled'
-            '''), {'ride_id': ride_id}).fetchall()
+            """), {'ride_id': ride_id}).fetchall()
         
         result = []
         for res in reservations:
@@ -190,19 +190,20 @@ def get_ride_reservations(ride_id):
 def get_ride_messages(ride_id):
     try:
         with db.session.begin():
-            messages = db.session.execute(db.text('''
+            messages = db.session.execute(db.text("""
                 SELECT m.message, m.created_at, m.sender_id, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
                 WHERE m.ride_id = :ride_id
                 ORDER BY m.created_at ASC
-            '''), {'ride_id': ride_id}).fetchall()
+            """), {'ride_id': ride_id}).fetchall()
         
         result = []
         for msg in messages:
+            created_at_val = parse_datetime_str(msg[1])
             result.append({
                 'message': msg[0],
-                'created_at': msg[1],
+                'created_at': created_at_val.isoformat() if created_at_val else None,
                 'sender_id': msg[2],
                 'sender_name': msg[3]
             })
@@ -216,7 +217,7 @@ def get_ride_messages(ride_id):
 def reservations_test(user_id):
     try:
         with db.session.begin():
-            reservations = db.session.execute(db.text('''
+            reservations = db.session.execute(db.text("""
                 SELECT res.id, res.seats_reserved, res.status, res.created_at,
                        r.from_location, r.to_location, r.departure_time, r.price_per_person,
                        u.name as driver_name, u.phone as driver_phone
@@ -225,18 +226,20 @@ def reservations_test(user_id):
                 JOIN users u ON r.user_id = u.id
                 WHERE res.passenger_id = :user_id AND res.status != 'cancelled'
                 ORDER BY r.departure_time ASC
-            '''), {'user_id': user_id}).fetchall()
+            """), {'user_id': user_id}).fetchall()
         
         result = []
         for res in reservations:
+            created_at_val = parse_datetime_str(res[3])
+            departure_time_val = parse_datetime_str(res[6])
             result.append({
                 'reservation_id': res[0],
                 'seats_reserved': res[1],
                 'status': res[2],
-                'created_at': res[3],
+                'created_at': created_at_val.isoformat() if created_at_val else None,
                 'from_location': res[4],
                 'to_location': res[5],
-                'departure_time': res[6].isoformat(),
+                'departure_time': departure_time_val.isoformat() if departure_time_val else None,
                 'price_per_person': res[7],
                 'driver_name': res[8],
                 'driver_phone': res[9]
@@ -255,12 +258,13 @@ def list_users():
         
         result = []
         for user in users:
+            created_at_val = parse_datetime_str(user[4])
             result.append({
                 'id': user[0],
                 'name': user[1],
                 'phone': user[2],
                 'password_hash': user[3],
-                'created_at': user[4]
+                'created_at': created_at_val.isoformat() if created_at_val else None
             })
         
         return jsonify(result), 200
@@ -270,7 +274,6 @@ def list_users():
 
 @app.route('/api/test/password/<password>', methods=['GET'])
 def test_password_hash(password):
-    import hashlib
     hash_result = hashlib.sha256(password.encode()).hexdigest()
     return jsonify({
         'original_password': password,
@@ -283,19 +286,14 @@ def get_user_hash(phone):
         with db.session.begin():
             password_hash = db.session.execute(db.text('SELECT password_hash FROM users WHERE phone = :phone'), {'phone': phone}).fetchone()
         
-        if password_hash:
+        if not password_hash:
             return jsonify({'error': 'User not found'}), 404
+        return jsonify({'password_hash': password_hash[0]})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Removed SQLite-specific database initialization. Database migrations are now handled by Alembic and PostgreSQL.
-# DATABASE = 'spolujizda.db'
-# def init_db():
-#    pass
-
-
 @app.route('/api/users/register', methods=['POST'])
-@rate_limit(max_requests=5, window=300)  # Max 5 registrací za 5 minut
+@rate_limit(max_requests=5, window=300)
 def register():
     try:
         data = request.get_json()
@@ -303,10 +301,8 @@ def register():
         phone = data.get('phone')
         password = data.get('password')
         
-        # Validace jména
         forbidden_names = ['neznámý řidič', 'neznámý', 'unknown', 'driver', 'řidič', 'neznámy ridic', 'test', 'user', 'anonym', 'guest', 'admin', 'null', 'undefined', 'testovací', 'robot']
         
-        # Input sanitization
         import re
         name = re.sub(r'[<"\'/]', '', name.strip())
         phone = re.sub(r'[^+\d\s-]', '', phone.strip())
@@ -328,39 +324,31 @@ def register():
         if password != password_confirm:
             return jsonify({'error': 'Hesla se neshodují'}), 400
         
-        # Normalizuje telefonní číslo - odebere všechny mezery a speciální znaky
         phone_clean = ''.join(filter(str.isdigit, phone))
         
-        # Odstraní předvolbu
         if phone_clean.startswith('420'):
             phone_clean = phone_clean[3:]
         
-        # Ověří formát (9 číslic)
         if len(phone_clean) != 9:
             return jsonify({'error': 'Neplatný formát telefonu (9 číslic)'}), 400
         
-        # Vždy uloží ve formátu +420xxxxxxxxx
         phone_full = f'+420{phone_clean}'
         
-        # Validace emailu pokud je zadán
         if email and '@' not in email:
             return jsonify({'error': 'Neplatný formát emailu'}), 400
         
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         
         with db.session.begin():
-            # Zkontroluje existující telefon
             existing_phone = db.session.execute(db.text('SELECT id FROM users WHERE phone = :phone'), {'phone': phone_full}).fetchone()
             if existing_phone:
                 return jsonify({'error': 'Toto telefonní číslo je již registrováno'}), 409
             
-            # Zkontroluje existující email pokud je zadán
             if email:
                 existing_email = db.session.execute(db.text('SELECT id FROM users WHERE email = :email'), {'email': email}).fetchone()
                 if existing_email:
                     return jsonify({'error': 'Tento email je již registrován'}), 409
             
-            # Registruje uživatele
             db.session.execute(db.text('INSERT INTO users (name, phone, email, password_hash, rating, home_city, paypal_email) VALUES (:name, :phone_full, :email, :password_hash, :rating, :home_city, :paypal_email)'),
                              {'name': name, 'phone_full': phone_full, 'email': email if email else None, 'password_hash': password_hash, 'rating': 5.0, 'home_city': home_city if home_city else None, 'paypal_email': paypal_email if paypal_email else None})
             
@@ -369,13 +357,12 @@ def register():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/api/users/login', methods=['POST'])
-@rate_limit(max_requests=10, window=300)  # Max 10 přihlášení za 5 minut
+@rate_limit(max_requests=10, window=300)
 def login():
     try:
         data = request.get_json()
-        login_field = data.get('phone')  # Může být telefon nebo email
+        login_field = data.get('phone')
         password = data.get('password')
         
         if not all([login_field, password]):
@@ -384,13 +371,10 @@ def login():
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         
         with db.session.begin():
-            # Zkusí přihlášení pomocí telefonu nebo emailu
             if '@' in login_field:
-                # Přihlášení emailem
                 user = db.session.execute(db.text('SELECT id, name, rating FROM users WHERE email = :login_field AND password_hash = :password_hash'),
                                          {'login_field': login_field, 'password_hash': password_hash}).fetchone()
             else:
-                # Přihlášení telefonem - normalizuj formát
                 phone_clean = ''.join(filter(str.isdigit, login_field))
                 if phone_clean.startswith('420'):
                     phone_clean = phone_clean[3:]
@@ -428,9 +412,7 @@ def offer_ride():
         route_waypoints = json.dumps(data.get('route_waypoints', []))
         
         with db.session.begin():
-            result = db.session.execute(db.text('''INSERT INTO rides 
-                                                 (user_id, from_location, to_location, departure_time, available_seats, price_per_person, route_waypoints)
-                                                 VALUES (:user_id, :from_location, :to_location, :departure_time, :available_seats, :price_per_person, :route_waypoints)'''),
+            result = db.session.execute(db.text('INSERT INTO rides (user_id, from_location, to_location, departure_time, available_seats, price_per_person, route_waypoints) VALUES (:user_id, :from_location, :to_location, :departure_time, :available_seats, :price_per_person, :route_waypoints)'),
                                      {'user_id': user_id, 'from_location': from_location, 'to_location': to_location, 'departure_time': departure_time, 'available_seats': available_seats, 'price_per_person': price_per_person, 'route_waypoints': route_waypoints})
             ride_id = result.lastrowid
         
@@ -445,30 +427,25 @@ def offer_ride():
 @app.route('/api/rides/search', methods=['GET'])
 def search_rides():
     try:
-        # Získání parametrů z URL
         from_location = request.args.get('from', '').strip()
         to_location = request.args.get('to', '').strip()
         max_price = request.args.get('max_price', type=int)
         user_id = request.args.get('user_id', type=int)
         include_own = request.args.get('include_own', 'true').lower() == 'true'
         
-        # GPS parametry
         user_lat = request.args.get('lat', type=float)
         user_lng = request.args.get('lng', type=float)
         search_range = request.args.get('range', type=int)
         
-        # Datum a čas parametry
         date_from = request.args.get('date_from', '').strip()
         date_to = request.args.get('date_to', '').strip()
         time_from = request.args.get('time_from', '').strip()
         time_to = request.args.get('time_to', '').strip()
 
-        # Základní dotaz
         query = "SELECT r.*, u.name, u.rating FROM rides r LEFT JOIN users u ON r.user_id = u.id"
         conditions = []
         params = {}
 
-        # Přidání podmínek podle parametrů
         if from_location:
             conditions.append("r.from_location LIKE :from_location")
             params['from_location'] = f'%{from_location}%'
@@ -485,7 +462,6 @@ def search_rides():
             conditions.append("r.user_id != :user_id")
             params['user_id'] = user_id
         
-        # Filtrování podle data a času
         if date_from:
             conditions.append("DATE(r.departure_time) >= :date_from")
             params['date_from'] = date_from
@@ -502,14 +478,12 @@ def search_rides():
             conditions.append("TIME(r.departure_time) <= :time_to")
             params['time_to'] = time_to
 
-        # Sestavení finálního dotazu
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
 
         with db.session.begin():
             rides = db.session.execute(db.text(query), params).fetchall()
 
-        # Města a jejich souřadnice pro výpočet vzdálenosti
         cities = {
             'Praha': [50.0755, 14.4378],
             'Brno': [49.1951, 16.6068],
@@ -525,7 +499,7 @@ def search_rides():
 
         def calculate_distance(lat1, lng1, lat2, lng2):
             import math
-            R = 6371  # Poloměr Země v km
+            R = 6371
             dlat = math.radians(lat2 - lat1)
             dlng = math.radians(lng2 - lng1)
             a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2) * math.sin(dlng/2)
@@ -538,37 +512,32 @@ def search_rides():
         for ride in rides:
             waypoints = json.loads(ride[7]) if ride[7] else []
             
-            # Get coordinates for from_location and to_location
             from_city_name = ride[2].split(',')[0].strip()
             to_city_name = ride[3].split(',')[0].strip()
             
             from_coords = cities.get(from_city_name)
             to_coords = cities.get(to_city_name)
             
-            # Výpočet vzdálenosti od uživatele
-            distance = 999  # Nastav na vysoké číslo jako výchozí
+            distance = 999
             if user_lat and user_lng and search_range:
-                # Zkontroluj vzdálenost k OBOU městům (odkud i kam)
-                from_coords = cities.get(ride[2].split(',')[0].strip())  # Pouze město, bez ulice
-                to_coords = cities.get(ride[3].split(',')[0].strip())    # Pouze město, bez ulice
+                from_coords = cities.get(ride[2].split(',')[0].strip())
+                to_coords = cities.get(ride[3].split(',')[0].strip())
                 
-                # Vzdálenost pouze k výchozímu městu (odkud jede jízda)
                 if from_coords:
                     distance = calculate_distance(user_lat, user_lng, from_coords[0], from_coords[1])
                 else:
-                    # Pokud nemáme souřadnice výchozího města, přeskoč jízdu
                     continue
                 
-                # Filtruj podle vzdálenosti - jízda musí být blízko ALESPOŇ jednoho z měst
                 if distance > search_range:
                     continue
             
-            # Zjištění, zda je jízda vlastní nebo rezervovaná
             is_own = False
             if current_user_id and ride[1] == current_user_id:
                 is_own = True
 
             is_reserved = False
+            
+            departure_time_val = parse_datetime_str(ride[4])
 
             result.append({
                 'id': ride[0],
@@ -577,7 +546,7 @@ def search_rides():
                 'driver_rating': ride[10] or 5.0,
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4],
+                'departure_time': departure_time_val.isoformat() if departure_time_val else None,
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'route_waypoints': waypoints,
@@ -588,13 +557,11 @@ def search_rides():
                 'to_coords': to_coords if to_coords else None
             })
         
-        # Seřadí podle vzdálenosti
         if user_lat and user_lng:
             result.sort(key=lambda x: x['distance'])
             
         return jsonify(result)
     except Exception as e:
-        import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
@@ -608,11 +575,9 @@ def search_user():
             return jsonify({'error': 'Zadejte email nebo telefon'}), 400
         
         with db.session.begin():
-            # Hledání pouze podle emailu (telefon skryt)
             if '@' in query:
                 user = db.session.execute(db.text('SELECT id, name, phone, email, rating FROM users WHERE email LIKE :query'), {'query': f'%{query}%'}).fetchone()
             else:
-                # Hledání podle jména
                 user = db.session.execute(db.text('SELECT id, name, phone, email, rating FROM users WHERE name LIKE :query'), {'query': f'%{query}%'}).fetchone()
         
         if not user:
@@ -631,15 +596,14 @@ def search_user():
 
 @app.route('/api/rides/all', methods=['GET'])
 def get_all_rides():
-    import traceback
     try:
         with db.session.begin():
-            rides = db.session.execute(db.text('''SELECT r.*, u.name, u.rating FROM rides r 
-                                                 LEFT JOIN users u ON r.user_id = u.id
-                                                 ORDER BY r.created_at DESC''')).fetchall()
+            rides = db.session.execute(db.text('SELECT r.*, u.name, u.rating FROM rides r LEFT JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC')).fetchall()
         
         result = []
         for ride in rides:
+            departure_time_val = parse_datetime_str(ride[4])
+            created_at_val = parse_datetime_str(ride[8])
             result.append({
                 'id': ride[0],
                 'user_id': ride[1],
@@ -647,11 +611,11 @@ def get_all_rides():
                 'driver_rating': (ride[10] if len(ride) > 10 else None) or 5.0,
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4].isoformat(),
+                'departure_time': departure_time_val.isoformat() if departure_time_val else None,
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'route_waypoints': json.loads(ride[7]) if ride[7] else [],
-                'created_at': ride[8]
+                'created_at': created_at_val.isoformat() if created_at_val else None
             })
         
         return jsonify(result), 200
@@ -659,7 +623,6 @@ def get_all_rides():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# SocketIO events pro real-time lokalizaci
 @socketio.on('connect')
 def handle_connect():
     print('Uživatel se připojil')
@@ -681,7 +644,6 @@ def handle_location_update(data):
             'lng': lng,
             'timestamp': datetime.datetime.now().isoformat()
         }
-        # Pošli aktualizaci všem připojeným klientům
         emit('location_updated', {
             'user_id': user_id,
             'lat': lat,
@@ -702,7 +664,6 @@ def handle_get_location(data):
             'location': None
         })
 
-# Real-time chat
 @socketio.on('join_ride_chat')
 def handle_join_chat(data):
     ride_id = data.get('ride_id')
@@ -718,22 +679,20 @@ def handle_chat_message(data):
     ride_id = data.get('ride_id')
     user_name = data.get('user_name')
     message = data.get('message')
+    sender_id = data.get('sender_id')
     
-    # Uloží zprávu do databáze
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
-    # Získá sender_id z dat
-    sender_id = data.get('user_name', 'Neznámý')
-    c.execute('INSERT INTO messages (ride_id, sender_id, message) VALUES (?, ?, ?)',
-             (ride_id, sender_id, message))
-    conn.commit()
-    conn.close()
-    
-    emit('new_chat_message', {
-        'user_name': user_name,
-        'message': message,
-        'timestamp': datetime.datetime.now().isoformat()
-    }, room=f'ride_{ride_id}')
+    try:
+        with db.session.begin():
+            db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message) VALUES (:ride_id, :sender_id, :message)'),
+                             {'ride_id': ride_id, 'sender_id': sender_id, 'message': message})
+        
+        emit('new_chat_message', {
+            'user_name': user_name,
+            'message': message,
+            'timestamp': datetime.datetime.now().isoformat()
+        }, room=f'ride_{ride_id}')
+    except Exception as e:
+        print(f"Error in handle_chat_message: {e}")
 
 @socketio.on('leave_ride_chat')
 def handle_leave_chat(data):
@@ -745,7 +704,6 @@ def handle_leave_chat(data):
         'timestamp': datetime.datetime.now().isoformat()
     }, room=f'ride_{ride_id}')
 
-# Sdílení polohy v reálném čase
 @socketio.on('share_live_location')
 def handle_live_location(data):
     ride_id = data.get('ride_id')
@@ -760,13 +718,11 @@ def handle_live_location(data):
         'timestamp': datetime.datetime.now().isoformat()
     }, room=f'ride_{ride_id}')
 
-# Přímý chat mezi uživateli
 @socketio.on('join_direct_chat')
 def handle_join_direct_chat(data):
     target_user = data.get('target_user')
     user_name = data.get('user_name')
     
-    # Vytvoří jedinečný room pro dva uživatele
     room_name = f'direct_{min(user_name, target_user)}_{max(user_name, target_user)}'
     join_room(room_name)
     
@@ -802,13 +758,10 @@ def handle_leave_direct_chat(data):
         'timestamp': datetime.datetime.now().isoformat()
     }, room=room_name)
 
-# Požadavek na polohu uživatele
 @socketio.on('request_user_location')
 def handle_location_request(data):
     target_user = data.get('target_user')
-    requester = data.get('requester')
     
-    # Zkontroluje, zda je cílový uživatel online a má polohu
     if target_user in user_locations:
         location = user_locations[target_user]
         emit('user_location_response', {
@@ -824,9 +777,6 @@ def handle_location_request(data):
             'lng': None
         })
 
-
-
-# API pro rezervace
 @app.route('/api/reservations/create', methods=['POST'])
 def create_reservation():
     try:
@@ -838,30 +788,17 @@ def create_reservation():
             return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
         seats_reserved = data.get('seats_reserved', 1)
         
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Zkontroluje dostupnost míst
-        c.execute('SELECT available_seats FROM rides WHERE id = ?', (ride_id,))
-        ride = c.fetchone()
-        
-        if not ride or ride[0] < seats_reserved:
-            return jsonify({'error': 'Nedostatek volných míst'}), 400
-        
-        # Vytvoří rezervaci
-        c.execute('INSERT INTO reservations (ride_id, passenger_id, seats_reserved) VALUES (?, ?, ?)',
-                 (ride_id, passenger_id, seats_reserved))
-        
-        # Aktualizuje počet volných míst
-        c.execute('UPDATE rides SET available_seats = available_seats - ? WHERE id = ?',
-                 (seats_reserved, ride_id))
-        
-        # Nastav status rezervace na confirmed
-        c.execute('UPDATE reservations SET status = "confirmed" WHERE ride_id = ? AND passenger_id = ?',
-                 (ride_id, passenger_id))
-        
-        conn.commit()
-        conn.close()
+        with db.session.begin():
+            ride = db.session.execute(db.text('SELECT available_seats FROM rides WHERE id = :ride_id'), {'ride_id': ride_id}).fetchone()
+            
+            if not ride or ride[0] < seats_reserved:
+                return jsonify({'error': 'Nedostatek volných míst'}), 400
+            
+            db.session.execute(db.text('INSERT INTO reservations (ride_id, passenger_id, seats_reserved, status) VALUES (:ride_id, :passenger_id, :seats_reserved, \'confirmed\')'),
+                             {'ride_id': ride_id, 'passenger_id': passenger_id, 'seats_reserved': seats_reserved})
+            
+            db.session.execute(db.text('UPDATE rides SET available_seats = available_seats - :seats_reserved WHERE id = :ride_id'), 
+                             {'seats_reserved': seats_reserved, 'ride_id': ride_id})
         
         return jsonify({'message': 'Rezervace úspěšně vytvořena'}), 201
         
@@ -871,45 +808,42 @@ def create_reservation():
 @app.route('/api/reservations/user/<int:user_id>')
 def get_user_reservations_simple(user_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT res.id, res.seats_reserved, res.status, res.created_at,
-                   r.from_location, r.to_location, r.departure_time, r.price_per_person,
-                   u.name as driver_name, u.phone as driver_phone, r.id as ride_id
-            FROM reservations res
-            JOIN rides r ON res.ride_id = r.id
-            JOIN users u ON r.user_id = u.id
-            WHERE res.passenger_id = ? AND res.status = 'confirmed'
-            ORDER BY r.departure_time ASC
-        ''', (user_id,))
+        with db.session.begin():
+            reservations = db.session.execute(db.text("""
+                SELECT res.id, res.seats_reserved, res.status, res.created_at,
+                       r.from_location, r.to_location, r.departure_time, r.price_per_person,
+                       u.name as driver_name, u.phone as driver_phone, r.id as ride_id
+                FROM reservations res
+                JOIN rides r ON res.ride_id = r.id
+                JOIN users u ON r.user_id = u.id
+                WHERE res.passenger_id = :user_id AND res.status = 'confirmed'
+                ORDER BY r.departure_time ASC
+            """), {'user_id': user_id}).fetchall()
         
-        reservations = c.fetchall()
+            result = []
+            for res in reservations:
+                payment = db.session.execute(db.text('SELECT status FROM payments WHERE ride_id = :ride_id AND passenger_id = :user_id AND status = \'completed\''), 
+                                               {'ride_id': res[10], 'user_id': user_id}).fetchone()
+                
+                driver_phone = res[9] if payment else "Skryto - zaplaťte nejdříve"
+                
+                departure_time_val = parse_datetime_str(res[6])
+                created_at_val = parse_datetime_str(res[3])
+
+                result.append({
+                    'reservation_id': res[0],
+                    'seats_reserved': res[1],
+                    'status': res[2],
+                    'created_at': created_at_val.isoformat() if created_at_val else None,
+                    'from_location': res[4],
+                    'to_location': res[5],
+                    'departure_time': departure_time_val.isoformat() if departure_time_val else None,
+                    'price_per_person': res[7],
+                    'driver_name': res[8],
+                    'driver_phone': driver_phone,
+                    'is_paid': bool(payment)
+                })
         
-        result = []
-        for res in reservations:
-            # Zkontroluj, zda je platba dokončena
-            c.execute('SELECT status FROM payments WHERE ride_id = ? AND passenger_id = ? AND status = "completed"', (res[10], user_id))
-            payment = c.fetchone()
-            
-            # Skryj pouze telefon pokud není zaplaceno
-            driver_phone = res[9] if payment else "Skryto - zaplaťte nejdříve"
-            
-            result.append({
-                'reservation_id': res[0],
-                'seats_reserved': res[1],
-                'status': res[2],
-                'created_at': res[3],
-                'from_location': res[4],
-                'to_location': res[5],
-                'departure_time': res[6].isoformat(),
-                'price_per_person': res[7],
-                'driver_name': res[8],
-                'driver_phone': driver_phone,
-                'is_paid': bool(payment)
-            })
-        
-        conn.close()
         return jsonify(result), 200
         
     except Exception as e:
@@ -918,21 +852,19 @@ def get_user_reservations_simple(user_id):
 @app.route('/api/reservations/<int:reservation_id>')
 def get_reservation_details(reservation_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT res.id, res.ride_id, res.passenger_id, res.seats_reserved, res.status,
-                   r.from_location, r.to_location, r.departure_time, r.price_per_person
-            FROM reservations res
-            JOIN rides r ON res.ride_id = r.id
-            WHERE res.id = ?
-        ''', (reservation_id,))
-        
-        reservation = c.fetchone()
-        conn.close()
+        with db.session.begin():
+            reservation = db.session.execute(db.text("""
+                SELECT res.id, res.ride_id, res.passenger_id, res.seats_reserved, res.status,
+                       r.from_location, r.to_location, r.departure_time, r.price_per_person
+                FROM reservations res
+                JOIN rides r ON res.ride_id = r.id
+                WHERE res.id = :reservation_id
+            """), {'reservation_id': reservation_id}).fetchone()
         
         if not reservation:
             return jsonify({'error': 'Rezervace nenalezena'}), 404
+        
+        departure_time_val = parse_datetime_str(reservation[7])
         
         return jsonify({
             'id': reservation[0],
@@ -942,7 +874,7 @@ def get_reservation_details(reservation_id):
             'status': reservation[4],
             'from_location': reservation[5],
             'to_location': reservation[6],
-            'departure_time': reservation[7].isoformat(),
+            'departure_time': departure_time_val.isoformat() if departure_time_val else None,
             'price_per_person': reservation[8]
         }), 200
         
@@ -952,32 +884,30 @@ def get_reservation_details(reservation_id):
 @app.route('/api/reservations/driver/<int:driver_id>')
 def get_driver_reservations(driver_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT res.id, res.seats_reserved, res.status, res.created_at,
-                   r.from_location, r.to_location, r.departure_time, r.id as ride_id,
-                   u.name as passenger_name, u.id as passenger_id
-            FROM reservations res
-            JOIN rides r ON res.ride_id = r.id
-            JOIN users u ON res.passenger_id = u.id
-            WHERE r.user_id = ? AND res.status = 'confirmed'
-            ORDER BY r.departure_time DESC
-        ''', (driver_id,))
-        
-        reservations = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            reservations = db.session.execute(db.text("""
+                SELECT res.id, res.seats_reserved, res.status, res.created_at,
+                       r.from_location, r.to_location, r.departure_time, r.id as ride_id,
+                       u.name as passenger_name, u.id as passenger_id
+                FROM reservations res
+                JOIN rides r ON res.ride_id = r.id
+                JOIN users u ON res.passenger_id = u.id
+                WHERE r.user_id = :driver_id AND res.status = 'confirmed'
+                ORDER BY r.departure_time DESC
+            """), {'driver_id': driver_id}).fetchall()
         
         result = []
         for res in reservations:
+            departure_time_val = parse_datetime_str(res[6])
+            created_at_val = parse_datetime_str(res[3])
             result.append({
                 'reservation_id': res[0],
                 'seats_reserved': res[1],
                 'status': res[2],
-                'created_at': res[3],
+                'created_at': created_at_val.isoformat() if created_at_val else None,
                 'from_location': res[4],
                 'to_location': res[5],
-                'departure_time': res[6].isoformat(),
+                'departure_time': departure_time_val.isoformat() if departure_time_val else None,
                 'ride_id': res[7],
                 'passenger_name': res[8],
                 'passenger_id': res[9]
@@ -991,17 +921,9 @@ def get_driver_reservations(driver_id):
 @app.route('/api/rides/cancel/<int:ride_id>', methods=['DELETE'])
 def cancel_ride(ride_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Zruš všechny rezervace pro tuto jízdu
-        c.execute('UPDATE reservations SET status = "cancelled" WHERE ride_id = ?', (ride_id,))
-        
-        # Smaž jízdu
-        c.execute('DELETE FROM rides WHERE id = ?', (ride_id,))
-        
-        conn.commit()
-        conn.close()
+        with db.session.begin():
+            db.session.execute(db.text('UPDATE reservations SET status = \'cancelled\' WHERE ride_id = :ride_id'), {'ride_id': ride_id})
+            db.session.execute(db.text('DELETE FROM rides WHERE id = :ride_id'), {'ride_id': ride_id})
         
         return jsonify({'message': 'Jízda zrušena'}), 200
         
@@ -1011,32 +933,24 @@ def cancel_ride(ride_id):
 @app.route('/api/reservations/cancel/<int:reservation_id>', methods=['DELETE'])
 def cancel_reservation_new(reservation_id):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        c.execute('SELECT ride_id, seats_reserved FROM reservations WHERE id = ?', (reservation_id,))
-        reservation = c.fetchone()
-        
-        if not reservation:
-            conn.close()
-            return jsonify({'error': 'Rezervace nenalezena'}), 404
-        
-        ride_id, seats_reserved = reservation
-        
-        c.execute('UPDATE reservations SET status = "cancelled" WHERE id = ?', (reservation_id,))
-        c.execute('UPDATE rides SET available_seats = available_seats + ? WHERE id = ?', (seats_reserved, ride_id))
-        
-        conn.commit()
-        conn.close()
+        with db.session.begin():
+            reservation = db.session.execute(db.text('SELECT ride_id, seats_reserved FROM reservations WHERE id = :reservation_id'), 
+                                               {'reservation_id': reservation_id}).fetchone()
+            
+            if not reservation:
+                return jsonify({'error': 'Rezervace nenalezena'}), 404
+            
+            ride_id, seats_reserved = reservation
+            
+            db.session.execute(db.text('UPDATE reservations SET status = \'cancelled\' WHERE id = :reservation_id'), {'reservation_id': reservation_id})
+            db.session.execute(db.text('UPDATE rides SET available_seats = available_seats + :seats_reserved WHERE id = :ride_id'), 
+                             {'seats_reserved': seats_reserved, 'ride_id': ride_id})
         
         return jsonify({'message': 'Rezervace zrušena'}), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-
-# API pro zprávy
 @app.route('/api/messages/send', methods=['POST'])
 def send_message():
     try:
@@ -1048,53 +962,42 @@ def send_message():
             return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
         message = data.get('message')
         
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('INSERT INTO messages (ride_id, sender_id, message) VALUES (?, ?, ?)',
-                 (ride_id, sender_id, message))
-        conn.commit()
-        conn.close()
+        with db.session.begin():
+            db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message) VALUES (:ride_id, :sender_id, :message)'),
+                             {'ride_id': ride_id, 'sender_id': sender_id, 'message': message})
         
         return jsonify({'message': 'Zpráva odeslána'}), 201
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# API pro hodnocení
 @app.route('/api/users/<user_name>/reviews', methods=['GET'])
 def get_user_reviews(user_name):
     try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Najdi user_id podle jména
-        c.execute('SELECT id FROM users WHERE name = ?', (user_name,))
-        user = c.fetchone()
-        
-        if not user:
-            return jsonify({'error': 'Uživatel nenalezen'}), 404
-        
-        user_id = user[0]
-        
-        # Získej hodnocení
-        c.execute('''
-            SELECT r.rating, r.comment, r.created_at, u.name as rater_name
-            FROM ratings r
-            JOIN users u ON r.rater_id = u.id
-            WHERE r.rated_id = ? AND r.comment IS NOT NULL AND r.comment != ''
-            ORDER BY r.created_at DESC
-            LIMIT 10
-        ''', (user_id,))
-        
-        reviews = c.fetchall()
-        conn.close()
+        with db.session.begin():
+            user = db.session.execute(db.text('SELECT id FROM users WHERE name = :user_name'), {'user_name': user_name}).fetchone()
+            
+            if not user:
+                return jsonify({'error': 'Uživatel nenalezen'}), 404
+            
+            user_id = user[0]
+            
+            reviews = db.session.execute(db.text("""
+                SELECT r.rating, r.comment, r.created_at, u.name as rater_name
+                FROM ratings r
+                JOIN users u ON r.rater_id = u.id
+                WHERE r.rated_id = :user_id AND r.comment IS NOT NULL AND r.comment != ''
+                ORDER BY r.created_at DESC
+                LIMIT 5
+            """), {'user_id': user_id}).fetchall()
         
         result = []
         for review in reviews:
+            created_at_val = parse_datetime_str(review[2])
             result.append({
                 'rating': review[0],
                 'comment': review[1],
-                'created_at': review[2],
+                'created_at': created_at_val.isoformat() if created_at_val else None,
                 'rater_name': review[3]
             })
         
@@ -1117,1039 +1020,29 @@ def create_rating():
         comment = data.get('comment', '')
         driver_name = data.get('driver_name')
         
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Najdi rated_id podle jména
-        rated_id = None
-        if driver_name:
-            c.execute('SELECT id FROM users WHERE name = ?', (driver_name,))
-            user = c.fetchone()
-            if user:
-                rated_id = user[0]
-        
-        if not rated_id:
-            rated_id = data.get('rated_id', 0)
-        
-        c.execute('INSERT INTO ratings (ride_id, rater_id, rated_id, rating, comment) VALUES (?, ?, ?, ?, ?)',
-                 (ride_id, rater_id, rated_id, rating, comment))
-        
-        # Aktualizace průměrného hodnocení
-        if rated_id:
-            c.execute('SELECT AVG(rating) FROM ratings WHERE rated_id = ?', (rated_id,))
-            avg_rating = c.fetchone()[0]
-            if avg_rating:
-                c.execute('UPDATE users SET rating = ? WHERE id = ?', (avg_rating, rated_id))
-        
-        conn.commit()
-        conn.close()
+        with db.session.begin():
+            rated_id = None
+            if driver_name:
+                user = db.session.execute(db.text('SELECT id FROM users WHERE name = :driver_name'), {'driver_name': driver_name}).fetchone()
+                if user:
+                    rated_id = user[0]
+            
+            if not rated_id:
+                rated_id = data.get('rated_id', 0)
+            
+            db.session.execute(db.text('INSERT INTO ratings (ride_id, rater_id, rated_id, rating, comment) VALUES (:ride_id, :rater_id, :rated_id, :rating, :comment)'),
+                             {'ride_id': ride_id, 'rater_id': rater_id, 'rated_id': rated_id, 'rating': rating, 'comment': comment})
+            
+            if rated_id:
+                avg_rating_result = db.session.execute(db.text('SELECT AVG(rating) FROM ratings WHERE rated_id = :rated_id'), {'rated_id': rated_id}).fetchone()
+                avg_rating = avg_rating_result[0] if avg_rating_result else None
+                if avg_rating:
+                    db.session.execute(db.text('UPDATE users SET rating = :avg_rating WHERE id = :rated_id'), {'avg_rating': avg_rating, 'rated_id': rated_id})
         
         return jsonify({'message': 'Hodnocení odesláno'}), 201
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-# API pro blokování uživatelů
-@app.route('/api/users/block', methods=['POST'])
-def block_user():
-    try:
-        data = request.get_json()
-        blocker_id = data.get('blocker_id')
-        
-        if not blocker_id:
-            return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
-        blocked_id = data.get('blocked_id')
-        reason = data.get('reason', '')
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('INSERT INTO blocked_users (blocker_id, blocked_id, reason) VALUES (?, ?, ?)',
-                 (blocker_id, blocked_id, reason))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'Uživatel zablokován'}), 201
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro statistiky
-@app.route('/api/users/<int:user_id>/stats', methods=['GET'])
-def get_user_stats(user_id):
-    try:
-        # Ověří, že uživatel existuje
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('SELECT id FROM users WHERE id = ?', (user_id,))
-        if not c.fetchone():
-            conn.close()
-            return jsonify({'error': 'Uživatel nenalezen'}), 404
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('SELECT * FROM user_stats WHERE user_id = ?', (user_id,))
-        stats = c.fetchone()
-        
-        if not stats:
-            c.execute('INSERT INTO user_stats (user_id) VALUES (?)', (user_id,))
-            conn.commit()
-            stats = (None, user_id, 0, 0, 0, 0)
-        
-        conn.close()
-        
-        return jsonify({
-            'total_rides': stats[2],
-            'total_distance': stats[3],
-            'co2_saved': stats[4],
-            'money_saved': stats[5]
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro pravidelné jízdy
-@app.route('/api/rides/recurring', methods=['POST'])
-def create_recurring_ride():
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        
-        if not user_id:
-            return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
-        from_location = data.get('from_location')
-        to_location = data.get('to_location')
-        departure_time = datetime.datetime.strptime(data.get('departure_time'), "%Y-%m-%dT%H:%M")
-        days_of_week = ','.join(data.get('days_of_week', []))
-        available_seats = data.get('available_seats')
-        price_per_person = data.get('price_per_person')
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''INSERT INTO recurring_rides 
-                     (user_id, from_location, to_location, departure_time, days_of_week, available_seats, price_per_person)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                 (user_id, from_location, to_location, departure_time, days_of_week, available_seats, price_per_person))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'Pravidelná jízda vytvořena'}), 201
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/rides/recurring', methods=['GET'])
-def get_recurring_rides():
-    try:
-        user_id = request.args.get('user_id')
-        
-        if not user_id:
-            return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''SELECT r.*, u.name FROM recurring_rides r
-                     LEFT JOIN users u ON r.user_id = u.id
-                     WHERE r.active = 1 AND (r.user_id = ? OR ? = 0)''', (user_id, user_id))
-        rides = c.fetchall()
-        conn.close()
-        
-        result = []
-        for ride in rides:
-            result.append({
-                'id': ride[0],
-                'driver_name': ride[8] or 'Neznámý řidič',
-                'from_location': ride[2],
-                'to_location': ride[3],
-                'departure_time': ride[4],
-                'days_of_week': ride[5].split(','),
-                'available_seats': ride[6],
-                'price_per_person': ride[7],
-                'active': ride[8]
-            })
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/<path:filename>')
-def serve_static(filename):
-    return send_from_directory('static', filename)
-
-# API pro platby (mock implementace)
-@app.route('/api/payments/create-checkout-session', methods=['POST'])
-def create_checkout_session():
-    try:
-        data = request.get_json()
-        ride_id = data.get('ride_id')
-        user_id = data.get('user_id')
-        amount = data.get('amount')
-        
-        if not user_id:
-            return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
-        
-        # Získej detaily jízdy
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('SELECT from_location, to_location, user_id FROM rides WHERE id = ?', (ride_id,))
-        ride = c.fetchone()
-        
-        if not ride:
-            conn.close()
-            return jsonify({'error': 'Jízda nenalezena'}), 404
-        
-        # Kontrola a výpočet provize
-        if amount is None:
-            return jsonify({'error': 'Částka není zadána'}), 400
-        
-        try:
-            amount = int(amount)
-        except (ValueError, TypeError):
-            return jsonify({'error': 'Neplatná částka'}), 400
-        
-        commission = int(amount * COMMISSION_RATE)
-        driver_amount = amount - commission
-        
-        # Mock platební session (bez Stripe)
-        mock_session_id = f'mock_session_{ride_id}_{user_id}'
-        
-        # Ulož platbu do databáze
-        c.execute('''INSERT INTO payments (ride_id, passenger_id, driver_id, amount, commission, driver_amount, stripe_payment_id, status)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')''',
-                 (ride_id, user_id, ride[2], amount, commission, driver_amount, mock_session_id))
-        conn.commit()
-        conn.close()
-        
-        # QR platební brána s nízkými poplatky
-        qr_payment_url = f'{request.host_url}qr-payment?ride_id={ride_id}&amount={commission}&commission={commission}&driver_amount={driver_amount}'
-        
-        return jsonify({'checkout_url': qr_payment_url}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/qr-payment')
-def qr_payment():
-    ride_id = request.args.get('ride_id')
-    amount = request.args.get('amount', '0')
-    commission = request.args.get('commission', '0')
-    driver_amount = request.args.get('driver_amount', '0')
-    
-    # QR kód pro bankovní platbu
-    qr_data = f'SPD*1.0*ACC:CZ2501000001235652280207*AM:{commission}*CC:CZK*MSG:Sveztese.cz #{ride_id}*X-VS:{ride_id}'
-    
-    return f'''
-    <html>
-    <head>
-        <title>QR Platba - Jízda #{ride_id}</title>
-        <meta charset="utf-8">
-        <style>
-            body {{ font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; text-align: center; }}
-            .qr-code {{ margin: 20px 0; }}
-            .amount {{ font-size: 24px; font-weight: bold; color: #007bff; margin: 20px 0; }}
-            .btn {{ background: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px; text-decoration: none; display: inline-block; }}
-            .btn-cancel {{ background: #dc3545; }}
-        </style>
-    </head>
-    <body>
-        <h1>📱 QR Platba</h1>
-        
-        <div class="amount">
-            K úhradě: {commission} Kč
-        </div>
-        
-        <div class="qr-code">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={qr_data}" alt="QR kód pro platbu">
-        </div>
-        
-        <p><strong>Instrukce:</strong></p>
-        <ol style="text-align: left;">
-            <li>Otevřete bankovní aplikaci</li>
-            <li>Naskenujte QR kód</li>
-            <li>Potvrdte platbu</li>
-            <li>Klikněte "Platba provedena"</li>
-        </ol>
-        
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Účet:</strong> 123-5652280207/0100</p>
-            <p><strong>Variabilní symbol:</strong> {ride_id}</p>
-            <p><strong>Částka:</strong> {commission} Kč</p>
-        </div>
-        
-        <a href="/payment-success?ride_id={ride_id}&amount={amount}&commission={commission}" class="btn">✓ Platba provedena</a>
-        <a href="/payment-cancel" class="btn btn-cancel">❌ Zrušit</a>
-    </body>
-    </html>
-    '''
-
-@app.route('/payment-gateway')
-def payment_gateway():
-    ride_id = request.args.get('ride_id')
-    amount = request.args.get('amount', '0')
-    commission = request.args.get('commission', '0')
-    driver_amount = request.args.get('driver_amount', '0')
-    
-    return f'''
-    <html>
-    <head>
-        <title>Platba za jízdu #{ride_id}</title>
-        <meta charset="utf-8">
-        <style>
-            body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }}
-            .container {{ background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-            .bank-info {{ background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; }}
-            .amount {{ font-size: 24px; font-weight: bold; color: #007bff; text-align: center; margin: 20px 0; }}
-            .btn {{ background: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px 5px; text-decoration: none; display: inline-block; }}
-            .btn-cancel {{ background: #dc3545; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>💳 Platba za jízdu #{ride_id}</h1>
-            
-            <div class="amount">
-                K úhradě: {amount} Kč
-            </div>
-            
-            <div class="bank-info">
-                <h3>🏦 Bankovní údaje pro platbu:</h3>
-                <p><strong>Číslo účtu:</strong> 123-5652280207/0100</p>
-                <p><strong>IBAN:</strong> CZ25 0100 0001 2356 5228 0207</p>
-                <p><strong>SWIFT:</strong> KOMBCZPPXXX</p>
-                <p><strong>Variabilní symbol:</strong> {ride_id}</p>
-                <p><strong>Účel platby:</strong> Spolujízda #{ride_id}</p>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <h4>Detail platby:</h4>
-                <p>Cena jízdy: {amount} Kč</p>
-                <p>Poplatek Sveztese.cz: {commission} Kč (10%)</p>
-                <p>Řidiči: {driver_amount} Kč</p>
-            </div>
-            
-            <p><strong>Instrukce:</strong></p>
-            <ol>
-                <li>Proveďte bankovní převod na výše uvedený účet</li>
-                <li>Jako variabilní symbol uveďte: <strong>{ride_id}</strong></li>
-                <li>Po provedení platby klikněte na "Platba provedena"</li>
-                <li>Kontaktní údaje řidiče získáte po ověření platby</li>
-            </ol>
-            
-            <div style="text-align: center; margin-top: 30px;">
-                <a href="/payment-success?ride_id={ride_id}&amount={amount}&commission={commission}" class="btn">✓ Platba provedena</a>
-                <a href="/payment-cancel" class="btn btn-cancel">❌ Zrušit platbu</a>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
-
-@app.route('/payment-success')
-def payment_success():
-    ride_id = request.args.get('ride_id')
-    amount = request.args.get('amount', '0')
-    commission = request.args.get('commission', '0')
-    driver_amount = int(amount) - int(commission) if amount and commission else 0
-    
-    return f'''
-    <html>
-    <head><title>Platba úspěšná</title></head>
-    <body style="font-family: Arial; text-align: center; padding: 50px;">
-        <h1>🎉 Platba úspěšná!</h1>
-        <p>Vaše místo v jízdě #{ride_id} bylo rezervováno.</p>
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; max-width: 400px; margin-left: auto; margin-right: auto;">
-            <h3>Detail platby:</h3>
-            <p><strong>Poplatek Sveztese.cz:</strong> {commission} Kč (zaplaceno online)</p>
-            <p><strong>Řidiči v hotovosti:</strong> {driver_amount} Kč</p>
-            <p><strong>Celková cena jízdy:</strong> {amount} Kč</p>
-        </div>
-        <p><strong>Důležité:</strong> Zbytek ({driver_amount} Kč) zaplaťte řidiči v hotovosti při jízdě.</p>
-        <p>Brzy vás bude kontaktovat řidič.</p>
-        <a href="/" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Zpět do aplikace</a>
-    </body>
-    </html>
-    '''
-
-@app.route('/payment-cancel')
-def payment_cancel():
-    return f'''
-    <html>
-    <head><title>Platba zrušena</title></head>
-    <body style="font-family: Arial; text-align: center; padding: 50px;">
-        <h1>❌ Platba zrušena</h1>
-        <p>Platba byla zrušena. Můžete to zkusit znovu.</p>
-        <a href="/" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Zpět do aplikace</a>
-    </body>
-    </html>
-    '''
-
-@app.route('/terms')
-def terms():
-    return render_template('terms.html')
-
-@app.route('/privacy')
-def privacy():
-    return render_template('privacy.html')
-
-
-
-@app.route('/sitemap.xml', methods=['GET'])
-def sitemap_xml():
-    sitemap = '''<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://www.sveztese.cz/</loc>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://www.sveztese.cz/search</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.sveztese.cz/terms</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://www.sveztese.cz/privacy</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-</urlset>'''
-    
-    return Response(sitemap, mimetype='application/xml', headers={
-        'Cache-Control': 'public, max-age=86400',
-        'Access-Control-Allow-Origin': '*'
-    })
-
-@app.route('/api/notifications/send', methods=['POST'])
-def send_notification():
-    try:
-        data = request.get_json()
-        recipient = data.get('recipient')
-        title = data.get('title')
-        body = data.get('body')
-        
-        print(f"📱 Notifikace pro {recipient}: {title} - {body}")
-        
-        return jsonify({'message': 'Notifikace odeslána'}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users/location', methods=['POST'])
-def update_user_location():
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        lat = data.get('lat')
-        lng = data.get('lng')
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Vytvoř tabulku pro polohy pokud neexistuje
-        c.execute('''CREATE TABLE IF NOT EXISTS user_locations
-                     (user_id INTEGER PRIMARY KEY,
-                      lat REAL NOT NULL,
-                      lng REAL NOT NULL,
-                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      FOREIGN KEY (user_id) REFERENCES users (id))''')
-        
-        # Aktualizuj nebo vlož polohu
-        c.execute('''INSERT OR REPLACE INTO user_locations (user_id, lat, lng, updated_at)
-                     VALUES (?, ?, ?, CURRENT_TIMESTAMP)''', (user_id, lat, lng))
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'Poloha aktualizována'}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro seznam uživatelů
-@app.route('/api/users/all', methods=['GET'])
-def get_all_users():
-    try:
-        # Ověř, že uživatel má alespoň jednu dokončenou platbu
-        user_id = request.args.get('user_id', type=int)
-        if user_id:
-            conn = sqlite3.connect(DATABASE)
-            c = conn.cursor()
-            c.execute('SELECT COUNT(*) FROM payments WHERE passenger_id = ? AND status = "completed"', (user_id,))
-            payment_count = c.fetchone()[0]
-            if payment_count == 0:
-                conn.close()
-                return jsonify({'error': 'Přístup pouze pro zaplacené uživatele'}), 403
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT u.id, u.name, u.phone, u.rating, u.total_rides, u.verified, u.created_at, u.home_city,
-                   COUNT(DISTINCT rh1.id) as rides_as_driver,
-                   COUNT(DISTINCT rh2.id) as rides_as_passenger
-            FROM users u
-            LEFT JOIN ride_history rh1 ON u.id = rh1.driver_id
-            LEFT JOIN ride_history rh2 ON u.id = rh2.passenger_id
-            GROUP BY u.id
-            ORDER BY u.rating DESC, u.total_rides DESC
-        ''')
-        
-        users = c.fetchall()
-        conn.close()
-        
-        result = []
-        for user in users:
-            result.append({
-                'id': user[0],
-                'name': user[1],
-                'phone': '***-***-***',  # Skryj celý telefon
-                'rating': user[3] or 5.0,
-                'total_rides': user[4] or 0,
-                'verified': user[5] or False,
-                'last_active': user[6],  # created_at jako last_active
-                'home_city': user[7] or 'Neznámé',
-                'rides_as_driver': user[8] or 0,
-                'rides_as_passenger': user[9] or 0
-            })
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users/<int:user_id>/profile', methods=['GET'])
-def get_user_profile(user_id):
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Základní info o uživateli
-        c.execute('''
-            SELECT u.id, u.name, u.rating, u.total_rides, u.verified, u.created_at, u.bio,
-                   COUNT(DISTINCT rh1.id) as rides_as_driver,
-                   COUNT(DISTINCT rh2.id) as rides_as_passenger
-            FROM users u
-            LEFT JOIN ride_history rh1 ON u.id = rh1.driver_id
-            LEFT JOIN ride_history rh2 ON u.id = rh2.passenger_id
-            WHERE u.id = ?
-            GROUP BY u.id
-        ''', (user_id,))
-        
-        user = c.fetchone()
-        if not user:
-            conn.close()
-            return jsonify({'error': 'Uživatel nenalezen'}), 404
-        
-        # Posledních 5 recenzí
-        c.execute('''
-            SELECT r.rating, r.comment, r.created_at, u.name as reviewer_name
-            FROM ratings r
-            JOIN users u ON r.rater_id = u.id
-            WHERE r.rated_id = ? AND r.comment IS NOT NULL AND r.comment != ''
-            ORDER BY r.created_at DESC
-            LIMIT 5
-        ''', (user_id,))
-        
-        reviews = c.fetchall()
-        
-        # Historie jízd (posledních 10)
-        c.execute('''
-            SELECT rh.from_location, rh.to_location, rh.departure_time, rh.status,
-                   CASE WHEN rh.driver_id = ? THEN 'driver' ELSE 'passenger' END as role
-            FROM ride_history rh
-            WHERE rh.driver_id = ? OR rh.passenger_id = ?
-            ORDER BY rh.completed_at DESC
-            LIMIT 10
-        ''', (user_id, user_id, user_id))
-        
-        history = c.fetchall()
-        conn.close()
-        
-        result = {
-            'id': user[0],
-            'name': user[1],
-            'rating': user[2] or 5.0,
-            'total_rides': user[3] or 0,
-            'verified': user[4] or False,
-            'member_since': user[5],
-            'bio': user[6] or '',
-            'rides_as_driver': user[7] or 0,
-            'rides_as_passenger': user[8] or 0,
-            'reviews': [{
-                'rating': review[0],
-                'comment': review[1],
-                'date': review[2],
-                'reviewer': review[3]
-            } for review in reviews],
-            'recent_rides': [{
-                'from': ride[0],
-                'to': ride[1],
-                'date': ride[2].isoformat(),
-                'status': ride[3],
-                'role': ride[4]
-            } for ride in history]
-        }
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users/locations', methods=['GET'])
-def get_user_locations():
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Získej polohy uživatelů (pouze posledních 5 minut)
-        c.execute('''
-            SELECT ul.user_id, ul.lat, ul.lng, ul.updated_at, u.name
-            FROM user_locations ul
-            JOIN users u ON ul.user_id = u.id
-            WHERE ul.updated_at > datetime('now', '-5 minutes')
-        ''')
-        
-        locations = c.fetchall()
-        conn.close()
-        
-        result = []
-        for loc in locations:
-            result.append({
-                'user_id': loc[0],
-                'lat': loc[1],
-                'lng': loc[2],
-                'updated_at': loc[3],
-                'user_name': loc[4]
-            })
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro oblíbené uživatele
-@app.route('/api/users/favorites', methods=['POST'])
-def add_favorite_user():
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        favorite_user_id = data.get('favorite_user_id')
-        
-        if not user_id:
-            return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Zkontroluj, zda už není v oblíbených
-        c.execute('SELECT id FROM favorite_users WHERE user_id = ? AND favorite_user_id = ?', 
-                 (user_id, favorite_user_id))
-        if c.fetchone():
-            conn.close()
-            return jsonify({'error': 'Uživatel je již v oblíbených'}), 400
-        
-        c.execute('INSERT INTO favorite_users (user_id, favorite_user_id) VALUES (?, ?)',
-                 (user_id, favorite_user_id))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'Uživatel přidán do oblíbených'}), 201
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users/<int:user_id>/favorites', methods=['GET'])
-def get_favorite_users(user_id):
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('''
-            SELECT u.id, u.name, u.rating, u.total_rides, u.verified
-            FROM favorite_users f
-            JOIN users u ON f.favorite_user_id = u.id
-            WHERE f.user_id = ?
-            ORDER BY u.rating DESC
-        ''', (user_id,))
-        
-        favorites = c.fetchall()
-        conn.close()
-        
-        result = []
-        for fav in favorites:
-            result.append({
-                'id': fav[0],
-                'name': fav[1],
-                'rating': fav[2] or 5.0,
-                'total_rides': fav[3] or 0,
-                'verified': fav[4] or False
-            })
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro vyhledávání uživatelů
-@app.route('/api/users/search', methods=['GET'])
-def search_users():
-    try:
-        # Ověř, že uživatel má alespoň jednu dokončenou platbu
-        user_id = request.args.get('user_id', type=int)
-        if user_id:
-            conn = sqlite3.connect(DATABASE)
-            c = conn.cursor()
-            c.execute('SELECT COUNT(*) FROM payments WHERE passenger_id = ? AND status = "completed"', (user_id,))
-            payment_count = c.fetchone()[0]
-            if payment_count == 0:
-                conn.close()
-                return jsonify({'error': 'Přístup pouze pro zaplacené uživatele'}), 403
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        query = request.args.get('q', '').strip()
-        min_rating = request.args.get('min_rating', type=float)
-        verified_only = request.args.get('verified', 'false').lower() == 'true'
-        city_filter = request.args.get('city', '').strip()
-        
-        if not query and not city_filter:
-            return jsonify({'error': 'Zadejte jméno nebo vyberte město'}), 400
-        
-        sql = '''
-            SELECT u.id, u.name, u.rating, u.total_rides, u.verified, u.created_at, u.home_city
-            FROM users u
-            WHERE 1=1
-        '''
-        params = []
-        
-        if query:
-            sql += ' AND u.name LIKE ?'
-            params.append(f'%{query}%')
-        
-        if min_rating:
-            sql += ' AND u.rating >= ?'
-            params.append(min_rating)
-        
-        if verified_only:
-            sql += ' AND u.verified = 1'
-        
-        if city_filter:
-            sql += ' AND u.home_city = ?'
-            params.append(city_filter)
-        
-        # Debug výpisy
-        print(f"DEBUG: query='{query}', city_filter='{city_filter}'")
-        print(f"DEBUG: SQL={sql}")
-        print(f"DEBUG: params={params}")
-        
-        sql += ' ORDER BY u.rating DESC, u.total_rides DESC LIMIT 20'
-        
-        c.execute(sql, params)
-        users = c.fetchall()
-        print(f"DEBUG: Nalezeno {len(users)} uživatelů")
-        for user in users:
-            print(f"DEBUG: - {user[1]}: {user[6]}")
-        conn.close()
-        
-        result = []
-        for user in users:
-            result.append({
-                'id': user[0],
-                'name': user[1],
-                'rating': user[2] or 5.0,
-                'total_rides': user[3] or 0,
-                'verified': user[4] or False,
-                'last_active': user[5],
-                'home_city': user[6] or 'Neznámé'
-            })
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro přidání jízdy do historie
-@app.route('/api/rides/<int:ride_id>/complete', methods=['POST'])
-def complete_ride(ride_id):
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        
-        if not user_id:
-            return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Získej detaily jízdy
-        c.execute('''
-            SELECT r.id, r.user_id, r.from_location, r.to_location, r.departure_time, r.price_per_person
-            FROM rides r WHERE r.id = ?
-        ''', (ride_id,))
-        
-        ride = c.fetchone()
-        if not ride:
-            conn.close()
-            return jsonify({'error': 'Jízda nenalezena'}), 404
-        
-        # Získej všechny pasažéry
-        c.execute('''
-            SELECT res.passenger_id FROM reservations res
-            WHERE res.ride_id = ? AND res.status = 'confirmed'
-        ''', (ride_id,))
-        
-        passengers = c.fetchall()
-        
-        # Přidej do historie pro řidiče
-        c.execute('''
-            INSERT INTO ride_history (ride_id, driver_id, from_location, to_location, departure_time, price_per_person)
-            VALUES (?, ?, ?, ?, ?, ?) 
-        ''', (ride[0], ride[1], ride[2], ride[3], ride[4].isoformat(), ride[5]))
-        
-        # Přidej do historie pro každého pasažéra
-        for passenger in passengers:
-            c.execute('''
-                INSERT INTO ride_history (ride_id, driver_id, passenger_id, from_location, to_location, departure_time, price_per_person)
-                VALUES (?, ?, ?, ?, ?, ?, ?) 
-            ''', (ride[0], ride[1], passenger[0], ride[2], ride[3], ride[4].isoformat(), ride[5]))
-        
-        # Aktualizuj počet jízd uživatelů
-        c.execute('UPDATE users SET total_rides = total_rides + 1 WHERE id = ?', (ride[1],))
-        for passenger in passengers:
-            c.execute('UPDATE users SET total_rides = total_rides + 1 WHERE id = ?', (passenger[0],))
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'Jízda označena jako dokončená'}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro města
-@app.route('/api/cities', methods=['GET'])
-def get_cities():
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('SELECT name, region, population FROM cities ORDER BY population DESC, name ASC')
-        cities = c.fetchall()
-        conn.close()
-        
-        result = []
-        for city in cities:
-            result.append({
-                'name': city[0],
-                'region': city[1],
-                'population': city[2]
-            })
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro smazání uživatele
-@app.route('/api/users/delete/<user_name>', methods=['DELETE'])
-def delete_user_by_name(user_name):
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Najdi uživatele podle jména
-        c.execute('SELECT id FROM users WHERE name = ?', (user_name,))
-        user = c.fetchone()
-        
-        if not user:
-            conn.close()
-            return jsonify({'error': 'Uživatel nenalezen'}), 404
-        
-        user_id = user[0]
-        
-        # Smaž všechna související data
-        c.execute('DELETE FROM reservations WHERE passenger_id = ?', (user_id,))
-        c.execute('DELETE FROM rides WHERE user_id = ?', (user_id,))
-        c.execute('DELETE FROM messages WHERE sender_id = ?', (user_id,))
-        c.execute('DELETE FROM ratings WHERE rater_id = ? OR rated_id = ?', (user_id, user_id))
-        c.execute('DELETE FROM blocked_users WHERE blocker_id = ? OR blocked_id = ?', (user_id, user_id))
-        c.execute('DELETE FROM favorite_users WHERE user_id = ? OR favorite_user_id = ?', (user_id, user_id))
-        c.execute('DELETE FROM ride_history WHERE driver_id = ? OR passenger_id = ?', (user_id, user_id))
-        c.execute('DELETE FROM user_stats WHERE user_id = ?', (user_id,))
-        
-        # Smaž uživatele
-        c.execute('DELETE FROM users WHERE id = ?', (user_id,))
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': f'Uživatel {user_name} byl smazán'}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Debug endpoint pro kontrolu uživatelů
-@app.route('/api/debug/users', methods=['GET'])
-def debug_users():
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('SELECT name, home_city, phone FROM users ORDER BY name')
-        users = c.fetchall()
-        conn.close()
-        
-        result = []
-        for user in users:
-            result.append({
-                'name': user[0],
-                'home_city': user[1],
-                'phone': user[2]
-            })
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro aktualizaci města uživatele
-@app.route('/api/users/update-city', methods=['POST'])
-def update_user_city():
-    try:
-        data = request.get_json()
-        user_name = data.get('name')
-        home_city = data.get('home_city')
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Aktualizuj město uživatele
-        c.execute('UPDATE users SET home_city = ? WHERE name = ?', (home_city, user_name))
-        
-        if c.rowcount == 0:
-            conn.close()
-            return jsonify({'error': 'Uživatel nenalezen'}), 404
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': f'Město {home_city} přidáno uživateli {user_name}'}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Webhook pro Stripe platby
-@app.route('/webhook/stripe', methods=['POST'])
-def stripe_webhook():
-    payload = request.get_data()
-    sig_header = request.headers.get('Stripe-Signature')
-    
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_test')
-        )
-    except ValueError:
-        return 'Invalid payload', 400
-    except stripe.error.SignatureVerificationError:
-        return 'Invalid signature', 400
-    
-    # Zpracuj úspěšnou platbu
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        
-        # Získej metadata
-        ride_id = session['metadata']['ride_id']
-        user_id = session['metadata']['user_id']
-        amount = int(session['metadata']['amount'])
-        commission = int(session['metadata']['commission'])
-        driver_amount = amount - commission
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Aktualizuj status platby
-        c.execute('UPDATE payments SET status = "completed" WHERE stripe_payment_id = ?', (session['id'],))
-        
-        # Získej řidiče
-        c.execute('SELECT user_id FROM rides WHERE id = ?', (ride_id,))
-        driver = c.fetchone()
-        
-        if driver:
-            driver_id = driver[0]
-            
-            # Ulož platbu do databáze
-            c.execute('''INSERT INTO payments (ride_id, passenger_id, driver_id, amount, commission, driver_amount, stripe_payment_id, status)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, "completed")''',
-                     (ride_id, user_id, driver_id, amount, commission, driver_amount, session['id']))
-            
-            # TODO: Zde byš měl poslat peníze řidiči
-            # Např. přes Stripe Connect nebo bankovní převod
-            print(f"PLATBA: {driver_amount} Kč pro řidiče {driver_id}, provize {commission} Kč")
-        
-        conn.commit()
-        conn.close()
-    
-    return 'Success', 200
-
-# API pro přidání bankovního účtu řidiče
-@app.route('/api/driver/bank-account', methods=['POST'])
-def add_driver_bank_account():
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        bank_account = data.get('bank_account')
-        iban = data.get('iban')
-        account_holder = data.get('account_holder')
-        
-        if not user_id:
-            return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
-        
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Ulož nebo aktualizuj bankovní účet
-        c.execute('''INSERT OR REPLACE INTO driver_accounts (user_id, bank_account, iban, account_holder)
-                     VALUES (?, ?, ?, ?)''',
-                 (user_id, bank_account, iban, account_holder))
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'Bankovní účet uložen'}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API pro vyčištění databáze
-@app.route('/api/admin/cleanup', methods=['POST'])
-def cleanup_database():
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        
-        # Smaž uživatele bez domovského města
-        c.execute('DELETE FROM users WHERE home_city IS NULL OR home_city = ""')
-        deleted_users = c.rowcount
-        
-        # Smaž jízdy s neplatnou cenou (NULL, 0 nebo záporná)
-        c.execute('DELETE FROM rides WHERE price_per_person IS NULL OR price_per_person <= 0')
-        deleted_rides = c.rowcount
-        
-        conn.commit()
-        conn.close()
-        
-        return jsonify({
-            'message': 'Databáze vyčištěna',
-            'deleted_users': deleted_users,
-            'deleted_rides': deleted_rides
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
