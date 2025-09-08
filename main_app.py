@@ -262,7 +262,7 @@ def get_all_users_redirect():
 def list_users():
     try:
         with db.session.begin():
-            users = db.session.execute(db.text('SELECT id, name, phone, password_hash, created_at FROM users ORDER BY created_at DESC')).fetchall()
+            users = db.session.execute(db.text('SELECT id, name, phone, password_hash, created_at, rating FROM users ORDER BY created_at DESC')).fetchall()
         
         result = []
         for user in users:
@@ -272,7 +272,8 @@ def list_users():
                 'name': user[1],
                 'phone': user[2],
                 'password_hash': user[3],
-                'created_at': created_at_val.isoformat() if created_at_val else None
+                'created_at': created_at_val.isoformat() if created_at_val else None,
+                'driver_rating': user[5] or 5.0
             })
         
         return jsonify(result), 200
