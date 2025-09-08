@@ -1914,7 +1914,7 @@ function displayAllRides(rides) {
   let html = `<h3>Dostupné jízdy ve vašem okolí (${rides.length}):</h3>`;
   rides.forEach((ride) => {
     const distanceText = ride.distance > 0 ? ` - ${ride.distance} km` : "";
-    const ratingStars = "⭐".repeat(Math.floor(ride.driver_rating));
+    const ratingStars = \"⭐\".repeat(Math.floor(ride.driver_rating || 0));
 
     // Určení barvy a textu podle typu jízdy
     let backgroundColor = "rgb(249, 249, 249)";
@@ -2038,7 +2038,7 @@ async function searchRides() {
                 <div class=\"ride-item\">
                     <h4>🚗 ${ 
       ride.driver_name
-    } <span class=\"ride-rating\">${ratingStars} (${ride.driver_rating.toFixed(
+    } <span class=\"ride-rating\">${ratingStars} (${(ride.driver_rating || 0).toFixed(
       1
     )})
     </span></h4>
@@ -2135,7 +2135,7 @@ function addRideMarkersToMap(rides) {
     }</p>
                 <p><strong>Cena:</strong> ${ride.price_per_person} Kč</p>
                 <p><strong>Místa:</strong> ${ride.available_seats}</p>
-                <p>${ratingStars} (${ride.driver_rating.toFixed(1)})
+                <p>${ratingStars} (${(ride.driver_rating || 0).toFixed(1)})
                 <div style=\"margin-top: 10px;\">
                     <button onclick=\"openDirectChat('${
       ride.driver_name
