@@ -984,6 +984,48 @@ def send_message():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/users/<int:user_id>/profile', methods=['GET'])
+def get_user_profile(user_id):
+    try:
+        with db.session.begin():
+            user = db.session.execute(db.text('SELECT id, name, phone, email, rating, created_at, home_city FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
+            
+            if not user:
+                return jsonify({'error': 'Uživatel nenalezen'}), 404
+            
+            # Základní profil
+            profile = {
+                'id': user[0],
+                'name': user[1],
+                'phone': user[2],
+                'email': user[3] or '',
+                'rating': float(user[4]) if user[4] is not None else 5.0,
+                'member_since': parse_datetime_str(user[5]).isoformat() if user[5] else None,
+                'home_city': user[6] or 'Neznámé',
+                'verified': False,
+                'bio': '',
+                'total_rides': 0,
+                'rides_as_driver': 0,
+                'rides_as_passenger': 0,
+                'reviews': [],
+                'recent_rides': []
+            }
+            
+            # Počet jízd jako řidič
+            driver_rides = db.session.execute(db.text('SELECT COUNT(*) FROM rides WHERE user_id = :user_id'), {'user_id': user_id}).fetchone()
+            profile['rides_as_driver'] = driver_rides[0] if driver_rides else 0
+            
+            # Počet jízd jako pasažér
+            passenger_rides = db.session.execute(db.text('SELECT COUNT(*) FROM reservations WHERE passenger_id = :user_id AND status = "confirmed"'), {'user_id': user_id}).fetchone()
+            profile['rides_as_passenger'] = passenger_rides[0] if passenger_rides else 0
+            
+            profile['total_rides'] = profile['rides_as_driver'] + profile['rides_as_passenger']
+            
+        return jsonify(profile), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/users/<user_name>/reviews', methods=['GET'])
 def get_user_reviews(user_name):
     try:
