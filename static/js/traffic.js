@@ -96,7 +96,7 @@ class TrafficManager {
         if (distance < 0.5) {
             instruction = `Za ${Math.round(distance * 1000)} metrů pokračujte k ${nextWaypoint.name || 'dalšímu bodu'}.`;
         } else {
-            instruction = `Za ${distance.toFixed(1)} kilometrů pokračujte k ${nextWaypoint.name || 'dalšímu bodu'}.`;
+            instruction = `Za ${(distance || 0).toFixed(1)} kilometrů pokračujte k ${nextWaypoint.name || 'dalšímu bodu'}.`;
         }
 
         const utterance = new SpeechSynthesisUtterance(instruction);

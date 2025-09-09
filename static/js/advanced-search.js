@@ -221,7 +221,7 @@ class AdvancedSearch {
             return users.map(user => ({
                 id: `user_${user.id}`,
                 text: user.name,
-                subtitle: `⭐ ${user.rating.toFixed(1)} • ${user.phone}`,
+                subtitle: `⭐ ${(user.rating || 0).toFixed(1)} • ${user.phone}`,
                 type: 'user',
                 icon: '👤',
                 data: user,
