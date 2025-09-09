@@ -348,69 +348,11 @@
         </div>
     </div>
 
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="/static/js/cookies.js"></script>
     <script>
         let currentUser = null;
-        let socket = null;
         let currentChatRide = null;
         let currentChatType = null;
-        
-        // Inicializace SocketIO
-        function initializeSocket() {
-            if (socket) return;
-            
-            try {
-                socket = io();
-                
-                socket.on('connect', function() {
-                    console.log('Socket připojen');
-                });
-                
-                socket.on('disconnect', function() {
-                    console.log('Socket odpojen');
-                });
-                
-                socket.on('connect_error', function(error) {
-                    console.log('Socket chyba:', error);
-                });
-            
-            socket.on('new_chat_message', function(data) {
-                if (currentChatRide && document.getElementById('floatingChat').style.display === 'block') {
-                    // Přidej zprávu přímo do chatu bez nového načítání
-                    const chatMessages = document.getElementById('floatingChatMessages');
-                    const isOwn = currentUser && data.user_name === currentUser.name;
-                    const align = isOwn ? 'right' : 'left';
-                    const bgColor = isOwn ? '#007bff' : '#6c757d';
-                    
-                    const messageHtml = `
-                        <div style="text-align: ${align}; margin: 8px 0;">
-                            <div style="display: inline-block; background: ${bgColor}; color: white; padding: 6px 10px; border-radius: 12px; max-width: 80%; font-size: 14px;">
-                                <div style="font-size: 11px; opacity: 0.8;">${data.user_name}</div>
-                                <div>${data.message}</div>
-                                <div style="font-size: 10px; opacity: 0.6;">${new Date(data.timestamp).toLocaleTimeString()}</div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    chatMessages.innerHTML += messageHtml;
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            });
-            
-            socket.on('user_joined', function(data) {
-                console.log('Uživatel se připojil:', data.message);
-            });
-            
-            socket.on('user_left', function(data) {
-                console.log('Uživatel odešel:', data.message);
-            });
-            
-            } catch (error) {
-                console.error('Chyba při inicializaci SocketIO:', error);
-                socket = null;
-            }
-        }
 
         function showMessage(text, type = 'success') {
             const msg = document.getElementById('message');
@@ -1222,15 +1164,7 @@
             
             console.log('Opening floating chat:', type, rideId, partnerName);
             
-            // Připoj se k chat room přes SocketIO
-            if (socket && socket.connected) {
-                socket.emit('join_ride_chat', {
-                    ride_id: rideId,
-                    user_name: currentUser.name
-                });
-            } else {
-                console.log('SocketIO není připojen, použije se pouze HTTP chat');
-            }
+            console.log('Opening chat for ride:', rideId);
             
             // Otevři plovoucí chat
             document.getElementById('floatingChatTitle').textContent = `💬 ${partnerName}`;
@@ -1241,14 +1175,6 @@
         }
         
         function closeFloatingChat() {
-            // Opusť chat room přes SocketIO
-            if (socket && currentChatRide && currentUser) {
-                socket.emit('leave_ride_chat', {
-                    ride_id: currentChatRide,
-                    user_name: currentUser.name
-                });
-            }
-            
             document.getElementById('floatingChat').style.display = 'none';
             currentChatRide = null;
             currentChatType = null;
@@ -1311,18 +1237,8 @@
                 });
                 
                 if (response.ok) {
-                    // Pošli zprávu přes SocketIO pro real-time aktualizaci
-                    if (socket) {
-                        socket.emit('send_chat_message', {
-                            ride_id: currentChatRide,
-                            user_name: currentUser.name,
-                            sender_id: currentUser.id,
-                            message: message
-                        });
-                    }
-                    
                     messageInput.value = '';
-                    // Zpráva se aktualizuje automaticky přes SocketIO event
+                    loadFloatingChatMessages(currentChatRide);
                 } else {
                     showMessage('Chyba při odesílání zprávy', 'error');
                 }
@@ -2242,15 +2158,6 @@
         checkSavedLogin();
         updateUI();
         loadCities();
-        
-        // SocketIO inicializace až po načtení stránky
-        setTimeout(() => {
-            try {
-                initializeSocket();
-            } catch (error) {
-                console.log('SocketIO nedostupné:', error);
-            }
-        }, 1000);
         
         
         
