@@ -1830,7 +1830,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <h3>${user.name} ${user.verified ? '✓' : ''}</h3>
-                                <div>⭐ ${user.rating.toFixed(1)} | 🚗 ${user.total_rides} jízd | 👥 Řidič: ${user.rides_as_driver}x, Pasažér: ${user.rides_as_passenger}x</div>
+                                <div>⭐ ${(user.rating || 0).toFixed(1)} | 🚗 ${user.total_rides} jízd | 👥 Řidič: ${user.rides_as_driver}x, Pasažér: ${user.rides_as_passenger}x</div>
                                 <div style="font-size: 12px; color: #666;">Poslední aktivita: ${new Date(user.last_active).toLocaleDateString()}</div>
                             </div>
                             <div style="text-align: right;">
@@ -1887,7 +1887,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <h3>${user.name} ${user.verified ? '✓' : ''}</h3>
-                                <div>⭐ ${user.rating.toFixed(1)} | 🚗 ${user.total_rides} jízd | 🏠 ${user.home_city || 'Neznámé'}</div>
+                                <div>⭐ ${(user.rating || 0).toFixed(1)} | 🚗 ${user.total_rides} jízd | 🏠 ${user.home_city || 'Neznámé'}</div>
                                 <div style="font-size: 12px; color: #666;">Poslední aktivita: ${new Date(user.last_active).toLocaleDateString()}</div>
                             </div>
                             <div>
@@ -1943,7 +1943,7 @@
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
                             <div style="text-align: center;">
-                                <div style="font-size: 24px; font-weight: bold; color: #007bff;">${profile.rating.toFixed(1)}</div>
+                                <div style="font-size: 24px; font-weight: bold; color: #007bff;">${(profile.rating || 0).toFixed(1)}</div>
                                 <div style="font-size: 12px; color: #666;">⭐ Hodnocení</div>
                             </div>
                             <div style="text-align: center;">
@@ -2080,7 +2080,7 @@
                             <div>
                                 <h3>${user.name} ${user.verified ? '<span style="color: #4caf50;">✓</span>' : ''}</h3>
                                 <div style="display: flex; gap: 15px; margin: 5px 0;">
-                                    <span>⭐ ${user.rating.toFixed(1)}</span>
+                                    <span>⭐ ${(user.rating || 0).toFixed(1)}</span>
                                     <span>🚗 ${user.total_rides} jízd</span>
                                     <span>🏠 ${user.home_city || 'Neznámé'}</span>
                                     <span>👥 Řidič: ${user.rides_as_driver}x</span>
