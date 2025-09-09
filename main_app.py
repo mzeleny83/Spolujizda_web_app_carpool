@@ -160,7 +160,7 @@ def get_driver_rides(user_id):
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
                 'driver_name': ride[9],
-                'driver_rating': ride[10] or 5.0,
+                'driver_rating': float(ride[10]) if ride[10] is not None else 5.0,
                 'reservations_count': ride[11] or 0
             })
         
@@ -277,7 +277,7 @@ def list_users():
                 'phone': user[2],
                 'password_hash': user[3],
                 'created_at': created_at_val.isoformat() if created_at_val else None,
-                'driver_rating': user[5] or 5.0
+                'driver_rating': float(user[5]) if user[5] is not None else 5.0
             })
         
         return jsonify(result), 200
@@ -401,7 +401,7 @@ def login():
                 'message': 'Přihlášení úspěšné',
                 'user_id': user[0],
                 'name': user[1],
-                'rating': user[2] or 5.0
+                'rating': float(user[2]) if user[2] is not None else 5.0
             }), 200
         else:
             return jsonify({'error': 'Neplatné přihlašovací údaje'}), 401
@@ -556,7 +556,7 @@ def search_rides():
                 'id': ride[0],
                 'user_id': ride[1],
                 'driver_name': ride[9],
-                'driver_rating': ride[10] or 5.0,
+                'driver_rating': float(ride[10]) if ride[10] is not None else 5.0,
                 'from_location': ride[2],
                 'to_location': ride[3],
                 'departure_time': departure_time_val.isoformat() if departure_time_val else None,
@@ -601,7 +601,7 @@ def search_user():
             'name': user[1],
             'phone': user[2],
             'email': user[3] or '',
-            'rating': user[4] or 5.0
+            'rating': float(user[4]) if user[4] is not None else 5.0
         }), 200
         
     except Exception as e:
@@ -621,7 +621,7 @@ def get_all_rides():
                 'id': ride[0],
                 'user_id': ride[1],
                 'driver_name': (ride[9] if len(ride) > 9 else None) or 'Neznámý řidič',
-                'driver_rating': (ride[10] if len(ride) > 10 else None) or 5.0,
+                'driver_rating': float(ride[10]) if len(ride) > 10 and ride[10] is not None else 5.0,
                 'from_location': ride[2],
                 'to_location': ride[3],
                 'departure_time': departure_time_val.isoformat() if departure_time_val else None,
