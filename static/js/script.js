@@ -669,9 +669,9 @@ function initializeSocket() {
   socket.on("live_location_update", (data) => {
     addChatMessage(
       "Poloha",
-      `📍 ${data.user_name} sdílí svou polohu: ${data.lat.toFixed(
+      `📍 ${data.user_name} sdílí svou polohu: ${(data.lat || 0).toFixed(
         4
-      )}, ${data.lng.toFixed(4)}`,
+      )}, ${(data.lng || 0).toFixed(4)}`,
       data.timestamp,
       true
     );
@@ -972,9 +972,9 @@ function startTracking() {
 
             document.getElementById(
               "locationStatus"
-            ).textContent = `GPS: Aktivní (${lat.toFixed(6)}, ${lng.toFixed(
+            ).textContent = `GPS: Aktivní (${(lat || 0).toFixed(6)}, ${(lng || 0).toFixed(
               6
-            )}) ±${accuracy.toFixed(0)}m`;
+            )}) ±${(accuracy || 0).toFixed(0)}m`;
           },
           function (error) {
             console.error("Chyba při sledování:", error);
@@ -1672,7 +1672,7 @@ function updateRangeValue(value) {
 function updateRatingValue(value) {
   const rating = parseFloat(value);
   document.getElementById("ratingValue").textContent =
-    rating === 0 ? "0" : rating.toFixed(1);
+    rating === 0 ? "0" : (rating || 0).toFixed(1);
   updateSliderBackground("minRating", value, 0, 5);
 }
 
@@ -2038,7 +2038,7 @@ async function searchRides() {
                 <div class=\"ride-item\">
                     <h4>🚗 ${ 
       ride.driver_name
-    } <span class=\"ride-rating\">${ratingStars} (${(ride.driver_rating || 0).toFixed(
+    } <span class=\"ride-rating\">${ratingStars} (${((ride.driver_rating || 0)).toFixed(
       1
     )})
     </span></h4>
@@ -2135,7 +2135,7 @@ function addRideMarkersToMap(rides) {
     }</p>
                 <p><strong>Cena:</strong> ${ride.price_per_person} Kč</p>
                 <p><strong>Místa:</strong> ${ride.available_seats}</p>
-                <p>${ratingStars} (${(ride.driver_rating || 0).toFixed(1)})
+                <p>${ratingStars} (${((ride.driver_rating || 0)).toFixed(1)})
                 <div style=\"margin-top: 10px;\">
                     <button onclick=\"openDirectChat('${
       ride.driver_name

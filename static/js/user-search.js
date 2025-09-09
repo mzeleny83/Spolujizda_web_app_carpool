@@ -44,7 +44,7 @@ function displayFoundUser(user) {
         <div style="padding: 10px; background: #f0f8ff; border-radius: 8px; margin: 10px 0;">
             <h4>👤 ${user.name}</h4>
             <p>📞 ${user.phone}</p>
-            <p>⭐ Hodnocení: ${user.rating.toFixed(1)}</p>
+            <p>⭐ Hodnocení: ${(user.rating || 0).toFixed(1)}</p>
             <button onclick="showUserOnMap('${user.name}')" style="background: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px; margin: 5px;">📍 Zobrazit na mapě</button>
             <button onclick="startNavigationToUser('${user.name}')" style="background: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 5px; margin: 5px;">🧭 Navigovat</button>
         </div>
