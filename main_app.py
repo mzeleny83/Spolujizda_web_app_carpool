@@ -1003,12 +1003,7 @@ def get_user_profile(user_id):
                 'member_since': parse_datetime_str(user[5]).isoformat() if user[5] else None,
                 'home_city': user[6] or 'Neznámé',
                 'verified': False,
-                'bio': '',
-                'total_rides': 0,
-                'rides_as_driver': 0,
-                'rides_as_passenger': 0,
-                'reviews': [],
-                'recent_rides': []
+                'bio': ''
             }
             
             # Počet jízd jako řidič
@@ -1021,9 +1016,47 @@ def get_user_profile(user_id):
             
             profile['total_rides'] = profile['rides_as_driver'] + profile['rides_as_passenger']
             
+            # Načtení recenzí
+            reviews_data = db.session.execute(db.text("""
+                SELECT r.rating, r.comment, r.created_at, u.name as rater_name
+                FROM ratings r
+                JOIN users u ON r.rater_id = u.id
+                WHERE r.rated_id = :user_id AND r.comment IS NOT NULL AND r.comment != ''
+                ORDER BY r.created_at DESC
+                LIMIT 10
+            """), {'user_id': user_id}).fetchall()
+            
+            profile['reviews'] = []
+            for review in reviews_data:
+                profile['reviews'].append({
+                    'rating': review[0],
+                    'comment': review[1],
+                    'date': parse_datetime_str(review[2]).isoformat() if review[2] else None,
+                    'reviewer': review[3]
+                })
+            
+            # Načtení posledních jízd
+            recent_rides_data = db.session.execute(db.text("""
+                SELECT 'driver' as role, from_location, to_location, departure_time as date FROM rides WHERE user_id = :user_id
+                UNION ALL
+                SELECT 'passenger' as role, r.from_location, r.to_location, r.departure_time as date FROM reservations res JOIN rides r ON res.ride_id = r.id WHERE res.passenger_id = :user_id AND res.status = 'confirmed'
+                ORDER BY date DESC
+                LIMIT 5
+            """), {'user_id': user_id}).fetchall()
+            
+            profile['recent_rides'] = []
+            for ride in recent_rides_data:
+                profile['recent_rides'].append({
+                    'role': ride[0],
+                    'from': ride[1],
+                    'to': ride[2],
+                    'date': parse_datetime_str(ride[3]).isoformat() if ride[3] else None
+                })
+            
         return jsonify(profile), 200
         
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/users/<user_name>/reviews', methods=['GET'])

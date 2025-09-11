@@ -1751,6 +1751,8 @@
                 const response = await fetch(`/api/users/${userId}/profile`);
                 const profile = await response.json();
                 
+                console.log('User profile data:', profile);
+
                 document.getElementById('userProfileTitle').textContent = `👤 ${profile.name}`;
                 
                 const reviewsHtml = profile.reviews.length > 0 ? 
@@ -1817,6 +1819,7 @@
                 `;
                 
             } catch (error) {
+                console.error('Error loading user profile:', error);
                 contentDiv.innerHTML = '❌ Chyba při načítání profilu: ' + error.message;
             }
         }
