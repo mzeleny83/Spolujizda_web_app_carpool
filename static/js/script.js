@@ -44,22 +44,12 @@ function checkUserLogin() {
   const userPhone = localStorage.getItem("user_phone");
 
   if (userId && userName && userPhone) {
-    updateUIForLoggedInUser(userName);
+    // User is logged in, update UI
+    const userNameInput = document.getElementById("userName");
+    if (userNameInput) {
+        userNameInput.value = userName;
+    }
   }
-}
-
-function updateUIForLoggedInUser(userName) {
-  document.getElementById("loginButtons").style.display = "none";
-  const welcomeMsg = document.getElementById("welcomeMessage");
-  welcomeMsg.textContent = `Vítejte, ${userName}!`;
-  welcomeMsg.style.display = "block";
-  document.getElementById("logoutButton").style.display = "block";
-}
-
-function updateUIForLoggedOutUser() {
-  document.getElementById("loginButtons").style.display = "block";
-  document.getElementById("welcomeMessage").style.display = "none";
-  document.getElementById("logoutButton").style.display = "none";
 }
 
 // PWA inicializace
@@ -98,125 +88,6 @@ function requestNotificationPermission() {
   }
 }
 
-function sendNotification(title, body) {
-  if ("serviceWorker" in navigator && "Notification" in window) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.showNotification(title, {
-        body: body,
-        icon: "/static/images/app_icon.png",
-        vibrate: [200, 100, 200],
-      });
-    });
-  }
-}
-
-function normalizePhoneNumber(phone) {
-  let normalizedPhone = phone.replace(/[^0-9]/g, "");
-  if (normalizedPhone.startsWith("420")) {
-    normalizedPhone = normalizedPhone.substring(3);
-  }
-  return normalizedPhone;
-}
-
-function modalLoginUser() {
-  const phone = document.getElementById("modalLoginPhone").value;
-  const password = document.getElementById("modalLoginPassword").value;
-
-  if (!phone || !password) {
-    alert("Vyplňte všechna pole!");
-    return;
-  }
-
-  const fullPhone = `+420${normalizePhoneNumber(phone)}`;
-
-  fetch("/api/users/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phone: fullPhone, password: password }),
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      return response.json();
-    })
-    .then((data) => {
-      if (data.user_id) {
-        localStorage.setItem("user_id", data.user_id);
-        localStorage.setItem("user_name", data.name);
-        localStorage.setItem("user_phone", fullPhone);
-        updateUIForLoggedInUser(data.name);
-        closeLoginModal();
-        document.getElementById("loginRequiredMessage").style.display = "none";
-      } else {
-        alert(data.error || "Nesprávné přihlašovací údaje");
-      }
-    })
-    .catch((error) => {
-      console.error("Chyba při přihlášení:", error);
-      alert("Chyba při přihlášení");
-    });
-}
-
-function modalRegisterUser() {
-  const phone = document.getElementById("modalRegPhone").value;
-  const name = document.getElementById("modalRegName").value;
-  const email = document.getElementById("modalRegEmail").value;
-  const password = document.getElementById("modalRegPassword").value;
-  const passwordConfirm = document.getElementById("modalRegPasswordConfirm").value;
-
-  if (!name || !phone || !password || !passwordConfirm) {
-    alert("Vyplňte všechna pole!");
-    return;
-  }
-
-  if (password !== passwordConfirm) {
-    alert("Hesla se neshodují!");
-    return;
-  }
-
-  const normalizedPhone = normalizePhoneNumber(phone);
-
-  if (normalizedPhone.length !== 9) {
-    alert("Zadejte platné české telefonní číslo (9 číslic)");
-    return;
-  }
-
-  fetch("/api/users/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: name,
-      phone: `+420${normalizedPhone}`,
-      email: email,
-      password: password,
-      password_confirm: passwordConfirm,
-    }),
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      return response.json();
-    })
-    .then((data) => {
-      if (data.message) {
-        closeRegisterModal();
-        showQuickLogin();
-      }
-    })
-    .catch((error) => {
-      console.error("Chyba při registraci:", error);
-    });
-}
-
-function logoutUser() {
-  localStorage.removeItem("user_id");
-  localStorage.removeItem("user_name");
-  localStorage.removeItem("user_phone");
-  updateUIForLoggedOutUser();
-}
-
 // Inicializace mapy s Leaflet (OpenStreetMap)
 function initializeMap() {
   try {
@@ -248,72 +119,37 @@ function initializeMap() {
 
 // Nastavení event listenerů
 function setupEventListeners() {
-  document.getElementById("rideOfferForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    offerRide();
-  });
+  const rideOfferForm = document.getElementById("rideOfferForm");
+  if (rideOfferForm) {
+      rideOfferForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        offerRide();
+      });
+  }
 
-  document.getElementById("rideSearchForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    searchRides();
-  });
-
-  document.getElementById("showQuickLoginBtn").addEventListener("click", showQuickLogin);
-  document.getElementById("showQuickRegisterBtn").addEventListener("click", showQuickRegister);
-  document.getElementById("trackingBtn").addEventListener("click", toggleTracking);
-  document.getElementById("toggleOfferFormBtn").addEventListener("click", toggleOfferForm);
-  document.getElementById("toggleSearchFormBtn").addEventListener("click", toggleSearchForm);
-  document.getElementById("logoutButton").addEventListener("click", logoutUser);
-  document.getElementById("modalLoginUserBtn").addEventListener("click", modalLoginUser);
-  document.getElementById("modalRegisterUserBtn").addEventListener("click", modalRegisterUser);
-  document.getElementById("closeLoginModalBtn").addEventListener("click", closeLoginModal);
-  document.getElementById("closeRegisterModalBtn").addEventListener("click", closeRegisterModal);
-  document.getElementById("showAllRidesBtn").addEventListener("click", showAllRides);
-}
-
-function showQuickLogin() {
-  document.getElementById("loginModal").style.display = "block";
-}
-
-function showQuickRegister() {
-  document.getElementById("registerModal").style.display = "block";
-}
-
-function closeLoginModal() {
-  document.getElementById("loginModal").style.display = "none";
-  document.getElementById("loginRequiredMessage").style.display = "none";
-}
-
-function closeRegisterModal() {
-  document.getElementById("registerModal").style.display = "none";
-}
-
-function toggleTracking() {
-  if (!checkLoginRequired()) return;
-
-  if (isTracking) {
-    stopTracking();
-  } else {
-    startTracking();
+  const rideSearchForm = document.getElementById("rideSearchForm");
+  if (rideSearchForm) {
+      rideSearchForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        searchRides();
+      });
   }
 }
 
 function startTracking() {
-  const userId = localStorage.getItem("user_id");
-  const userName = localStorage.getItem("user_name");
-
-  if (!userId || !userName) {
-    return;
+  const userName = document.getElementById("userName").value;
+  if (!userName) {
+      alert("Zadejte prosím své jméno.");
+      return;
   }
+  localStorage.setItem("user_name", userName);
 
-  currentUserId = userId;
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       function (position) {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        const accuracy = position.coords.accuracy;
         
         map.setView([lat, lng], 16);
         updateOwnLocation(lat, lng);
@@ -340,9 +176,8 @@ function startTracking() {
         );
 
         isTracking = true;
-        const btn = document.getElementById("trackingBtn");
-        btn.innerHTML = "⏹️ Zastavit sledování";
-        btn.title = "Zastaví sledování GPS polohy";
+        document.getElementById("locationStatus").textContent = "GPS: Aktivní";
+
       },
       function (error) {
         console.error("Chyba při získávání polohy:", error);
@@ -365,10 +200,6 @@ function stopTracking() {
   }
   document.getElementById("locationStatus").textContent = "GPS: Neaktivní";
   isTracking = false;
-
-  const btn = document.getElementById("trackingBtn");
-  btn.innerHTML = "📍 Najít mě a sledovat";
-  btn.title = "Spustí sledování vaší GPS polohy a vycentruje mapu na vaši pozici";
 }
 
 function updateOwnLocation(lat, lng) {
@@ -398,59 +229,15 @@ function updateOwnLocation(lat, lng) {
   }
 }
 
-function toggleOfferForm() {
-  if (!checkLoginRequired()) return;
-
-  const form = document.getElementById("offerForm");
-  if (form.style.display === "block") {
-    form.style.display = "none";
-  } else {
-    hideAllForms();
-    form.style.display = "block";
-  }
-}
-
-function toggleSearchForm() {
-  const form = document.getElementById("searchForm");
-  if (form.style.display === "block") {
-    form.style.display = "none";
-    document.getElementById("results").innerHTML = "";
-  } else {
-    hideAllForms();
-    form.style.display = "block";
-    showAllRides();
-  }
-}
-
-function hideAllForms() {
-  document.getElementById("offerForm").style.display = "none";
-  document.getElementById("searchForm").style.display = "none";
-  document.getElementById("results").innerHTML = "";
-}
-
-function checkLoginRequired() {
-  const userId = localStorage.getItem("user_id");
-  if (!userId) {
-    showLoginRequired();
-    return false;
-  }
-  return true;
-}
-
-function showLoginRequired() {
-  document.getElementById("loginRequiredMessage").style.display = "block";
-  showQuickLogin();
-}
-
 async function offerRide() {
-  const userId = localStorage.getItem("user_id");
-  if (!userId) {
-    alert("Musíte se přihlásit pro nabízení jízd");
+  const userName = localStorage.getItem("user_name");
+  if (!userName) {
+    alert("Musíte zadat své jméno pro nabízení jízd");
     return;
   }
 
   const formData = {
-    user_id: parseInt(userId),
+    user_name: userName,
     from_location: document.getElementById("fromOffer").value,
     to_location: document.getElementById("toOffer").value,
     departure_time: document.getElementById("departureOffer").value,
@@ -480,17 +267,22 @@ async function offerRide() {
   }
 }
 
-async function showAllRides() {
+async function searchRides() {
+  const from = document.getElementById("fromSearch").value;
+  const to = document.getElementById("toSearch").value;
+
   try {
-    const response = await fetch("/api/rides/all");
+    let url = `/api/rides/search-text?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+    const response = await fetch(url);
     if (!response.ok) {
-      alert("Chyba serveru: " + response.status);
-      return;
+      throw new Error(`Server error: ${response.status}`);
     }
     const rides = await response.json();
+
     displayAllRides(rides);
   } catch (error) {
-    alert("Chyba při načítání jízd: " + error.message);
+    alert("Chyba při hledání: " + error.message);
   }
 }
 
@@ -515,26 +307,6 @@ function displayAllRides(rides) {
   resultsContainer.innerHTML = html;
 }
 
-async function searchRides() {
-  const from = document.getElementById("fromSearch").value;
-  const to = document.getElementById("toSearch").value;
-
-  try {
-    const userId = localStorage.getItem("user_id") || "0";
-    let url = `/api/rides/search-text?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&user_id=${userId}`;
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Server error: ${response.status}`);
-    }
-    const rides = await response.json();
-
-    displayAllRides(rides);
-  } catch (error) {
-    alert("Chyba při hledání: " + error.message);
-  }
-}
-
 function clearRoute() {
   routeWaypoints = [];
   if (routeMarkers) {
@@ -554,5 +326,27 @@ function clearRoute() {
   document.getElementById('fromOffer').value = '';
   document.getElementById('toOffer').value = '';
 }
+
+
+// Placeholder functions for index_fixed.html
+function togglePanel() { console.log('togglePanel called'); }
+function showOfferForm() { 
+    document.getElementById('offerForm').style.display = 'block';
+    document.getElementById('searchForm').style.display = 'none';
+}
+function showSearchForm() {
+    document.getElementById('searchForm').style.display = 'block';
+    document.getElementById('offerForm').style.display = 'none';
+}
+function showRecurringForm() { console.log('showRecurringForm called'); }
+function showActiveRides() { console.log('showActiveRides called'); }
+function showSettings() { console.log('showSettings called'); }
+function updateRoutePreview() { console.log('updateRoutePreview called'); }
+function planRoute() { console.log('planRoute called'); }
+function toggleFullscreen() { console.log('toggleFullscreen called'); }
+function centerOnUser() { console.log('centerOnUser called'); }
+function showAllUsers() { console.log('showAllUsers called'); }
+function clearRideMarkers() { console.log('clearRideMarkers called'); }
+function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 
 });
