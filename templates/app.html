@@ -1755,16 +1755,16 @@
 
                 document.getElementById('userProfileTitle').textContent = `👤 ${profile.name}`;
                 
-                const reviewsHtml = profile.reviews.length > 0 ? 
-                    profile.reviews.map(review => `
+                const reviewsHtml = (profile.reviews || []).length > 0 ?
+                    (profile.reviews || []).map(review => `
                         <div style="background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 3px solid #007bff;">
                             <div>⭐ ${review.rating}/5 - ${review.comment}</div>
                             <div style="font-size: 12px; color: #666;">od ${review.reviewer}, ${new Date(review.date).toLocaleDateString()}</div>
                         </div>
                     `).join('') : '<p style="color: #666;">Zatím žádné recenze</p>';
                 
-                const historyHtml = profile.recent_rides.length > 0 ?
-                    profile.recent_rides.map(ride => `
+                const historyHtml = (profile.recent_rides || []).length > 0 ?
+                    (profile.recent_rides || []).map(ride => `
                         <div style="background: #f8f9fa; padding: 8px; margin: 3px 0; border-radius: 3px;">
                             <span style="background: ${ride.role === 'driver' ? '#28a745' : '#007bff'}; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px;">${ride.role === 'driver' ? '🚗 Řidič' : '👥 Pasažér'}</span>
                             ${ride.from} → ${ride.to} (${new Date(ride.date).toLocaleDateString()})
@@ -1808,7 +1808,7 @@
                     </div>
                     
                     <div style="margin-bottom: 20px;">
-                        <h4>💬 Recenze (${profile.reviews.length})</h4>
+                        <h4>💬 Recenze (${(profile.reviews || []).length})</h4>
                         ${reviewsHtml}
                     </div>
                     
