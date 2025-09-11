@@ -1053,6 +1053,7 @@ def get_user_profile(user_id):
                     'date': parse_datetime_str(ride[3]).isoformat() if ride[3] else None
                 })
             
+            print(f"Returning profile for user {user_id}: {json.dumps(profile, indent=2, default=str)}")
         return jsonify(profile), 200
         
     except Exception as e:
