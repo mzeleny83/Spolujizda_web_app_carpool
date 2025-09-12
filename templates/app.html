@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=304&t=1735659900"></script>
+    <script src="/static/js/cookies.js?v=305&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1000,7 +1000,7 @@
             // Vytvoř modal okno s !important styly
             const modal = document.createElement('div');
             modal.className = 'chat-modal';
-            modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(255,0,0,0.9) !important; z-index: 999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; pointer-events: auto !important;';
+            modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0,0,0,0.7) !important; z-index: 999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; pointer-events: auto !important;';
             
             modal.innerHTML = `
                 <div style="background: white !important; width: 90% !important; max-width: 500px !important; height: 80% !important; max-height: 600px !important; border-radius: 15px !important; padding: 25px !important; position: relative !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important; pointer-events: auto !important;" onclick="event.stopPropagation()">
@@ -1034,15 +1034,7 @@
                     console.log('Modal position:', modalElement.getBoundingClientRect());
                     console.log('Modal z-index:', window.getComputedStyle(modalElement).zIndex);
                     
-                    // Test - změň barvu pozadí na červenou pro lepší viditelnost
-                    const overlay = modalElement.querySelector('div');
-                    if (overlay) {
-                        overlay.style.background = 'rgba(255,0,0,0.9)';
-                        console.log('Changed background to red for visibility test');
-                    }
-                    
-                    // Zkus alert jako test
-                    alert('Modal byl vytvořen! Pokud nevidíte červené pozadí, je problém s CSS.');
+                    // Modal je viditelný, už nepotřebujeme debug
                 } else {
                     console.log('Modal NOT found in DOM!');
                 }
