@@ -354,89 +354,92 @@ function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 function openChat(rideId, driverName) {
   console.log('Opening chat with:', driverName, 'for ride:', rideId);
   
-  const chatWindow = window.open('', 'chat', 'width=400,height=600,scrollbars=yes,resizable=yes');
+  // Vytvoříme modal okno místo popup
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center;';
   
-  if (!chatWindow) {
-    alert('Popup okno bylo blokováno prohlížečem. Povolte popup okna pro tuto stránku.');
-    return;
-  }
+  const chatBox = document.createElement('div');
+  chatBox.style.cssText = 'background: white; width: 400px; height: 500px; border-radius: 10px; padding: 20px; position: relative;';
   
-  chatWindow.document.write(`
-    <html>
-    <head>
-      <title>Chat s ${driverName}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 10px; }
-        #messages { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-        #messageInput { width: 70%; padding: 5px; }
-        #sendBtn { width: 25%; padding: 5px; }
-        .message { margin: 5px 0; padding: 5px; border-radius: 5px; }
-        .my-message { background: #e3f2fd; text-align: right; }
-        .other-message { background: #f5f5f5; }
-      </style>
-    </head>
-    <body>
+  chatBox.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
       <h3>Chat s ${driverName}</h3>
-      <div id="messages"></div>
-      <input type="text" id="messageInput" placeholder="Napište zprávu..." onkeypress="if(event.key==='Enter') sendMessage()">
-      <button id="sendBtn" onclick="sendMessage()">Odeslat</button>
-      
-      <script>
-        const rideId = ${rideId};
-        const userName = localStorage.getItem('user_name') || 'Anonym';
-        
-        async function sendMessage() {
-          const input = document.getElementById('messageInput');
-          const message = input.value.trim();
-          if (!message) return;
-          
-          try {
-            const response = await fetch('/api/chat/send', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                ride_id: rideId,
-                sender_name: userName,
-                message: message
-              })
-            });
-            
-            if (response.ok) {
-              input.value = '';
-              loadMessages();
-            }
-          } catch (error) {
-            console.error('Chyba při odesílání:', error);
-          }
-        }
-        
-        async function loadMessages() {
-          try {
-            const response = await fetch('/api/chat/' + rideId + '/messages');
-            const messages = await response.json();
-            
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = '';
-            
-            messages.forEach(msg => {
-              const div = document.createElement('div');
-              div.className = 'message ' + (msg.sender_name === userName ? 'my-message' : 'other-message');
-              div.innerHTML = '<strong>' + msg.sender_name + ':</strong> ' + msg.message + '<br><small>' + new Date(msg.timestamp).toLocaleString() + '</small>';
-              messagesDiv.appendChild(div);
-            });
-            
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-          } catch (error) {
-            console.error('Chyba při načítání zpráv:', error);
-          }
-        }
-        
-        loadMessages();
-        setInterval(loadMessages, 3000);
-      </script>
-    </body>
-    </html>
-  `);
+      <button onclick="this.closest('.modal').remove()" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">✕</button>
+    </div>
+    <div id="chatMessages" style="height: 350px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
+    <div style="display: flex; gap: 10px;">
+      <input type="text" id="chatInput" placeholder="Napište zprávu..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      <button onclick="sendChatMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Odeslat</button>
+    </div>
+  `;
   
-  chatWindow.document.close();
+  modal.className = 'modal';
+  modal.appendChild(chatBox);
+  document.body.appendChild(modal);
+  
+  // Načteme zprávy
+  loadChatMessages(rideId);
+  
+  // Automatické obnovování
+  const interval = setInterval(() => loadChatMessages(rideId), 3000);
+  
+  // Vyčistíme interval při zavření
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      clearInterval(interval);
+      modal.remove();
+    }
+  });
+}
+
+async function sendChatMessage(rideId) {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message) return;
+  
+  const userName = localStorage.getItem('user_name') || 'Anonym';
+  
+  try {
+    const response = await fetch('/api/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ride_id: rideId,
+        sender_name: userName,
+        message: message
+      })
+    });
+    
+    if (response.ok) {
+      input.value = '';
+      loadChatMessages(rideId);
+    }
+  } catch (error) {
+    console.error('Chyba při odesílání:', error);
+  }
+}
+
+async function loadChatMessages(rideId) {
+  try {
+    const response = await fetch('/api/chat/' + rideId + '/messages');
+    const messages = await response.json();
+    
+    const messagesDiv = document.getElementById('chatMessages');
+    if (!messagesDiv) return;
+    
+    const userName = localStorage.getItem('user_name') || 'Anonym';
+    messagesDiv.innerHTML = '';
+    
+    messages.forEach(msg => {
+      const div = document.createElement('div');
+      const isMyMessage = msg.sender_name === userName;
+      div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #e3f2fd; text-align: right; margin-left: 50px;' : 'background: #f5f5f5; margin-right: 50px;'}`;
+      div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${new Date(msg.timestamp).toLocaleString()}</small>`;
+      messagesDiv.appendChild(div);
+    });
+    
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  } catch (error) {
+    console.error('Chyba při načítání zpráv:', error);
+  }
 }
