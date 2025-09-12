@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=285"></script>
+    <script src="/static/js/cookies.js?v=285&t=1735659600"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -986,6 +986,8 @@
         }
         
         async function openChat(type, rideId, partnerName) {
+            console.log('CHAT v285 - Opening chat with:', partnerName, 'for ride:', rideId);
+            
             if (!currentUser) {
                 alert('Musíte se přihlásit pro použití chatu!');
                 return;
