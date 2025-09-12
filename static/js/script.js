@@ -350,6 +350,11 @@ async function loadChatMessages(rideId) {
   }
 }
 
+function testNotificationDisplay() {
+  console.log('TEST - Forcing notification display');
+  showFloatingNotification('Test Uživatel', 'Testovací zpráva pro ověření funkčnosti notifikací', 123);
+}
+
 function showFloatingNotification(senderName, message, rideId) {
   console.log('NOTIFICATION v340 - Showing notification:', senderName, message, rideId);
   
