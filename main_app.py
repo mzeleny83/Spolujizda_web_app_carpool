@@ -1075,19 +1075,20 @@ def get_user_notifications(user_name):
             user_id = user[0]
             print(f"Found user {user_name} with ID {user_id}")
             
-            # Zjednodušená logika - najdi všechny zprávy z posledních 10 minut od jiných uživatelů
+            # Najdi všechny zprávy z posledních 10 minut (bez filtrování)
             ten_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=10)
             print(f"Looking for messages after {ten_minutes_ago} (10 minutes ago)")
             
             messages = db.session.execute(db.text("""
-                SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
+                SELECT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
-                WHERE m.sender_id != :user_id
-                AND m.created_at > :ten_minutes_ago
+                WHERE m.created_at > :ten_minutes_ago
                 ORDER BY m.created_at DESC
                 LIMIT 5
-            """), {'user_id': user_id, 'ten_minutes_ago': ten_minutes_ago}).fetchall()
+            """), {'ten_minutes_ago': ten_minutes_ago}).fetchall()
+            
+            print(f"Found {len(messages)} messages in last 10 minutes")
         
         result = []
         for msg in messages:
@@ -1099,14 +1100,7 @@ def get_user_notifications(user_name):
                 'sender_name': msg[3]
             })
         
-        # Testovací notifikace pro debugging
-        if len(result) == 0 and user_name == "Pokus Pokus":
-            result.append({
-                'ride_id': 34,
-                'message': 'Testovací notifikace - systém funguje!',
-                'created_at': datetime.datetime.now().isoformat(),
-                'sender_name': 'Systém'
-            })
+        # Odebrána testovací notifikace - systém funguje
         
         print(f"Notifications for {user_name}: {len(result)} messages found")
         return jsonify(result), 200
