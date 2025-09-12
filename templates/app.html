@@ -93,8 +93,7 @@
                 <button type="button" class="btn btn-success" onclick="showAll()">📋 Všechny jízdy</button>
                 <button type="button" class="btn" onclick="clearDateTimeFilters()" style="background: #6c757d;">🗑️ Vymazat filtry</button>
                 <button type="button" class="btn" onclick="showMyLocation()" style="background: #17a2b8;">📍 Moje poloha</button>
-                <button type="button" class="btn" onclick="createTestMessage()" style="background: #dc3545;">🧪 Test zprávy</button>
-                <button type="button" class="btn" onclick="testNotificationDisplay()" style="background: #ff6b35;">🔔 Test notifikací</button>
+
             </form>
             
             
@@ -356,28 +355,7 @@
 
     <script>
         // Force override cached functions
-        function testNotificationDisplay() {
-            console.log('TEST v361 - Testing notification system');
-            const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) {
-                alert('Musíte být přihlášeni!');
-                return;
-            }
-            
-            // Přímý test notifikace
-            console.log('TEST v361 - Creating test notification');
-            if (typeof showFloatingNotification === 'function') {
-                showFloatingNotification('Test Uživatel', 'Testovací zpráva', 999);
-            } else {
-                alert('showFloatingNotification function not found!');
-            }
-            
-            alert('Test notifikací spuštěn! Zkontrolujte konzoli.');
-        }
-        
-        function createTestMessage() {
-            alert('Test zprávy - funkce je dostupná!');
-        }
+
         
         // Complete notification system inline
         let shownNotifications = new Set();

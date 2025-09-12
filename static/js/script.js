@@ -298,79 +298,7 @@ function showFloatingNotification(senderName, message, rideId) {
   console.log('NOTIFICATION v361 - Added to DOM, element:', notification);
 }
 
-function testNotificationDisplay() {
-  console.log('TEST v361 - Testing notification system');
-  const currentUser = localStorage.getItem('currentUser');
-  if (!currentUser) {
-    alert('Musíte být přihlášeni!');
-    return;
-  }
-  
-  // Přímý test notifikace
-  console.log('TEST v361 - Creating test notification');
-  showFloatingNotification('Test Uživatel', 'Testovací zpráva', 999);
-  
-  // Zkontroluj skutečné notifikace
-  console.log('TEST v361 - Checking real notifications');
-  checkForNotifications();
-  
-  // Debug info
-  setTimeout(() => {
-    const notifications = document.querySelectorAll('[style*="position: fixed"]');
-    console.log('TEST v361 - Found', notifications.length, 'fixed elements on page');
-    notifications.forEach((el, i) => {
-      console.log(`Element ${i}:`, el.style.cssText, el.innerHTML.substring(0, 50));
-    });
-  }, 1000);
-  
-  alert('Test notifikací spuštěn! Zkontrolujte konzoli.');
-}
 
-async function createTestMessage() {
-  const currentUser = localStorage.getItem('currentUser');
-  if (!currentUser) {
-    alert('Musíte být přihlášeni!');
-    return;
-  }
-  
-  const action = prompt('1 - Odeslat zprávu\n2 - Zkontrolovat notifikace\n3 - Test notifikace');
-  
-  if (action === '1') {
-    const user = JSON.parse(currentUser);
-    try {
-      const response = await fetch('/api/rides/search');
-      const rides = await response.json();
-      if (rides.length === 0) {
-        alert('Žádné jízdy!');
-        return;
-      }
-      const testRide = rides[0];
-      const testMessage = `Test od ${user.name} - ${new Date().toLocaleTimeString()}`;
-      
-      const sendResponse = await fetch('/api/chat/send', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          ride_id: testRide.id,
-          sender_name: user.name,
-          message: testMessage
-        })
-      });
-      
-      if (sendResponse.ok) {
-        alert(`✅ Zpráva odeslána: "${testMessage}"`);
-      } else {
-        alert('❌ Chyba při odesílání');
-      }
-    } catch (error) {
-      alert('❌ Chyba: ' + error.message);
-    }
-  } else if (action === '2') {
-    checkForNotifications();
-  } else if (action === '3') {
-    showFloatingNotification('Test', 'Testovací notifikace', 999);
-  }
-}
 
 // Dummy funkce pro kompatibilitu
 function updateRoutePreview() { console.log('updateRoutePreview called'); }
