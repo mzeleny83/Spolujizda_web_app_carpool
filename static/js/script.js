@@ -221,12 +221,32 @@ function updateOwnLocation(lat, lng) {
           <h4>📍 ${userName}</h4>
           <p>Vaše aktuální poloha</p>
         </div>
-      `;
+      `// Chat functions for ride sharing app
+let map, routeWaypoints = [], routeMarkers = [], routeLine = null, userMarker = null;
 
-      userMarker = L.marker([lat, lng], { icon: userIcon })
-        .addTo(map)
-        .bindPopup(popupContent);
-    }
+function updateUserLocation(lat, lng) {
+  if (map && userMarker) {
+    map.removeLayer(userMarker);
+  }
+  
+  if (map) {
+    const userName = localStorage.getItem('user_name') || 'Vy';
+    const userIcon = L.divIcon({
+      html: '<div style="background: #007bff; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">👤</div>',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+    
+    const popupContent = `
+      <div style="text-align: center; min-width: 150px;">
+        <h4>📍 ${userName}</h4>
+        <p>Vaše aktuální poloha</p>
+      </div>
+    `;
+
+    userMarker = L.marker([lat, lng], { icon: userIcon })
+      .addTo(map)
+      .bindPopup(popupContent);
   }
 }
 
