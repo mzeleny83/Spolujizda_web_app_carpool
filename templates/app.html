@@ -608,7 +608,7 @@
                         <div style="margin-top: 10px;">
                             <button class="btn" onclick="reserveRide(${ride.id})" style="background: #28a745; margin-right: 10px;">🎫 Rezervovat</button>
                             <button class="btn btn-success" onclick="payForRide(${ride.id}, ${ride.price_per_person})">💳 Zaplatit</button>
-                            <button class="btn" onclick="alert('Tlačítko kliknuto!'); openChat('passenger', ${ride.id}, '${ride.driver_name}')" style="background: #17a2b8; margin-left: 10px; padding: 5px 15px;">💬 Chat s řidičem</button>
+                            <button class="btn" onclick="openChat('passenger', ${ride.id}, '${ride.driver_name}')" style="background: #17a2b8; margin-left: 10px; padding: 5px 15px;">💬 Chat s řidičem</button>
                         </div>
                     </div>
                 `).join('');
@@ -640,7 +640,7 @@
                         <div style="margin-top: 10px;">
                             <button class="btn" onclick="reserveRide(${ride.id})" style="background: #28a745; margin-right: 10px;">🎫 Rezervovat</button>
                             <button class="btn btn-success" onclick="payForRide(${ride.id}, ${ride.price_per_person})">💳 Zaplatit</button>
-                            <button class="btn" onclick="alert('Tlačítko kliknuto!'); openChat('passenger', ${ride.id}, '${ride.driver_name}')" style="background: #17a2b8; margin-left: 10px; padding: 5px 15px;">💬 Chat s řidičem</button>
+                            <button class="btn" onclick="openChat('passenger', ${ride.id}, '${ride.driver_name}')" style="background: #17a2b8; margin-left: 10px; padding: 5px 15px;">💬 Chat s řidičem</button>
                         </div>
                     </div>
                 `).join('');
