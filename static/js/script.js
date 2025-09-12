@@ -354,11 +354,49 @@ function testNotificationDisplay() {
   console.log('TEST - Forcing notification display');
   alert('TEST NOTIFIKACE: Toto je testovací notifikace!');
   showFloatingNotification('Test Uživatel', 'Testovací zpráva pro ověření funkčnosti notifikací', 123);
+  
+  // Test notifikačního systému
+  const currentUser = localStorage.getItem('currentUser');
+  if (currentUser) {
+    console.log('Current user found, testing notification check...');
+    checkForNotifications();
+  } else {
+    alert('Není přihlášený uživatel!');
+  }
 }
 
 function showFloatingNotification(senderName, message, rideId) {
-  console.log('NOTIFICATION v346 - Showing notification:', senderName, message, rideId);
+  console.log('NOTIFICATION v347 - Showing notification:', senderName, message, rideId);
   
   // Zkus alert místo DOM elementu
   alert('NOTIFIKACE: ' + senderName + ' napsal: ' + message);
+}
+
+async function checkForNotifications() {
+  const currentUser = localStorage.getItem('currentUser');
+  if (!currentUser) {
+    console.log('NOTIF v347 - No current user');
+    return;
+  }
+  
+  try {
+    const user = JSON.parse(currentUser);
+    const url = `/api/notifications/${encodeURIComponent(user.name)}`;
+    console.log('NOTIF v347 - Checking notifications for:', user.name, 'URL:', url);
+    
+    const response = await fetch(url);
+    const notifications = await response.json();
+    console.log('NOTIF v347 - Notifications response:', notifications);
+    
+    if (notifications.length > 0) {
+      notifications.forEach(notification => {
+        console.log('NOTIF v347 - Found notification:', notification);
+        showFloatingNotification(notification.sender_name, notification.message, notification.ride_id);
+      });
+    } else {
+      console.log('NOTIF v347 - No notifications found');
+    }
+  } catch (error) {
+    console.error('NOTIF v347 - Notification check error:', error);
+  }
 }
