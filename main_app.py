@@ -1014,13 +1014,19 @@ def send_chat_message():
     try:
         data = request.get_json()
         ride_id = data.get('ride_id')
-        sender_id = data.get('sender_id')
+        sender_name = data.get('sender_name')
         message = data.get('message')
         
-        if not all([ride_id, sender_id, message]):
+        if not all([ride_id, sender_name, message]):
             return jsonify({'error': 'Všechna pole jsou povinná'}), 400
         
+        # Find sender_id by name
         with db.session.begin():
+            user = db.session.execute(db.text('SELECT id FROM users WHERE name = :name'), {'name': sender_name}).fetchone()
+            if not user:
+                return jsonify({'error': 'Uživatel nenalezen'}), 404
+            
+            sender_id = user[0]
             db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message) VALUES (:ride_id, :sender_id, :message)'),
                              {'ride_id': ride_id, 'sender_id': sender_id, 'message': message})
         
