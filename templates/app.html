@@ -986,7 +986,11 @@
         }
         
         function openChat(type, rideId, partnerName) {
+            console.log('openChat called:', type, rideId, partnerName);
+            console.log('currentUser:', currentUser);
+            
             if (!currentUser) {
+                alert('Musíte se přihlásit pro použití chatu!');
                 showMessage('Musíte být přihlášeni!', 'error');
                 return;
             }
@@ -994,10 +998,16 @@
             currentChatRide = rideId;
             currentChatType = type;
             
+            console.log('Opening floating chat window');
+            
             // Otevři plovoucí chat
-            document.getElementById('floatingChatTitle').textContent = `💬 ${partnerName}`;
-            document.getElementById('floatingChat').style.display = 'block';
-            document.getElementById('floatingMessageInput').value = '';
+            const chatTitle = document.getElementById('floatingChatTitle');
+            const chatWindow = document.getElementById('floatingChat');
+            const messageInput = document.getElementById('floatingMessageInput');
+            
+            if (chatTitle) chatTitle.textContent = `💬 ${partnerName}`;
+            if (chatWindow) chatWindow.style.display = 'block';
+            if (messageInput) messageInput.value = '';
             
             loadFloatingChatMessages(rideId);
         }
