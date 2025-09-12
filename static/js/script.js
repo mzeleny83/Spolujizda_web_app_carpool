@@ -327,10 +327,14 @@ async function loadChatMessages(rideId) {
       div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #e3f2fd; text-align: right; margin-left: 50px;' : 'background: #f5f5f5; margin-right: 50px;'}`;
       let timeStr = 'Neznámý čas';
       if (msg.created_at) {
+        console.log('Raw date from server:', msg.created_at, typeof msg.created_at);
         try {
           const date = new Date(msg.created_at);
+          console.log('Parsed date:', date, 'isValid:', !isNaN(date.getTime()));
           if (!isNaN(date.getTime())) {
             timeStr = date.toLocaleString();
+          } else {
+            console.error('Invalid date:', msg.created_at);
           }
         } catch (e) {
           console.error('Error parsing date:', msg.created_at, e);
