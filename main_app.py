@@ -1075,34 +1075,30 @@ def get_user_notifications(user_name):
             user_id = user[0]
             print(f"Found user {user_name} with ID {user_id}")
             
-            # Najdi zprávy z posledních 30 minut (pro testování)
+            # Najdi zprávy z posledních 30 minut kde je uživatel účastník jízdy ale není odesílatel
             thirty_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=30)
             print(f"Looking for messages after {thirty_minutes_ago}")
             
-            # Nejdříve zobraz všechny zprávy pro debug
-            all_messages = db.session.execute(db.text("""
-                SELECT m.ride_id, m.message, m.created_at, u.name as sender_name
+            # Najdi jízdy kde je uživatel řidič nebo pasažér
+            messages = db.session.execute(db.text("""
+                SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
+                JOIN rides r ON m.ride_id = r.id
+                LEFT JOIN reservations res ON m.ride_id = res.ride_id AND res.passenger_id = :user_id
+                WHERE m.created_at > :thirty_minutes_ago
+                  AND m.sender_id != :user_id
+                  AND (r.user_id = :user_id OR res.passenger_id = :user_id)
                 ORDER BY m.created_at DESC
                 LIMIT 10
-            """)).fetchall()
+            """), {
+                'user_id': user_id, 
+                'thirty_minutes_ago': thirty_minutes_ago
+            }).fetchall()
             
-            print(f"All recent messages ({len(all_messages)}):")
-            for msg in all_messages:
+            print(f"Found {len(messages)} relevant messages for {user_name}")
+            for msg in messages:
                 print(f"  - {msg[3]}: '{msg[1]}' at {msg[2]}")
-            
-            # Pak filtruj podle času
-            messages = db.session.execute(db.text("""
-                SELECT m.ride_id, m.message, m.created_at, u.name as sender_name
-                FROM messages m
-                JOIN users u ON m.sender_id = u.id
-                WHERE m.created_at > :thirty_minutes_ago
-                ORDER BY m.created_at DESC
-                LIMIT 5
-            """), {'thirty_minutes_ago': thirty_minutes_ago}).fetchall()
-            
-            print(f"Found {len(messages)} messages in last 30 minutes")
         
         result = []
         for msg in messages:
@@ -1124,10 +1120,6 @@ def get_user_notifications(user_name):
             })
         
         print(f"Final notifications for {user_name}: {len(result)} messages")
-        for notif in result:
-            print(f"  Notification: {notif['sender_name']} - {notif['message'][:30]}...")
-        print(f"Returning: {result}")
-        return jsonify(result), 200
         return jsonify(result), 200
         
     except Exception as e:
