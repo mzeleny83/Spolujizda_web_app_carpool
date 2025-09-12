@@ -41,6 +41,7 @@ window.addEventListener("resize", function () {
 function checkUserLogin() {
   const userId = localStorage.getItem("user_id");
   const userName = localStorage.getItem("user_name");
+console.log('SCRIPT.JS LOADED - v293');
   const userPhone = localStorage.getItem("user_phone");
 
   if (userId && userName && userPhone) {
