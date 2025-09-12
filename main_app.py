@@ -1100,7 +1100,14 @@ def get_user_notifications(user_name):
                 'sender_name': msg[3]
             })
         
-        # Odebrána testovací notifikace - systém funguje
+        # Pokud nejsou žádné zprávy, vytvoř testovací
+        if len(result) == 0:
+            result.append({
+                'ride_id': 34,
+                'message': f'Ahoj {user_name}! Zatím nejsou žádné nové zprávy. Pošlete nějakou zprávu v chatu a za chvíli se zde objeví.',
+                'created_at': datetime.datetime.now().isoformat(),
+                'sender_name': 'Systém'
+            })
         
         print(f"Notifications for {user_name}: {len(result)} messages found")
         return jsonify(result), 200
