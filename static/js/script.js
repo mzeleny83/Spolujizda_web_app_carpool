@@ -302,7 +302,7 @@ function displayAllRides(rides) {
         <h4>🚗 ${ride.driver_name || 'Neznámý řidič'}</h4>
         <p><strong>${ride.from_location}</strong> → <strong>${ride.to_location}</strong></p>
         <p>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</p>
-        <button onclick="alert('Test klik na chat'); openChat(${ride.id}, '${ride.driver_name || 'Řidič'}')" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
+        <button onclick="openChat(${ride.id}, '${ride.driver_name || 'Řidič'}')" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
       </div>
     `;
   });
@@ -353,44 +353,54 @@ function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 
 // Chat funkce
 function openChat(rideId, driverName) {
-  console.log('Opening chat with:', driverName, 'for ride:', rideId);
-  
-  // Vytvoříme modal okno místo popup
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center;';
-  
-  const chatBox = document.createElement('div');
-  chatBox.style.cssText = 'background: white; width: 400px; height: 500px; border-radius: 10px; padding: 20px; position: relative;';
-  
-  chatBox.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3>Chat s ${driverName}</h3>
-      <button onclick="this.closest('.modal').remove()" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">✕</button>
-    </div>
-    <div id="chatMessages" style="height: 350px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
-    <div style="display: flex; gap: 10px;">
-      <input type="text" id="chatInput" placeholder="Napište zprávu..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-      <button onclick="sendChatMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Odeslat</button>
-    </div>
-  `;
-  
-  modal.className = 'modal';
-  modal.appendChild(chatBox);
-  document.body.appendChild(modal);
-  
-  // Načteme zprávy
-  loadChatMessages(rideId);
-  
-  // Automatické obnovování
-  const interval = setInterval(() => loadChatMessages(rideId), 3000);
-  
-  // Vyčistíme interval při zavření
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      clearInterval(interval);
-      modal.remove();
-    }
-  });
+  try {
+    console.log('CHAT v296 - Opening chat with:', driverName, 'for ride:', rideId);
+    
+    // Vytvoříme modal okno místo popup
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; justify-content: center; align-items: center;';
+    
+    const chatBox = document.createElement('div');
+    chatBox.style.cssText = 'background: white; width: 400px; height: 500px; border-radius: 10px; padding: 20px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '✕';
+    closeBtn.style.cssText = 'background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; position: absolute; top: 10px; right: 10px;';
+    closeBtn.onclick = () => modal.remove();
+    
+    chatBox.innerHTML = `
+      <h3 style="margin-top: 0;">Chat s ${driverName}</h3>
+      <div id="chatMessages" style="height: 350px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
+      <div style="display: flex; gap: 10px;">
+        <input type="text" id="chatInput" placeholder="Napište zprávu..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <button onclick="sendChatMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Odeslat</button>
+      </div>
+    `;
+    
+    chatBox.appendChild(closeBtn);
+    modal.appendChild(chatBox);
+    document.body.appendChild(modal);
+    
+    console.log('Modal created and added to body');
+    
+    // Načteme zprávy
+    loadChatMessages(rideId);
+    
+    // Automatické obnovování
+    const interval = setInterval(() => loadChatMessages(rideId), 3000);
+    
+    // Vyčistíme interval při zavření
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        clearInterval(interval);
+        modal.remove();
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error opening chat:', error);
+    alert('Chyba při otevírání chatu: ' + error.message);
+  }
 }
 
 async function sendChatMessage(rideId) {
