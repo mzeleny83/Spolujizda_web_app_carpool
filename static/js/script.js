@@ -1,12 +1,43 @@
 // Chat functions for ride sharing app
-let map, routeWaypoints = [], routeMarkers = [], routeLine = null, userMarker = null;
+let chatMap, routeWaypoints = [], routeMarkers = [], routeLine = null, userMarker = null;
+
+// Missing function for showAll button
+function showAll() {
+  const results = document.getElementById('searchResults');
+  if (results) {
+    results.innerHTML = '⏳ Načítám všechny jízdy...';
+    
+    fetch('/api/rides/search')
+      .then(response => response.json())
+      .then(rides => {
+        if (rides.length === 0) {
+          results.innerHTML = '<div style="text-align:center;color:#666;margin:30px 0;">❌ Žádné jízdy nenalezeny</div>';
+          return;
+        }
+        
+        results.innerHTML = rides.map(ride => `
+          <div class="ride">
+            <h3>${ride.from_location} → ${ride.to_location}</h3>
+            <div>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</div>
+            <div>🚗 ${ride.driver_name || 'Neznámý řidič'}</div>
+            <div style="margin-top: 10px;">
+              <button class="btn" onclick="openChat(${ride.id}, '${ride.driver_name}')" style="background: #17a2b8; padding: 5px 15px;">💬 Chat s řidičem</button>
+            </div>
+          </div>
+        `).join('');
+      })
+      .catch(error => {
+        results.innerHTML = '❌ Chyba: ' + error.message;
+      });
+  }
+}
 
 function updateUserLocation(lat, lng) {
-  if (map && userMarker) {
-    map.removeLayer(userMarker);
+  if (chatMap && userMarker) {
+    chatMap.removeLayer(userMarker);
   }
   
-  if (map) {
+  if (chatMap) {
     const userName = localStorage.getItem('user_name') || 'Vy';
     const userIcon = L.divIcon({
       html: '<div style="background: #007bff; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">👤</div>',
@@ -22,7 +53,7 @@ function updateUserLocation(lat, lng) {
     `;
 
     userMarker = L.marker([lat, lng], { icon: userIcon })
-      .addTo(map)
+      .addTo(chatMap)
       .bindPopup(popupContent);
   }
 }
@@ -119,15 +150,15 @@ function clearRoute() {
   routeWaypoints = [];
   if (routeMarkers) {
     routeMarkers.forEach(marker => {
-      if (map.hasLayer(marker)) {
-        map.removeLayer(marker);
+      if (chatMap.hasLayer(marker)) {
+        chatMap.removeLayer(marker);
       }
     });
     routeMarkers = [];
   }
   if (routeLine) {
-    if (map.hasLayer(routeLine)) {
-      map.removeLayer(routeLine);
+    if (chatMap.hasLayer(routeLine)) {
+      chatMap.removeLayer(routeLine);
     }
     routeLine = null;
   }
