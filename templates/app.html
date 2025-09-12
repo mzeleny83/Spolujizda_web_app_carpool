@@ -1948,35 +1948,40 @@
         
         // Načtení měst do registračního formuláře
         async function loadCities() {
-            try {
-                const response = await fetch('/api/cities');
-                const cities = await response.json();
-                
-                const citySelect = document.getElementById('regCity');
-                citySelect.innerHTML = '<option value="">Vyberte město...</option>';
-                
-                const cityFilter = document.getElementById('cityFilter');
-                if (cityFilter) {
-                    cityFilter.innerHTML = '<option value="">Všechna města</option>';
-                }
-                
-                cities.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city.name;
-                    option.textContent = `${city.name} (${city.region})`;
-                    citySelect.appendChild(option);
-                    
-                    if (cityFilter) {
-                        const filterOption = document.createElement('option');
-                        filterOption.value = city.name;
-                        filterOption.textContent = city.name;
-                        cityFilter.appendChild(filterOption);
-                    }
-                });
-                
-            } catch (error) {
-                console.error('Chyba při načítání měst:', error);
+            const cities = [
+                { name: 'Praha', region: 'Hlavní město Praha' },
+                { name: 'Brno', region: 'Jihomoravský kraj' },
+                { name: 'Ostrava', region: 'Moravskoslezský kraj' },
+                { name: 'Plzeň', region: 'Plzeňský kraj' },
+                { name: 'Liberec', region: 'Liberecký kraj' },
+                { name: 'Olomouc', region: 'Olomoucký kraj' },
+                { name: 'Ústí nad Labem', region: 'Ústecký kraj' },
+                { name: 'Hradec Králové', region: 'Královéhradecký kraj' },
+                { name: 'České Budějovice', region: 'Jihočeský kraj' },
+                { name: 'Pardubice', region: 'Pardubický kraj' }
+            ];
+            
+            const citySelect = document.getElementById('regCity');
+            citySelect.innerHTML = '<option value="">Vyberte město...</option>';
+            
+            const cityFilter = document.getElementById('cityFilter');
+            if (cityFilter) {
+                cityFilter.innerHTML = '<option value="">Všechna města</option>';
             }
+            
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city.name;
+                option.textContent = `${city.name} (${city.region})`;
+                citySelect.appendChild(option);
+                
+                if (cityFilter) {
+                    const filterOption = document.createElement('option');
+                    filterOption.value = city.name;
+                    filterOption.textContent = city.name;
+                    cityFilter.appendChild(filterOption);
+                }
+            });
         }
         
         // Funkce pro vymazání filtrů data a času
