@@ -210,7 +210,7 @@ function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 // Chat funkce
 function openChat(rideId, driverName) {
   try {
-    console.log('CHAT v339 - Opening chat with:', driverName, 'for ride:', rideId);
+    console.log('CHAT v340 - Opening chat with:', driverName, 'for ride:', rideId);
     
     // Vytvoříme modal okno místo popup
     const modal = document.createElement('div');
@@ -351,6 +351,8 @@ async function loadChatMessages(rideId) {
 }
 
 function showFloatingNotification(senderName, message, rideId) {
+  console.log('NOTIFICATION v340 - Showing notification:', senderName, message, rideId);
+  
   const oldNotifications = document.querySelectorAll('.floating-notification');
   oldNotifications.forEach(n => n.remove());
   
@@ -386,9 +388,11 @@ function showFloatingNotification(senderName, message, rideId) {
   `;
   
   document.body.appendChild(notification);
+  console.log('Notification element added to DOM');
   
   setTimeout(() => {
     notification.style.transform = 'translateX(0) !important';
+    console.log('Notification animated in');
   }, 100);
   
   setTimeout(() => {
