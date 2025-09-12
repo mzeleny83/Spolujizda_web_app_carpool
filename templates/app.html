@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=308&t=1735659900"></script>
+    <script src="/static/js/cookies.js?v=330&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1432,15 +1432,8 @@
                     const latest = notifications[0];
                     console.log('Found notification:', latest);
                     
-                    // Test - použij alert místo modalu
-                    alert(`📨 Nová zpráva od ${latest.sender_name}: "${latest.message}"`);
-                    
-                    // Automaticky otevři chat s novou zprávou
-                    const shouldOpen = confirm(`Chcete otevřít chat?`);
-                    if (shouldOpen) {
-                        // Použij createChatModal přímo
-                        createChatModal(latest.ride_id, latest.sender_name);
-                    }
+                    // Zobraz pěknou plovoucí notifikaci
+                    showFloatingNotification(latest.sender_name, latest.message, latest.ride_id);
                 } else {
                     console.log('No notifications found');
                 }
@@ -1450,66 +1443,60 @@
         }
         
         function showFloatingNotification(senderName, message, rideId) {
+            // Odstraň staré notifikace
+            const oldNotifications = document.querySelectorAll('.floating-notification');
+            oldNotifications.forEach(n => n.remove());
+            
             // Vytvoř plovoucí notifikaci
             const notification = document.createElement('div');
+            notification.className = 'floating-notification';
             notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #007bff;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                z-index: 10000;
-                max-width: 300px;
-                cursor: pointer;
-                animation: slideIn 0.3s ease-out;
+                position: fixed !important;
+                top: 20px !important;
+                right: 20px !important;
+                background: #4CAF50 !important;
+                color: white !important;
+                padding: 20px !important;
+                border-radius: 12px !important;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
+                z-index: 999999 !important;
+                max-width: 350px !important;
+                cursor: pointer !important;
+                transform: translateX(100%) !important;
+                transition: transform 0.4s ease-out !important;
+                font-family: Arial, sans-serif !important;
             `;
             
             notification.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 5px;">💬 Nová zpráva od ${senderName}</div>
-                <div style="font-size: 14px; opacity: 0.9;">${message.substring(0, 50)}${message.length > 50 ? '...' : ''}</div>
-                <div style="font-size: 11px; opacity: 0.7; margin-top: 5px;">Klikněte pro otevření chatu</div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div style="font-weight: bold; font-size: 16px;">📨 Nová zpráva!</div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-size: 12px;">×</button>
+                </div>
+                <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">Od: ${senderName}</div>
+                <div style="font-size: 14px; line-height: 1.4; margin-bottom: 12px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">"${message}"</div>
+                <div style="text-align: center;">
+                    <button onclick="openChat('passenger', ${rideId}, '${senderName}'); this.closest('.floating-notification').remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">💬 Otevřít chat</button>
+                </div>
             `;
-            
-            // Přidej CSS animaci
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-            `;
-            document.head.appendChild(style);
-            
-            // Kliknutí otevře chat
-            notification.onclick = () => {
-                openChat('passenger', rideId, senderName);
-                document.body.removeChild(notification);
-            };
             
             document.body.appendChild(notification);
             
-            // Automaticky skryj po 5 sekundách
+            // Animace příchodu
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0) !important';
+            }, 100);
+            
+            // Automaticky skryj po 8 sekundách
             setTimeout(() => {
                 if (document.body.contains(notification)) {
-                    notification.style.animation = 'slideOut 0.3s ease-in';
+                    notification.style.transform = 'translateX(100%) !important';
                     setTimeout(() => {
                         if (document.body.contains(notification)) {
-                            document.body.removeChild(notification);
+                            notification.remove();
                         }
-                    }, 300);
+                    }, 400);
                 }
-            }, 5000);
-            
-            // Přidej slideOut animaci
-            style.textContent += `
-                @keyframes slideOut {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
+            }, 8000);
         }
         
         // Fallback funkce pro vytvoření chat modalu
