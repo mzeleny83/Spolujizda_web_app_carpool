@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=277"></script>
+    <script src="/static/js/cookies.js?v=278"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -986,18 +986,30 @@
         }
         
         function openChat(type, rideId, partnerName) {
+            alert('Step 1: openChat called');
+            
             if (!currentUser) {
-                alert('Musíte se přihlásit pro použití chatu!');
+                alert('Step 2: Not logged in');
                 return;
             }
+            
+            alert('Step 3: User is logged in');
             
             currentChatRide = rideId;
             currentChatType = type;
             
             // Otevři plovoucí chat
-            document.getElementById('floatingChatTitle').textContent = `💬 ${partnerName}`;
-            document.getElementById('floatingChat').style.display = 'block';
-            document.getElementById('floatingMessageInput').value = '';
+            const chatTitle = document.getElementById('floatingChatTitle');
+            const chatDiv = document.getElementById('floatingChat');
+            const messageInput = document.getElementById('floatingMessageInput');
+            
+            alert('Step 4: Elements found - title:' + !!chatTitle + ' chat:' + !!chatDiv + ' input:' + !!messageInput);
+            
+            if (chatTitle) chatTitle.textContent = `💬 ${partnerName}`;
+            if (chatDiv) chatDiv.style.display = 'block';
+            if (messageInput) messageInput.value = '';
+            
+            alert('Step 5: Chat should be visible now');
             
             loadFloatingChatMessages(rideId);
         }
