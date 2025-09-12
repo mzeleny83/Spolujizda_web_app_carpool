@@ -363,8 +363,9 @@ function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 
 // Chat funkce
 function openChat(rideId, driverName) {
+  alert('openChat called - v297');
   try {
-    console.log('CHAT v296 - Opening chat with:', driverName, 'for ride:', rideId);
+    console.log('CHAT v297 - Opening chat with:', driverName, 'for ride:', rideId);
     
     // Vytvoříme modal okno místo popup
     const modal = document.createElement('div');
