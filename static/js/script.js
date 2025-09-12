@@ -199,7 +199,8 @@ function showSearchForm() {
 function showRecurringForm() { console.log('showRecurringForm called'); }
 function showActiveRides() { console.log('showActiveRides called'); }
 function showSettings() { console.log('showSettings called'); }
-function // NOTIFIKAČNÍ SYSTÉM v361 - OPRAVENO ZOBRAZOVÁNÍ
+
+// NOTIFIKAČNÍ SYSTÉM v361 - OPRAVENO ZOBRAZOVÁNÍ
 console.log('SCRIPT v361 - Loading fixed notification system');
 
 // Track shown notifications

@@ -353,7 +353,133 @@
         </div>
     </div>
 
-    <script src="/static/js/script.js?v=359&t=1735660020&rewrite=true"></script>
+    <script src="/static/js/script_v361.js?t=1735661500"></script>
+    <script>
+        // Force override cached functions
+        function testNotificationDisplay() {
+            console.log('TEST v361 - Testing notification system');
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) {
+                alert('Musíte být přihlášeni!');
+                return;
+            }
+            
+            // Přímý test notifikace
+            console.log('TEST v361 - Creating test notification');
+            if (typeof showFloatingNotification === 'function') {
+                showFloatingNotification('Test Uživatel', 'Testovací zpráva', 999);
+            } else {
+                alert('showFloatingNotification function not found!');
+            }
+            
+            alert('Test notifikací spuštěn! Zkontrolujte konzoli.');
+        }
+        
+        function createTestMessage() {
+            alert('Test zprávy - funkce je dostupná!');
+        }
+        
+        // Complete notification system inline
+        let shownNotifications = new Set();
+        let notificationInterval = null;
+        
+        function startNotificationCheck() {
+            console.log('NOTIF v361 - Starting notification check');
+            if (notificationInterval) {
+                clearInterval(notificationInterval);
+            }
+            checkForNotifications();
+            notificationInterval = setInterval(checkForNotifications, 10000);
+        }
+        
+        function stopNotificationCheck() {
+            console.log('NOTIF v361 - Stopping notification check');
+            if (notificationInterval) {
+                clearInterval(notificationInterval);
+                notificationInterval = null;
+            }
+        }
+        
+        async function checkForNotifications() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) {
+                console.log('NOTIF v361 - No current user');
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(currentUser);
+                const url = `/api/notifications/v361/${encodeURIComponent(user.name)}`;
+                console.log('NOTIF v361 - Checking notifications for:', user.name, 'URL:', url);
+                
+                const response = await fetch(url);
+                if (!response.ok) {
+                    console.error('NOTIF v361 - API error:', response.status, response.statusText);
+                    return;
+                }
+                
+                const notifications = await response.json();
+                console.log('NOTIF v361 - Got', notifications.length, 'notifications:', notifications);
+                
+                if (notifications.length > 0) {
+                    let newCount = 0;
+                    notifications.forEach(notification => {
+                        const notifId = `${notification.ride_id}-${notification.sender_name}-${notification.created_at}`;
+                        if (!shownNotifications.has(notifId)) {
+                            console.log('NOTIF v361 - NEW notification:', notification.sender_name, notification.message);
+                            showFloatingNotification(notification.sender_name, notification.message, notification.ride_id);
+                            shownNotifications.add(notifId);
+                            newCount++;
+                        }
+                    });
+                    
+                    if (newCount > 0) {
+                        console.log(`NOTIF v361 - Showed ${newCount} new notifications`);
+                    }
+                }
+            } catch (error) {
+                console.error('NOTIF v361 - Error:', error);
+            }
+        }
+        
+        function showFloatingNotification(senderName, message, rideId) {
+            console.log('NOTIFICATION v361 - Showing notification:', senderName, message, rideId);
+            
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed !important;
+                top: 20px !important;
+                right: 20px !important;
+                z-index: 999999 !important;
+                background: #4CAF50 !important;
+                color: white !important;
+                padding: 15px !important;
+                border-radius: 8px !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+                font-family: Arial, sans-serif !important;
+                max-width: 300px !important;
+                pointer-events: auto !important;
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
+                <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
+                <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
+                <button onclick="alert('Chat pro jízdu ${rideId}'); this.remove();" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
+                <button onclick="this.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
+            `;
+            
+            document.body.appendChild(notification);
+            console.log('NOTIFICATION v361 - Added to DOM, element:', notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.remove();
+                    console.log('NOTIFICATION v361 - Auto-removed');
+                }
+            }, 8000);
+        }
+    </script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
