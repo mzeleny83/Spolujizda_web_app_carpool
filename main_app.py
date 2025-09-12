@@ -1077,7 +1077,7 @@ def get_user_notifications(user_name):
             
             # Použij kompatibilní datetime pro PostgreSQL i SQLite
             one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
-            print(f"Looking for messages after {one_hour_ago}")
+            print(f"Looking for messages after {ten_minutes_ago} (10 minutes ago)")
             
             # Najdi všechny zprávy pro debug
             all_messages = db.session.execute(db.text("""
@@ -1096,19 +1096,17 @@ def get_user_notifications(user_name):
             for msg in all_messages:
                 print(f"  Message: {msg[1][:50]}... from {msg[3]} (ID:{msg[4]}) at {msg[2]}")
             
-            # Najdi nové zprávy pro tohoto uživatele
+            # Zjednodušená logika - najdi všechny zprávy z posledních 10 minut od jiných uživatelů
+            ten_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=10)
             messages = db.session.execute(db.text("""
                 SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
-                JOIN rides r ON m.ride_id = r.id
-                WHERE (r.user_id = :user_id OR EXISTS (
-                    SELECT 1 FROM reservations res WHERE res.ride_id = r.id AND res.passenger_id = :user_id
-                )) AND m.sender_id != :user_id
-                AND m.created_at > :one_hour_ago
+                WHERE m.sender_id != :user_id
+                AND m.created_at > :ten_minutes_ago
                 ORDER BY m.created_at DESC
                 LIMIT 5
-            """), {'user_id': user_id, 'one_hour_ago': one_hour_ago}).fetchall()
+            """), {'user_id': user_id, 'ten_minutes_ago': ten_minutes_ago}).fetchall()
         
         result = []
         for msg in messages:
