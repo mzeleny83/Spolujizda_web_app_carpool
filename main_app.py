@@ -326,8 +326,6 @@ def register():
             return jsonify({'error': 'Zadejte platné jméno a příjmení'}), 400
         
         email = data.get('email', '').strip()
-        home_city = data.get('home_city', '').strip()
-        paypal_email = data.get('paypal_email', '').strip()
         password_confirm = data.get('password_confirm')
         
         if not all([name, phone, password, password_confirm]):
@@ -361,8 +359,8 @@ def register():
                 if existing_email:
                     return jsonify({'error': 'Tento email je již registrován'}), 409
             
-            db.session.execute(db.text('INSERT INTO users (name, phone, email, password_hash, rating, home_city, paypal_email) VALUES (:name, :phone, :email, :password_hash, :rating, :home_city, :paypal_email)'),
-                             {'name': name, 'phone': phone_full, 'email': email if email else None, 'password_hash': password_hash, 'rating': 5.0, 'home_city': home_city if home_city else None, 'paypal_email': paypal_email if paypal_email else None})
+            db.session.execute(db.text('INSERT INTO users (name, phone, email, password_hash, rating) VALUES (:name, :phone, :email, :password_hash, :rating)'),
+                             {'name': name, 'phone': phone_full, 'email': email if email else None, 'password_hash': password_hash, 'rating': 5.0})
             
             return jsonify({'message': 'Uživatel úspěšně registrován'}), 201
             
