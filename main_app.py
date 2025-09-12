@@ -1069,12 +1069,32 @@ def get_user_notifications(user_name):
             # Najdi user_id podle jména
             user = db.session.execute(db.text('SELECT id FROM users WHERE name = :name'), {'name': user_name}).fetchone()
             if not user:
+                print(f"User {user_name} not found")
                 return jsonify([]), 200
             
             user_id = user[0]
+            print(f"Found user {user_name} with ID {user_id}")
             
             # Použij kompatibilní datetime pro PostgreSQL i SQLite
             one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
+            print(f"Looking for messages after {one_hour_ago}")
+            
+            # Najdi všechny zprávy pro debug
+            all_messages = db.session.execute(db.text("""
+                SELECT m.ride_id, m.message, m.created_at, u.name as sender_name, m.sender_id
+                FROM messages m
+                JOIN users u ON m.sender_id = u.id
+                JOIN rides r ON m.ride_id = r.id
+                WHERE (r.user_id = :user_id OR EXISTS (
+                    SELECT 1 FROM reservations res WHERE res.ride_id = r.id AND res.passenger_id = :user_id
+                ))
+                ORDER BY m.created_at DESC
+                LIMIT 10
+            """), {'user_id': user_id}).fetchall()
+            
+            print(f"All messages for user {user_name}: {len(all_messages)} found")
+            for msg in all_messages:
+                print(f"  Message: {msg[1][:50]}... from {msg[3]} (ID:{msg[4]}) at {msg[2]}")
             
             # Najdi nové zprávy pro tohoto uživatele
             messages = db.session.execute(db.text("""
@@ -1100,10 +1120,11 @@ def get_user_notifications(user_name):
                 'sender_name': msg[3]
             })
         
-        print(f"Notifications for {user_name}: {len(result)} messages found")
+        print(f"Notifications for {user_name}: {len(result)} messages found (filtered)")
         return jsonify(result), 200
         
     except Exception as e:
+        print(f"Error in notifications: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/ratings/create', methods=['POST'])
