@@ -306,7 +306,6 @@ def get_user_hash(phone):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/users/register', methods=['POST'])
-@rate_limit(max_requests=5, window=300)
 def register():
     try:
         data = request.get_json()
@@ -371,7 +370,6 @@ def register():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/users/login', methods=['POST'])
-@rate_limit(max_requests=10, window=300)
 def login():
     try:
         data = request.get_json()
