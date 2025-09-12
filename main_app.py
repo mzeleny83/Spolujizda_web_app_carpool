@@ -1079,6 +1079,24 @@ def get_user_notifications(user_name):
             thirty_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=30)
             print(f"Looking for messages after {thirty_minutes_ago}")
             
+            # Debug: Najdi všechny jízdy uživatele
+            user_rides = db.session.execute(db.text("""
+                SELECT r.id, r.from_location, r.to_location, u.name as driver_name, 'driver' as role
+                FROM rides r
+                JOIN users u ON r.user_id = u.id
+                WHERE r.user_id = :user_id
+                UNION
+                SELECT r.id, r.from_location, r.to_location, u.name as driver_name, 'passenger' as role
+                FROM rides r
+                JOIN users u ON r.user_id = u.id
+                JOIN reservations res ON r.id = res.ride_id
+                WHERE res.passenger_id = :user_id
+            """), {'user_id': user_id}).fetchall()
+            
+            print(f"User {user_name} is involved in {len(user_rides)} rides:")
+            for ride in user_rides:
+                print(f"  - Ride {ride[0]}: {ride[1]} -> {ride[2]} (driver: {ride[3]}, role: {ride[4]})")
+            
             # Najdi jízdy kde je uživatel řidič nebo pasažér
             messages = db.session.execute(db.text("""
                 SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
@@ -1110,14 +1128,7 @@ def get_user_notifications(user_name):
                 'sender_name': msg[3]
             })
         
-        # Pro testování - přidej vždy jednu testovací notifikaci
-        if user_name == "Pokus Pokus":
-            result.append({
-                'ride_id': 34,
-                'message': f'TEST: Kontrola notifikací pro {user_name} - čas: {datetime.datetime.now().strftime("%H:%M:%S")}',
-                'created_at': datetime.datetime.now().isoformat(),
-                'sender_name': 'TestSystém'
-            })
+        # Test notifications removed - checking real notifications only
         
         print(f"Final notifications for {user_name}: {len(result)} messages")
         return jsonify(result), 200
