@@ -301,7 +301,7 @@ function displayAllRides(rides) {
         <h4>🚗 ${ride.driver_name || 'Neznámý řidič'}</h4>
         <p><strong>${ride.from_location}</strong> → <strong>${ride.to_location}</strong></p>
         <p>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</p>
-        <button onclick="openChat(${ride.id}, '${ride.driver_name || 'Řidič'}')" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
+        <button onclick="alert('Test klik na chat'); openChat(${ride.id}, '${ride.driver_name || 'Řidič'}')" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
       </div>
     `;
   });
