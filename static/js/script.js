@@ -264,7 +264,17 @@ async function sendChatMessage(rideId) {
   const message = input.value.trim();
   if (!message) return;
   
-  const userName = localStorage.getItem('user_name') || 'Anonym';
+  // Získej jméno uživatele z localStorage
+  let userName = 'Anonym';
+  const currentUser = localStorage.getItem('currentUser');
+  if (currentUser) {
+    try {
+      const user = JSON.parse(currentUser);
+      userName = user.name || 'Anonym';
+    } catch (e) {
+      console.error('Error parsing currentUser:', e);
+    }
+  }
   
   try {
     const response = await fetch('/api/chat/send', {
@@ -297,7 +307,18 @@ async function loadChatMessages(rideId) {
     const messagesDiv = document.getElementById('chatMessages');
     if (!messagesDiv) return;
     
-    const userName = localStorage.getItem('user_name');
+    // Získej jméno uživatele z localStorage
+    let userName = 'Anonym';
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+      try {
+        const user = JSON.parse(currentUser);
+        userName = user.name || 'Anonym';
+      } catch (e) {
+        console.error('Error parsing currentUser:', e);
+      }
+    }
+    
     messagesDiv.innerHTML = '';
     
     messages.forEach(msg => {

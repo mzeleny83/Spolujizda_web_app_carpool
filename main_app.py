@@ -1039,11 +1039,14 @@ def send_chat_message():
 def get_chat_messages(ride_id):
     try:
         with db.session.begin():
+            # Vymaž staré zprávy s NULL created_at
+            db.session.execute(db.text("DELETE FROM messages WHERE created_at IS NULL"))
+            
             messages = db.session.execute(db.text("""
                 SELECT m.message, m.created_at, m.sender_id, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
-                WHERE m.ride_id = :ride_id
+                WHERE m.ride_id = :ride_id AND m.created_at IS NOT NULL
                 ORDER BY m.created_at ASC
             """), {'ride_id': ride_id}).fetchall()
         
