@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=287&t=1735659700"></script>
+    <script src="/static/js/cookies.js?v=288&t=1735659800"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1344,8 +1344,8 @@
         function startNotificationCheck() {
             if (!currentUser || notificationInterval) return;
             
-            // Kontroluj notifikace každých 10 sekund
-            notificationInterval = setInterval(checkForNotifications, 10000);
+            // Kontroluj notifikace každých 5 sekund
+            notificationInterval = setInterval(checkForNotifications, 5000);
             
             // První kontrola okamžitě
             checkForNotifications();
@@ -1368,7 +1368,12 @@
                 if (notifications.length > 0) {
                     // Zobraz plovoucí notifikaci pro nejnovější zprávu
                     const latest = notifications[0];
-                    showFloatingNotification(latest.sender_name, latest.message, latest.ride_id);
+                    
+                    // Automaticky otevři chat s novou zprávou
+                    const shouldOpen = confirm(`Nová zpráva od ${latest.sender_name}:\n"${latest.message}"\n\nChcete otevřít chat?`);
+                    if (shouldOpen) {
+                        openChat('passenger', latest.ride_id, latest.sender_name);
+                    }
                 }
             } catch (error) {
                 console.log('Chyba při kontrole notifikací:', error);
