@@ -511,14 +511,31 @@ async function loadChatMessages(rideId) {
       div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #e3f2fd; text-align: right; margin-left: 50px;' : 'background: #f5f5f5; margin-right: 50px;'}`;
       let timeStr = new Date().toLocaleTimeString();
       if (msg.created_at || msg.timestamp) {
-        try {
-          const dateValue = msg.created_at || msg.timestamp;
-          const date = new Date(dateValue);
-          if (!isNaN(date.getTime())) {
-            timeStr = date.toLocaleString();
+        const dateValue = msg.created_at || msg.timestamp;
+        console.log('DATE DEBUG - Raw value:', dateValue, 'Type:', typeof dateValue);
+        
+        // Zkus různé formáty
+        let date = null;
+        if (dateValue) {
+          // Pokud je to už Date objekt
+          if (dateValue instanceof Date) {
+            date = dateValue;
           }
-        } catch (e) {
-          // Použij aktuální čas jako fallback
+          // Pokud je to string nebo číslo
+          else {
+            date = new Date(dateValue);
+            // Pokud selhalo, zkus jako timestamp
+            if (isNaN(date.getTime()) && !isNaN(dateValue)) {
+              date = new Date(parseInt(dateValue) * 1000); // Unix timestamp
+            }
+          }
+        }
+        
+        if (date && !isNaN(date.getTime())) {
+          timeStr = date.toLocaleString();
+          console.log('DATE DEBUG - Parsed successfully:', timeStr);
+        } else {
+          console.log('DATE DEBUG - Failed to parse, using current time');
           timeStr = new Date().toLocaleTimeString();
         }
       }
