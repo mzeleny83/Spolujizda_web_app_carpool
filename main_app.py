@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, Response
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit, join_room, leave_room
+# from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import hashlib
@@ -76,7 +76,7 @@ def rate_limit(max_requests=10, window=60):
 app.debug = True
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 CORS(app, resources={'/*': {'origins': '*', 'methods': ['GET', 'POST', 'OPTIONS'], 'allow_headers': ['Content-Type']}})
-socketio = SocketIO(app, cors_allowed_origins='*')
+# socketio = SocketIO(app, cors_allowed_origins='*')
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_51QYOhzP8xJKqGzKvYourSecretKey')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'pk_test_51QYOhzP8xJKqGzKvYourPublishableKey')
@@ -362,8 +362,8 @@ def register():
                 if existing_email:
                     return jsonify({'error': 'Tento email je již registrován'}), 409
             
-            db.session.execute(db.text('INSERT INTO users (name, phone, email, password_hash, rating, home_city, paypal_email) VALUES (:name, :phone_full, :email, :password_hash, :rating, :home_city, :paypal_email)'),
-                             {'name': name, 'phone_full': phone_full, 'email': email if email else None, 'password_hash': password_hash, 'rating': 5.0, 'home_city': home_city if home_city else None, 'paypal_email': paypal_email if paypal_email else None})
+            db.session.execute(db.text('INSERT INTO users (name, phone, email, password_hash, rating, home_city, paypal_email) VALUES (:name, :phone, :email, :password_hash, :rating, :home_city, :paypal_email)'),
+                             {'name': name, 'phone': phone_full, 'email': email if email else None, 'password_hash': password_hash, 'rating': 5.0, 'home_city': home_city if home_city else None, 'paypal_email': paypal_email if paypal_email else None})
             
             return jsonify({'message': 'Uživatel úspěšně registrován'}), 201
             
@@ -393,8 +393,8 @@ def login():
                     phone_clean = phone_clean[3:]
                 phone_full = f'+420{phone_clean}'
                 
-                user = db.session.execute(db.text('SELECT id, name, rating FROM users WHERE phone = :phone_full AND password_hash = :password_hash'),
-                                         {'phone_full': phone_full, 'password_hash': password_hash}).fetchone()
+                user = db.session.execute(db.text('SELECT id, name, rating FROM users WHERE phone = :phone AND password_hash = :password_hash'),
+                                         {'phone': phone_full, 'password_hash': password_hash}).fetchone()
         
         if user:
             return jsonify({
@@ -607,6 +607,64 @@ def search_user():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/rides/search-text', methods=['GET'])
+def search_rides_text():
+    try:
+        from_location = request.args.get('from', '').strip()
+        to_location = request.args.get('to', '').strip()
+        max_price = request.args.get('max_price', type=int)
+        user_id = request.args.get('user_id', type=int)
+        include_own = request.args.get('include_own', 'true').lower() == 'true'
+        
+        query = "SELECT r.*, u.name, u.rating FROM rides r LEFT JOIN users u ON r.user_id = u.id"
+        conditions = []
+        params = {}
+
+        if from_location:
+            conditions.append("r.from_location LIKE :from_location")
+            params['from_location'] = f'%{from_location}%'
+        
+        if to_location:
+            conditions.append("r.to_location LIKE :to_location")
+            params['to_location'] = f'%{to_location}%'
+
+        if max_price is not None:
+            conditions.append("r.price_per_person <= :max_price")
+            params['max_price'] = max_price
+
+        if not include_own and user_id is not None:
+            conditions.append("r.user_id != :user_id")
+            params['user_id'] = user_id
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        
+        query += " ORDER BY r.departure_time ASC"
+
+        with db.session.begin():
+            rides = db.session.execute(db.text(query), params).fetchall()
+
+        result = []
+        for ride in rides:
+            departure_time_val = parse_datetime_str(ride[4])
+            result.append({
+                'id': ride[0],
+                'user_id': ride[1],
+                'driver_name': (ride[9] if len(ride) > 9 else None) or 'Neznámý řidič',
+                'driver_rating': float(ride[10]) if len(ride) > 10 and ride[10] is not None else 5.0,
+                'from_location': ride[2],
+                'to_location': ride[3],
+                'departure_time': departure_time_val.isoformat() if departure_time_val else None,
+                'available_seats': ride[5],
+                'price_per_person': ride[6],
+                'route_waypoints': json.loads(ride[7]) if ride[7] else []
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/rides/all', methods=['GET'])
 def get_all_rides():
     try:
@@ -636,159 +694,7 @@ def get_all_rides():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@socketio.on('connect')
-def handle_connect():
-    print('Uživatel se připojil')
-    emit('connected', {'message': 'Připojeno k serveru'})
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('Uživatel se odpojil')
-
-@socketio.on('update_location')
-def handle_location_update(data):
-    user_id = data.get('user_id')
-    lat = data.get('lat')
-    lng = data.get('lng')
-    
-    if user_id and lat and lng:
-        user_locations[user_id] = {
-            'lat': lat,
-            'lng': lng,
-            'timestamp': datetime.datetime.now().isoformat()
-        }
-        emit('location_updated', {
-            'user_id': user_id,
-            'lat': lat,
-            'lng': lng
-        }, broadcast=True)
-
-@socketio.on('get_user_location')
-def handle_get_location(data):
-    user_id = data.get('user_id')
-    if user_id in user_locations:
-        emit('user_location', {
-            'user_id': user_id,
-            'location': user_locations[user_id]
-        })
-    else:
-        emit('user_location', {
-            'user_id': user_id,
-            'location': None
-        })
-
-@socketio.on('join_ride_chat')
-def handle_join_chat(data):
-    ride_id = data.get('ride_id')
-    user_name = data.get('user_name')
-    join_room(f'ride_{ride_id}')
-    emit('user_joined', {
-        'message': f'{user_name} se připojil do chatu',
-        'timestamp': datetime.datetime.now().isoformat()
-    }, room=f'ride_{ride_id}')
-
-@socketio.on('send_chat_message')
-def handle_chat_message(data):
-    ride_id = data.get('ride_id')
-    user_name = data.get('user_name')
-    message = data.get('message')
-    sender_id = data.get('sender_id')
-    
-    try:
-        with db.session.begin():
-            db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message) VALUES (:ride_id, :sender_id, :message)'),
-                             {'ride_id': ride_id, 'sender_id': sender_id, 'message': message})
-        
-        emit('new_chat_message', {
-            'user_name': user_name,
-            'message': message,
-            'timestamp': datetime.datetime.now().isoformat()
-        }, room=f'ride_{ride_id}')
-    except Exception as e:
-        print(f"Error in handle_chat_message: {e}")
-
-@socketio.on('leave_ride_chat')
-def handle_leave_chat(data):
-    ride_id = data.get('ride_id')
-    user_name = data.get('user_name')
-    leave_room(f'ride_{ride_id}')
-    emit('user_left', {
-        'message': f'{user_name} opustil chat',
-        'timestamp': datetime.datetime.now().isoformat()
-    }, room=f'ride_{ride_id}')
-
-@socketio.on('share_live_location')
-def handle_live_location(data):
-    ride_id = data.get('ride_id')
-    user_name = data.get('user_name')
-    lat = data.get('lat')
-    lng = data.get('lng')
-    
-    emit('live_location_update', {
-        'user_name': user_name,
-        'lat': lat,
-        'lng': lng,
-        'timestamp': datetime.datetime.now().isoformat()
-    }, room=f'ride_{ride_id}')
-
-@socketio.on('join_direct_chat')
-def handle_join_direct_chat(data):
-    target_user = data.get('target_user')
-    user_name = data.get('user_name')
-    
-    room_name = f'direct_{min(user_name, target_user)}_{max(user_name, target_user)}'
-    join_room(room_name)
-    
-    emit('user_joined', {
-        'message': f'{user_name} se připojil k chatu',
-        'timestamp': datetime.datetime.now().isoformat()
-    }, room=room_name)
-
-@socketio.on('send_direct_message')
-def handle_direct_message(data):
-    target_user = data.get('target_user')
-    user_name = data.get('user_name')
-    message = data.get('message')
-    
-    room_name = f'direct_{min(user_name, target_user)}_{max(user_name, target_user)}'
-    
-    emit('direct_message_received', {
-        'from_user': user_name,
-        'message': message,
-        'timestamp': datetime.datetime.now().isoformat()
-    }, room=room_name)
-
-@socketio.on('leave_direct_chat')
-def handle_leave_direct_chat(data):
-    target_user = data.get('target_user')
-    user_name = data.get('user_name')
-    
-    room_name = f'direct_{min(user_name, target_user)}_{max(user_name, target_user)}'
-    leave_room(room_name)
-    
-    emit('user_left', {
-        'message': f'{user_name} opustil chat',
-        'timestamp': datetime.datetime.now().isoformat()
-    }, room=room_name)
-
-@socketio.on('request_user_location')
-def handle_location_request(data):
-    target_user = data.get('target_user')
-    
-    if target_user in user_locations:
-        location = user_locations[target_user]
-        emit('user_location_response', {
-            'user_name': target_user,
-            'lat': location['lat'],
-            'lng': location['lng'],
-            'timestamp': location['timestamp']
-        })
-    else:
-        emit('user_location_response', {
-            'user_name': target_user,
-            'lat': None,
-            'lng': None
-        })
+# SocketIO handlers removed due to compatibility issues
 
 @app.route('/api/reservations/create', methods=['POST'])
 def create_reservation():
@@ -1136,4 +1042,4 @@ def create_rating():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"Starting server on port {port}")
-    socketio.run(app, debug=True, host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=port)
