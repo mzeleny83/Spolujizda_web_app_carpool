@@ -379,9 +379,13 @@
             alert('Test zprávy - funkce je dostupná!');
         }
         
-        // Complete notification system inline
-        let shownNotifications = new Set();
-        let notificationInterval = null;
+        // Complete notification system inline - conditional declarations
+        if (typeof shownNotifications === 'undefined') {
+            var shownNotifications = new Set();
+        }
+        if (typeof notificationInterval === 'undefined') {
+            var notificationInterval = null;
+        }
         
         function startNotificationCheck() {
             console.log('NOTIF v361 - Starting notification check');
