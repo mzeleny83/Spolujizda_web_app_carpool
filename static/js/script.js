@@ -314,3 +314,56 @@ async function loadChatMessages(rideId) {
     console.error('Chyba při načítání zpráv:', error);
   }
 }
+
+function showFloatingNotification(senderName, message, rideId) {
+  const oldNotifications = document.querySelectorAll('.floating-notification');
+  oldNotifications.forEach(n => n.remove());
+  
+  const notification = document.createElement('div');
+  notification.className = 'floating-notification';
+  notification.style.cssText = `
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    background: #4CAF50 !important;
+    color: white !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
+    z-index: 999999 !important;
+    max-width: 350px !important;
+    cursor: pointer !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.4s ease-out !important;
+    font-family: Arial, sans-serif !important;
+  `;
+  
+  notification.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+      <div style="font-weight: bold; font-size: 16px;">📨 Nová zpráva!</div>
+      <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-size: 12px;">×</button>
+    </div>
+    <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">Od: ${senderName}</div>
+    <div style="font-size: 14px; line-height: 1.4; margin-bottom: 12px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">"${message}"</div>
+    <div style="text-align: center;">
+      <button onclick="openChat(${rideId}, '${senderName}'); this.closest('.floating-notification').remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">💬 Otevřít chat</button>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.transform = 'translateX(0) !important';
+  }, 100);
+  
+  setTimeout(() => {
+    if (document.body.contains(notification)) {
+      notification.style.transform = 'translateX(100%) !important';
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          notification.remove();
+        }
+      }, 400);
+    }
+  }, 8000);
+}
