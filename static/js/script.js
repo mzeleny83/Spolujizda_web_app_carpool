@@ -352,7 +352,14 @@ function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 
 // Chat funkce
 function openChat(rideId, driverName) {
+  console.log('Opening chat with:', driverName, 'for ride:', rideId);
+  
   const chatWindow = window.open('', 'chat', 'width=400,height=600,scrollbars=yes,resizable=yes');
+  
+  if (!chatWindow) {
+    alert('Popup okno bylo blokováno prohlížečem. Povolte popup okna pro tuto stránku.');
+    return;
+  }
   
   chatWindow.document.write(`
     <html>
