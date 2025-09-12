@@ -1075,18 +1075,34 @@ def get_user_notifications(user_name):
             user_id = user[0]
             print(f"Found user {user_name} with ID {user_id}")
             
-            # Najdi zprávy z posledních 5 minut (pro rychlé testování)
-            five_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=5)
+            # Najdi zprávy z posledních 30 minut (pro testování)
+            thirty_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=30)
+            print(f"Looking for messages after {thirty_minutes_ago}")
+            
+            # Nejdříve zobraz všechny zprávy pro debug
+            all_messages = db.session.execute(db.text("""
+                SELECT m.ride_id, m.message, m.created_at, u.name as sender_name
+                FROM messages m
+                JOIN users u ON m.sender_id = u.id
+                ORDER BY m.created_at DESC
+                LIMIT 10
+            """)).fetchall()
+            
+            print(f"All recent messages ({len(all_messages)}):")
+            for msg in all_messages:
+                print(f"  - {msg[3]}: '{msg[1]}' at {msg[2]}")
+            
+            # Pak filtruj podle času
             messages = db.session.execute(db.text("""
                 SELECT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
-                WHERE m.created_at > :five_minutes_ago
+                WHERE m.created_at > :thirty_minutes_ago
                 ORDER BY m.created_at DESC
                 LIMIT 5
-            """), {'five_minutes_ago': five_minutes_ago}).fetchall()
+            """), {'thirty_minutes_ago': thirty_minutes_ago}).fetchall()
             
-            print(f"Found {len(messages)} messages in last 5 minutes")
+            print(f"Found {len(messages)} messages in last 30 minutes")
         
         result = []
         for msg in messages:
@@ -1100,7 +1116,11 @@ def get_user_notifications(user_name):
         
         # Bez testovacích zpráv - zobraz jen skutečné notifikace
         
-        print(f"Notifications for {user_name}: {len(result)} messages found")
+        print(f"Final notifications for {user_name}: {len(result)} messages")
+        for notif in result:
+            print(f"  Notification: {notif['sender_name']} - {notif['message'][:30]}...")
+        print(f"Returning: {result}")
+        return jsonify(result), 200
         return jsonify(result), 200
         
     except Exception as e:
