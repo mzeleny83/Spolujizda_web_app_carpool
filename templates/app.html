@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=330&t=1735659900"></script>
+    <script src="/static/js/cookies.js?v=332&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1395,6 +1395,7 @@
         }
         
         let notificationInterval = null;
+        let shownNotifications = new Set(); // Sleduj již zobrazené notifikace
         
         function startNotificationCheck() {
             if (!currentUser || notificationInterval) return;
@@ -1412,6 +1413,7 @@
                 console.log('Stopping notification check');
                 clearInterval(notificationInterval);
                 notificationInterval = null;
+                shownNotifications.clear(); // Vymaž sledované notifikace
             }
         }
         
@@ -1428,12 +1430,16 @@
                 console.log('Notifications response:', notifications);
                 
                 if (notifications.length > 0) {
-                    // Zobraz plovoucí notifikaci pro nejnovější zprávu
-                    const latest = notifications[0];
-                    console.log('Found notification:', latest);
-                    
-                    // Zobraz pěknou plovoucí notifikaci
-                    showFloatingNotification(latest.sender_name, latest.message, latest.ride_id);
+                    // Projdi všechny notifikace a zobraz jen nové
+                    notifications.forEach(notification => {
+                        const notifId = `${notification.sender_name}-${notification.message}-${notification.ride_id}`;
+                        
+                        if (!shownNotifications.has(notifId)) {
+                            console.log('Found NEW notification:', notification);
+                            shownNotifications.add(notifId);
+                            showFloatingNotification(notification.sender_name, notification.message, notification.ride_id);
+                        }
+                    });
                 } else {
                     console.log('No notifications found');
                 }

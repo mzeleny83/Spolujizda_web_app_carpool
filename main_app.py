@@ -1075,16 +1075,18 @@ def get_user_notifications(user_name):
             user_id = user[0]
             print(f"Found user {user_name} with ID {user_id}")
             
-            # Najdi posledních 5 zpráv (bez časového omezení pro test)
+            # Najdi zprávy z posledních 5 minut (pro rychlé testování)
+            five_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=5)
             messages = db.session.execute(db.text("""
                 SELECT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
+                WHERE m.created_at > :five_minutes_ago
                 ORDER BY m.created_at DESC
                 LIMIT 5
-            """)).fetchall()
+            """), {'five_minutes_ago': five_minutes_ago}).fetchall()
             
-            print(f"Found {len(messages)} total messages")
+            print(f"Found {len(messages)} messages in last 5 minutes")
         
         result = []
         for msg in messages:
@@ -1096,14 +1098,7 @@ def get_user_notifications(user_name):
                 'sender_name': msg[3]
             })
         
-        # Pokud nejsou žádné zprávy vůbec, vytvoř informaci
-        if len(result) == 0:
-            result.append({
-                'ride_id': 34,
-                'message': f'Ahoj {user_name}! V databázi nejsou žádné zprávy.',
-                'created_at': datetime.datetime.now().isoformat(),
-                'sender_name': 'Systém'
-            })
+        # Bez testovacích zpráv - zobraz jen skutečné notifikace
         
         print(f"Notifications for {user_name}: {len(result)} messages found")
         return jsonify(result), 200
