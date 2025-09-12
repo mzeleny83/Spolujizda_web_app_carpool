@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=302&t=1735659900"></script>
+    <script src="/static/js/cookies.js?v=303&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1023,6 +1023,18 @@
                 if (modalElement) {
                     console.log('Modal found in DOM:', modalElement.style.display);
                     console.log('Modal computed style:', window.getComputedStyle(modalElement).display);
+                    console.log('Modal position:', modalElement.getBoundingClientRect());
+                    console.log('Modal z-index:', window.getComputedStyle(modalElement).zIndex);
+                    
+                    // Test - změň barvu pozadí na červenou pro lepší viditelnost
+                    const overlay = modalElement.querySelector('div');
+                    if (overlay) {
+                        overlay.style.background = 'rgba(255,0,0,0.9)';
+                        console.log('Changed background to red for visibility test');
+                    }
+                    
+                    // Zkus alert jako test
+                    alert('Modal byl vytvořen! Pokud nevidíte červené pozadí, je problém s CSS.');
                 } else {
                     console.log('Modal NOT found in DOM!');
                 }
