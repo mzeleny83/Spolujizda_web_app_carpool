@@ -304,7 +304,8 @@ async function loadChatMessages(rideId) {
       const div = document.createElement('div');
       const isMyMessage = msg.sender_name === userName;
       div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #e3f2fd; text-align: right; margin-left: 50px;' : 'background: #f5f5f5; margin-right: 50px;'}`;
-      div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${new Date(msg.created_at).toLocaleString()}</small>`;
+      const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleString() : 'Neznámý čas';
+      div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${timeStr}</small>`;
       messagesDiv.appendChild(div);
     });
     
