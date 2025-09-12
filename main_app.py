@@ -116,6 +116,10 @@ def test_page():
 def search_page():
     return render_template('search.html')
 
+@app.route('/chat')
+def chat_page():
+    return render_template('chat.html')
+
 @app.route('/api/status')
 def api_status():
     return jsonify({
