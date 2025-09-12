@@ -1075,20 +1075,16 @@ def get_user_notifications(user_name):
             user_id = user[0]
             print(f"Found user {user_name} with ID {user_id}")
             
-            # Najdi všechny zprávy z posledních 10 minut (bez filtrování)
-            ten_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=10)
-            print(f"Looking for messages after {ten_minutes_ago} (10 minutes ago)")
-            
+            # Najdi posledních 5 zpráv (bez časového omezení pro test)
             messages = db.session.execute(db.text("""
                 SELECT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
-                WHERE m.created_at > :ten_minutes_ago
                 ORDER BY m.created_at DESC
                 LIMIT 5
-            """), {'ten_minutes_ago': ten_minutes_ago}).fetchall()
+            """)).fetchall()
             
-            print(f"Found {len(messages)} messages in last 10 minutes")
+            print(f"Found {len(messages)} total messages")
         
         result = []
         for msg in messages:
@@ -1100,11 +1096,11 @@ def get_user_notifications(user_name):
                 'sender_name': msg[3]
             })
         
-        # Pokud nejsou žádné zprávy, vytvoř testovací
+        # Pokud nejsou žádné zprávy vůbec, vytvoř informaci
         if len(result) == 0:
             result.append({
                 'ride_id': 34,
-                'message': f'Ahoj {user_name}! Zatím nejsou žádné nové zprávy. Pošlete nějakou zprávu v chatu a za chvíli se zde objeví.',
+                'message': f'Ahoj {user_name}! V databázi nejsou žádné zprávy.',
                 'created_at': datetime.datetime.now().isoformat(),
                 'sender_name': 'Systém'
             })
