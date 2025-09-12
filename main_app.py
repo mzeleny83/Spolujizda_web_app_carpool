@@ -1005,6 +1005,53 @@ def get_user_locations():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/chat/send', methods=['POST'])
+def send_chat_message():
+    try:
+        data = request.get_json()
+        ride_id = data.get('ride_id')
+        sender_id = data.get('sender_id')
+        message = data.get('message')
+        
+        if not all([ride_id, sender_id, message]):
+            return jsonify({'error': 'Všechna pole jsou povinná'}), 400
+        
+        with db.session.begin():
+            db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message) VALUES (:ride_id, :sender_id, :message)'),
+                             {'ride_id': ride_id, 'sender_id': sender_id, 'message': message})
+        
+        return jsonify({'message': 'Zpráva odeslána'}), 201
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/chat/<int:ride_id>/messages', methods=['GET'])
+def get_chat_messages(ride_id):
+    try:
+        with db.session.begin():
+            messages = db.session.execute(db.text("""
+                SELECT m.message, m.created_at, m.sender_id, u.name as sender_name
+                FROM messages m
+                JOIN users u ON m.sender_id = u.id
+                WHERE m.ride_id = :ride_id
+                ORDER BY m.created_at ASC
+            """), {'ride_id': ride_id}).fetchall()
+        
+        result = []
+        for msg in messages:
+            created_at_val = parse_datetime_str(msg[1])
+            result.append({
+                'message': msg[0],
+                'created_at': created_at_val.isoformat() if created_at_val else None,
+                'sender_id': msg[2],
+                'sender_name': msg[3]
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/ratings/create', methods=['POST'])
 def create_rating():
     try:
