@@ -1072,7 +1072,7 @@ def get_user_notifications(user_name):
                 WHERE (r.user_id = :user_id OR EXISTS (
                     SELECT 1 FROM reservations res WHERE res.ride_id = r.id AND res.passenger_id = :user_id
                 )) AND m.sender_id != :user_id
-                AND m.created_at > datetime('now', '-1 hour')
+                AND m.created_at > NOW() - INTERVAL '1 hour'
                 ORDER BY m.created_at DESC
                 LIMIT 5
             """), {'user_id': user_id}).fetchall()
@@ -1087,6 +1087,7 @@ def get_user_notifications(user_name):
                 'sender_name': msg[3]
             })
         
+        print(f"Notifications for {user_name}: {len(result)} messages found")
         return jsonify(result), 200
         
     except Exception as e:
