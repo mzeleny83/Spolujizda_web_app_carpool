@@ -986,6 +986,9 @@
         }
         
         function openChat(type, rideId, partnerName) {
+            console.log('openChat called with:', type, rideId, partnerName);
+            alert(`Chat funkce zavolána! Type: ${type}, RideId: ${rideId}, Partner: ${partnerName}`);
+            
             if (!currentUser) {
                 showMessage('Musíte být přihlášeni!', 'error');
                 return;
@@ -995,8 +998,6 @@
             currentChatType = type;
             
             console.log('Opening floating chat:', type, rideId, partnerName);
-            
-            console.log('Opening chat for ride:', rideId);
             
             // Otevři plovoucí chat
             document.getElementById('floatingChatTitle').textContent = `💬 ${partnerName}`;
