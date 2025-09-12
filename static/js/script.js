@@ -301,6 +301,7 @@ function displayAllRides(rides) {
         <h4>🚗 ${ride.driver_name || 'Neznámý řidič'}</h4>
         <p><strong>${ride.from_location}</strong> → <strong>${ride.to_location}</strong></p>
         <p>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</p>
+        <button onclick="openChat(${ride.id}, '${ride.driver_name || 'Řidič'}')" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
       </div>
     `;
   });
@@ -349,4 +350,86 @@ function showAllUsers() { console.log('showAllUsers called'); }
 function clearRideMarkers() { console.log('clearRideMarkers called'); }
 function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 
-// Chat funkce - implementovana v app.html
+// Chat funkce
+function openChat(rideId, driverName) {
+  const chatWindow = window.open('', 'chat', 'width=400,height=600,scrollbars=yes,resizable=yes');
+  
+  chatWindow.document.write(`
+    <html>
+    <head>
+      <title>Chat s ${driverName}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 10px; }
+        #messages { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+        #messageInput { width: 70%; padding: 5px; }
+        #sendBtn { width: 25%; padding: 5px; }
+        .message { margin: 5px 0; padding: 5px; border-radius: 5px; }
+        .my-message { background: #e3f2fd; text-align: right; }
+        .other-message { background: #f5f5f5; }
+      </style>
+    </head>
+    <body>
+      <h3>Chat s ${driverName}</h3>
+      <div id="messages"></div>
+      <input type="text" id="messageInput" placeholder="Napište zprávu..." onkeypress="if(event.key==='Enter') sendMessage()">
+      <button id="sendBtn" onclick="sendMessage()">Odeslat</button>
+      
+      <script>
+        const rideId = ${rideId};
+        const userName = localStorage.getItem('user_name') || 'Anonym';
+        
+        async function sendMessage() {
+          const input = document.getElementById('messageInput');
+          const message = input.value.trim();
+          if (!message) return;
+          
+          try {
+            const response = await fetch('/api/chat/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ride_id: rideId,
+                sender_name: userName,
+                message: message
+              })
+            });
+            
+            if (response.ok) {
+              input.value = '';
+              loadMessages();
+            }
+          } catch (error) {
+            console.error('Chyba při odesílání:', error);
+          }
+        }
+        
+        async function loadMessages() {
+          try {
+            const response = await fetch('/api/chat/' + rideId + '/messages');
+            const messages = await response.json();
+            
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            messages.forEach(msg => {
+              const div = document.createElement('div');
+              div.className = 'message ' + (msg.sender_name === userName ? 'my-message' : 'other-message');
+              div.innerHTML = '<strong>' + msg.sender_name + ':</strong> ' + msg.message + '<br><small>' + new Date(msg.timestamp).toLocaleString() + '</small>';
+              messagesDiv.appendChild(div);
+            });
+            
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          } catch (error) {
+            console.error('Chyba při načítání zpráv:', error);
+          }
+        }
+        
+        loadMessages();
+        setInterval(loadMessages, 3000);
+      </script>
+    </body>
+    </html>
+  `);
+  
+  chatWindow.document.close();
+}
