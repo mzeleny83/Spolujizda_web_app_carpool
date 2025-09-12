@@ -1,227 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
-
-// Globální proměnné
-let map;
-let userMarker;
-let userMarkers = {};
-let watchId;
-let currentUserId;
-let isTracking = false;
-let routeWaypoints = [];
-let routeMarkers = [];
-let routeLine = null;
-let isRoutePlanning = false;
-let deferredPrompt;
-window.rideMarkers = [];
-
-// Inicializace při načtení stránky
-initializeMap();
-setupEventListeners();
-initializePWA();
-checkUserLogin();
-
-setTimeout(() => {
-  requestNotificationPermission();
-}, 2000);
-
-window.addEventListener("resize", function () {
-  if (map) {
-    setTimeout(() => map.invalidateSize(), 100);
-  }
-  
-  const toggleBtn = document.getElementById("panelToggle");
-  if (window.innerWidth <= 768) {
-    toggleBtn.style.display = "none";
-  } else {
-    toggleBtn.style.display = "block";
-  }
-});
-
-// Zkontroluje, zda je uživatel přihlášen
-function checkUserLogin() {
-  const userId = localStorage.getItem("user_id");
-  const userName = localStorage.getItem("user_name");
-console.log('SCRIPT.JS LOADED - v293');
-  const userPhone = localStorage.getItem("user_phone");
-
-  if (userId && userName && userPhone) {
-    // User is logged in, update UI
-    const userNameInput = document.getElementById("userName");
-    if (userNameInput) {
-        userNameInput.value = userName;
-    }
-  }
-}
-
-// PWA inicializace
-function initializePWA() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register("/static/sw.js")
-      .catch((error) => {
-        console.error("SW chyba:", error);
-      });
-  }
-
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-  });
-}
-
-function installApp() {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      deferredPrompt = null;
-    });
-  }
-}
-
-function requestNotificationPermission() {
-  if ("Notification" in window) {
-    if (Notification.permission === "default") {
-      Notification.requestPermission()
-        .catch((error) => {
-          console.error("Chyba notifikací:", error);
-        });
-    }
-  }
-}
-
-// Inicializace mapy s Leaflet (OpenStreetMap)
-function initializeMap() {
-  try {
-    map = L.map("map", {
-      zoomControl: true,
-      scrollWheelZoom: true,
-      doubleClickZoom: true,
-      touchZoom: true,
-      dragging: true,
-      zoomSnap: 0.25,
-      zoomDelta: 0.25,
-      wheelPxPerZoomLevel: 120,
-    }).setView([50.0755, 14.4378], 13);
-
-    const osmLayer = L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        attribution: "© OpenStreetMap contributors",
-        maxZoom: 19,
-      }
-    );
-
-    osmLayer.addTo(map);
-
-  } catch (error) {
-    console.error("Chyba při inicializaci mapy:", error);
-  }
-}
-
-// Nastavení event listenerů
-function setupEventListeners() {
-  const rideOfferForm = document.getElementById("rideOfferForm");
-  if (rideOfferForm) {
-      rideOfferForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-        offerRide();
-      });
-  }
-
-  const rideSearchForm = document.getElementById("rideSearchForm");
-  if (rideSearchForm) {
-      rideSearchForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-        searchRides();
-      });
-  }
-}
-
-function startTracking() {
-  const userName = document.getElementById("userName").value;
-  if (!userName) {
-      alert("Zadejte prosím své jméno.");
-      return;
-  }
-  localStorage.setItem("user_name", userName);
-
-
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      function (position) {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        
-        map.setView([lat, lng], 16);
-        updateOwnLocation(lat, lng);
-
-        watchId = navigator.geolocation.watchPosition(
-          function (position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const accuracy = position.coords.accuracy;
-
-            updateOwnLocation(lat, lng);
-
-            document.getElementById("locationStatus").textContent = 
-              `GPS: Aktivní (${(lat || 0).toFixed(6)}, ${(lng || 0).toFixed(6)}) ±${(accuracy || 0).toFixed(0)}m`;
-          },
-          function (error) {
-            console.error("Chyba při sledování:", error);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0,
-          }
-        );
-
-        isTracking = true;
-        document.getElementById("locationStatus").textContent = "GPS: Aktivní";
-
-      },
-      function (error) {
-        console.error("Chyba při získávání polohy:", error);
-        document.getElementById("locationStatus").textContent =
-          "GPS: Chyba - zkontrolujte povolení lokalizace";
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 15000,
-        maximumAge: 300000,
-      }
-    );
-  }
-}
-
-function stopTracking() {
-  if (watchId) {
-    navigator.geolocation.clearWatch(watchId);
-    watchId = null;
-  }
-  document.getElementById("locationStatus").textContent = "GPS: Neaktivní";
-  isTracking = false;
-}
-
-function updateOwnLocation(lat, lng) {
-  if (map && typeof L !== "undefined") {
-    if (userMarker) {
-      userMarker.setLatLng([lat, lng]);
-    } else {
-      const userIcon = L.divIcon({
-        html: '<div style="background: #4285f4; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>',
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
-        className: "user-marker",
-      });
-
-      const userName = localStorage.getItem("user_name") || "Vy";
-      const popupContent = `
-        <div style="text-align: center; min-width: 150px;">
-          <h4>📍 ${userName}</h4>
-          <p>Vaše aktuální poloha</p>
-        </div>
-      `// Chat functions for ride sharing app
+// Chat functions for ride sharing app
 let map, routeWaypoints = [], routeMarkers = [], routeLine = null, userMarker = null;
 
 function updateUserLocation(lat, lng) {
@@ -331,7 +108,6 @@ function displayAllRides(rides) {
   // Add event listeners to chat buttons
   document.querySelectorAll('.chat-btn').forEach(btn => {
     btn.addEventListener('click', function() {
-      alert('Button clicked!');
       const rideId = this.getAttribute('data-ride-id');
       const driverName = this.getAttribute('data-driver-name');
       openChat(rideId, driverName);
@@ -359,7 +135,6 @@ function clearRoute() {
   document.getElementById('toOffer').value = '';
 }
 
-
 // Placeholder functions for index_fixed.html
 function togglePanel() { console.log('togglePanel called'); }
 function showOfferForm() { 
@@ -384,7 +159,7 @@ function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 // Chat funkce
 function openChat(rideId, driverName) {
   try {
-    console.log('CHAT v300 - Opening chat with:', driverName, 'for ride:', rideId);
+    console.log('CHAT v339 - Opening chat with:', driverName, 'for ride:', rideId);
     
     // Vytvoříme modal okno místo popup
     const modal = document.createElement('div');
