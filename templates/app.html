@@ -350,7 +350,7 @@
         </div>
     </div>
 
-    <script src="/static/js/script.js?v=348&t=1735659900"></script>
+    <script src="/static/js/script.js?v=349&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1426,29 +1426,22 @@
             
             try {
                 const url = `/api/notifications/${encodeURIComponent(currentUser.name)}`;
-                console.log('NOTIF v340 - Checking notifications for:', currentUser.name, 'URL:', url);
+                console.log('NOTIF v349 - Checking notifications for:', currentUser.name, 'URL:', url);
                 const response = await fetch(url);
                 const notifications = await response.json();
-                console.log('NOTIF v340 - Notifications response:', notifications);
+                console.log('NOTIF v349 - Notifications response:', notifications);
                 
                 if (notifications.length > 0) {
-                    // Projdi všechny notifikace a zobraz jen nové
+                    // Zobraz všechny notifikace bez sledování
                     notifications.forEach(notification => {
-                        const notifId = `${notification.sender_name}-${notification.message}-${notification.ride_id}`;
-                        
-                        if (!shownNotifications.has(notifId)) {
-                            console.log('NOTIF v340 - Found NEW notification:', notification);
-                            shownNotifications.add(notifId);
-                            showFloatingNotification(notification.sender_name, notification.message, notification.ride_id);
-                        } else {
-                            console.log('NOTIF v340 - Notification already shown:', notifId);
-                        }
+                        console.log('NOTIF v349 - Showing notification:', notification);
+                        showFloatingNotification(notification.sender_name, notification.message, notification.ride_id);
                     });
                 } else {
-                    console.log('NOTIF v340 - No notifications found');
+                    console.log('NOTIF v349 - No notifications found');
                 }
             } catch (error) {
-                console.error('NOTIF v340 - Notification check error:', error);
+                console.error('NOTIF v349 - Notification check error:', error);
             }
         }
         
