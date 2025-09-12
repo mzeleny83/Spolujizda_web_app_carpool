@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=280"></script>
+    <script src="/static/js/cookies.js?v=281"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -991,19 +991,11 @@
                 return;
             }
             
-            currentChatRide = rideId;
-            currentChatType = type;
-            
-            // Otevři plovoucí chat
-            const chatTitle = document.getElementById('floatingChatTitle');
-            const chatDiv = document.getElementById('floatingChat');
-            const messageInput = document.getElementById('floatingMessageInput');
-            const messagesDiv = document.getElementById('floatingChatMessages');
-            
-            if (chatTitle) chatTitle.textContent = `💬 ${partnerName}`;
-            if (chatDiv) chatDiv.style.display = 'block';
-            if (messageInput) messageInput.value = '';
-            if (messagesDiv) messagesDiv.innerHTML = '<p style="text-align: center; color: #666; font-size: 14px;">Chat je připraven k použití!</p>';
+            // Jednoduchý chat alert
+            const message = prompt(`Chat s ${partnerName}\n\nNapište zprávu:`);
+            if (message && message.trim()) {
+                alert(`Zpráva "${message}" byla odeslána uživateli ${partnerName}!\n\n(Toto je základní verze chatu)`);
+            }
         }
         
         function closeFloatingChat() {
