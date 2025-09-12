@@ -53,68 +53,72 @@
         } else {
             const urlParams = new URLSearchParams(window.location.search);
             const rideId = urlParams.get('rideId');
-            const partnerName = urlParams.get('partnerName');
-            document.getElementById('chatTitle').textContent = `Chat s ${partnerName}`;
+            if (!rideId) {
+                document.body.innerHTML = '<h1>Chyba: Chybí ID jízdy.</h1>';
+            } else {
+                const partnerName = urlParams.get('partnerName');
+                document.getElementById('chatTitle').textContent = `Chat s ${partnerName}`;
 
-            async function loadChatMessages() {
-                try {
-                    const response = await fetch(`/api/chat/${rideId}/messages`);
-                    const messages = await response.json();
-                    const chatMessages = document.getElementById('chatMessages');
-                    if (messages.length === 0) {
-                        chatMessages.innerHTML = '<p style="text-align: center; color: #666;">Zatím žádné zprávy...</p>';
+                async function loadChatMessages() {
+                    try {
+                        const response = await fetch(`/api/chat/${rideId}/messages`);
+                        const messages = await response.json();
+                        const chatMessages = document.getElementById('chatMessages');
+                        if (messages.length === 0) {
+                            chatMessages.innerHTML = '<p style="text-align: center; color: #666;">Zatím žádné zprávy...</p>';
+                            return;
+                        }
+                        chatMessages.innerHTML = messages.map(msg => {
+                            const isOwn = msg.sender_id === currentUser.id;
+                            const align = isOwn ? 'right' : 'left';
+                            const bgColor = isOwn ? '#007bff' : '#6c757d';
+                            return `
+                                <div style="text-align: ${align}; margin: 10px 0;">
+                                    <div style="display: inline-block; background: ${bgColor}; color: white; padding: 8px 12px; border-radius: 15px; max-width: 70%;">
+                                        <div style="font-size: 12px; opacity: 0.8;">${msg.sender_name}</div>
+                                        <div>${msg.message}</div>
+                                        <div style="font-size: 10px; opacity: 0.6;">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    } catch (error) {
+                        document.getElementById('chatMessages').innerHTML = '❌ Chyba při načítání zpráv';
+                    }
+                }
+
+                async function sendMessage() {
+                    const messageInput = document.getElementById('messageInput');
+                    const message = messageInput.value.trim();
+                    console.log('Sending message:', { rideId, sender_id: currentUser.id, message });
+                    if (!message || !currentUser || !rideId) {
                         return;
                     }
-                    chatMessages.innerHTML = messages.map(msg => {
-                        const isOwn = msg.sender_id === currentUser.id;
-                        const align = isOwn ? 'right' : 'left';
-                        const bgColor = isOwn ? '#007bff' : '#6c757d';
-                        return `
-                            <div style="text-align: ${align}; margin: 10px 0;">
-                                <div style="display: inline-block; background: ${bgColor}; color: white; padding: 8px 12px; border-radius: 15px; max-width: 70%;">
-                                    <div style="font-size: 12px; opacity: 0.8;">${msg.sender_name}</div>
-                                    <div>${msg.message}</div>
-                                    <div style="font-size: 10px; opacity: 0.6;">${new Date(msg.created_at).toLocaleTimeString()}</div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                } catch (error) {
-                    document.getElementById('chatMessages').innerHTML = '❌ Chyba při načítání zpráv';
-                }
-            }
-
-            async function sendMessage() {
-                const messageInput = document.getElementById('messageInput');
-                const message = messageInput.value.trim();
-                console.log('Sending message:', { rideId, sender_id: currentUser.id, message });
-                if (!message || !currentUser || !rideId) {
-                    return;
-                }
-                try {
-                    const response = await fetch('/api/chat/send', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            ride_id: rideId,
-                            sender_id: currentUser.id,
-                            message: message
-                        })
-                    });
-                    if (response.ok) {
-                        messageInput.value = '';
-                        loadChatMessages();
-                    } else {
-                        alert('Chyba při odesílání zprávy');
+                    try {
+                        const response = await fetch('/api/chat/send', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                ride_id: rideId,
+                                sender_id: currentUser.id,
+                                message: message
+                            })
+                        });
+                        if (response.ok) {
+                            messageInput.value = '';
+                            loadChatMessages();
+                        } else {
+                            alert('Chyba při odesílání zprávy');
+                        }
+                    } catch (error) {
+                        alert('Chyba při odesílání: ' + error.message);
                     }
-                } catch (error) {
-                    alert('Chyba při odesílání: ' + error.message);
                 }
-            }
 
-            loadChatMessages();
-            setInterval(loadChatMessages, 3000);
+                loadChatMessages();
+                setInterval(loadChatMessages, 3000);
+            }
         }
     </script>
 </body>
