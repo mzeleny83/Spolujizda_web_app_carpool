@@ -85,6 +85,7 @@
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
+            console.log('Sending message:', { rideId, sender_id: currentUser.id, message });
             if (!message || !currentUser || !rideId) {
                 return;
             }
