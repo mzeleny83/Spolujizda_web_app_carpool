@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=283"></script>
+    <script src="/static/js/cookies.js?v=284"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -986,15 +986,21 @@
         }
         
         async function openChat(type, rideId, partnerName) {
+            alert('DEBUG: openChat called - v284');
+            
             if (!currentUser) {
                 alert('Musíte se přihlásit pro použití chatu!');
                 return;
             }
             
+            alert('DEBUG: User is logged in, loading messages...');
+            
             // Nejdříve zobraz existující zprávy
             try {
                 const response = await fetch(`/api/chat/${rideId}/messages`);
                 const messages = await response.json();
+                
+                alert(`DEBUG: Loaded ${messages.length} messages`);
                 
                 let chatHistory = `Chat s ${partnerName}\n\n`;
                 if (messages.length > 0) {
