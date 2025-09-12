@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=305&t=1735659900"></script>
+    <script src="/static/js/cookies.js?v=306&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1399,11 +1399,12 @@
         function startNotificationCheck() {
             if (!currentUser || notificationInterval) return;
             
-            // Kontroluj notifikace každé 2 minuty místo 30 sekund
-            notificationInterval = setInterval(checkForNotifications, 120000);
+            console.log('Starting notification check for user:', currentUser.name);
+            // Kontroluj notifikace každých 30 sekund pro rychlejší testování
+            notificationInterval = setInterval(checkForNotifications, 30000);
             
-            // První kontrola za 10 sekund místo okamžitě
-            setTimeout(checkForNotifications, 10000);
+            // První kontrola za 5 sekund
+            setTimeout(checkForNotifications, 5000);
         }
         
         function stopNotificationCheck() {
@@ -1429,15 +1430,10 @@
                     const latest = notifications[0];
                     
                     // Automaticky otevři chat s novou zprávou
-                    const shouldOpen = confirm(`Nová zpráva od ${latest.sender_name}:\n"${latest.message}"\n\nChcete otevřít chat?`);
+                    const shouldOpen = confirm(`📨 Nová zpráva od ${latest.sender_name}:\n"${latest.message}"\n\nChcete otevřít chat?`);
                     if (shouldOpen) {
-                        // Zkus najít správnou openChat funkci
-                        if (typeof window.openChat === 'function') {
-                            window.openChat('passenger', latest.ride_id, latest.sender_name);
-                        } else {
-                            // Fallback - vytvoř modal přímo
-                            createChatModal(latest.ride_id, latest.sender_name);
-                        }
+                        // Použij createChatModal přímo
+                        createChatModal(latest.ride_id, latest.sender_name);
                     }
                 }
             } catch (error) {
