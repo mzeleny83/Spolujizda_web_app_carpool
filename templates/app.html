@@ -986,8 +986,6 @@
         }
         
         function openChat(type, rideId, partnerName) {
-            alert(`Chat s ${partnerName} - otevírám...`);
-            
             if (!currentUser) {
                 alert('Musíte se přihlásit pro použití chatu!');
                 return;
@@ -997,15 +995,11 @@
             currentChatType = type;
             
             // Otevři plovoucí chat
-            const chatWindow = document.getElementById('floatingChat');
-            if (chatWindow) {
-                document.getElementById('floatingChatTitle').textContent = `💬 ${partnerName}`;
-                chatWindow.style.display = 'block';
-                document.getElementById('floatingMessageInput').value = '';
-                loadFloatingChatMessages(rideId);
-            } else {
-                alert('Chat okno nenalezeno!');
-            }
+            document.getElementById('floatingChatTitle').textContent = `💬 ${partnerName}`;
+            document.getElementById('floatingChat').style.display = 'block';
+            document.getElementById('floatingMessageInput').value = '';
+            
+            loadFloatingChatMessages(rideId);
         }
         
         function closeFloatingChat() {
