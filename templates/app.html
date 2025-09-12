@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=299&t=1735659900"></script>
+    <script src="/static/js/cookies.js?v=300&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1415,7 +1415,13 @@
                     // Automaticky otevři chat s novou zprávou
                     const shouldOpen = confirm(`Nová zpráva od ${latest.sender_name}:\n"${latest.message}"\n\nChcete otevřít chat?`);
                     if (shouldOpen) {
-                        openChat('passenger', latest.ride_id, latest.sender_name);
+                        // Zkus najít správnou openChat funkci
+                        if (typeof window.openChat === 'function') {
+                            window.openChat('passenger', latest.ride_id, latest.sender_name);
+                        } else {
+                            // Fallback - vytvoř modal přímo
+                            createChatModal(latest.ride_id, latest.sender_name);
+                        }
                     }
                 }
             } catch (error) {
@@ -1484,6 +1490,90 @@
                     to { transform: translateX(100%); opacity: 0; }
                 }
             `;
+        }
+        
+        // Fallback funkce pro vytvoření chat modalu
+        function createChatModal(rideId, driverName) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; justify-content: center; align-items: center;';
+            
+            const chatBox = document.createElement('div');
+            chatBox.style.cssText = 'background: white; width: 400px; height: 500px; border-radius: 10px; padding: 20px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+            
+            chatBox.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>Chat s ${driverName}</h3>
+                    <button onclick="this.closest('.modal-overlay').remove()" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">✕</button>
+                </div>
+                <div id="notifChatMessages" style="height: 350px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="notifChatInput" placeholder="Napište zprávu..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" onkeypress="if(event.key==='Enter') sendNotifMessage(${rideId})">
+                    <button onclick="sendNotifMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Odeslat</button>
+                </div>
+            `;
+            
+            modal.className = 'modal-overlay';
+            modal.appendChild(chatBox);
+            document.body.appendChild(modal);
+            
+            loadNotifChatMessages(rideId);
+            
+            const interval = setInterval(() => loadNotifChatMessages(rideId), 3000);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    clearInterval(interval);
+                    modal.remove();
+                }
+            });
+        }
+        
+        async function sendNotifMessage(rideId) {
+            const input = document.getElementById('notifChatInput');
+            const message = input.value.trim();
+            if (!message || !currentUser) return;
+            
+            try {
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ride_id: rideId,
+                        sender_name: currentUser.name,
+                        message: message
+                    })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadNotifChatMessages(rideId);
+                }
+            } catch (error) {
+                console.error('Chyba při odesílání:', error);
+            }
+        }
+        
+        async function loadNotifChatMessages(rideId) {
+            try {
+                const response = await fetch('/api/chat/' + rideId + '/messages');
+                const messages = await response.json();
+                
+                const messagesDiv = document.getElementById('notifChatMessages');
+                if (!messagesDiv) return;
+                
+                messagesDiv.innerHTML = '';
+                
+                messages.forEach(msg => {
+                    const div = document.createElement('div');
+                    const isMyMessage = msg.sender_name === currentUser.name;
+                    div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #e3f2fd; text-align: right; margin-left: 50px;' : 'background: #f5f5f5; margin-right: 50px;'}`;
+                    div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${new Date(msg.created_at).toLocaleString()}</small>`;
+                    messagesDiv.appendChild(div);
+                });
+                
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Chyba při načítání zpráv:', error);
+            }
         }
         
         let isTracking = false;
