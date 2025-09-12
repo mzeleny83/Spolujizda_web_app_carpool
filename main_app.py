@@ -1102,11 +1102,13 @@ def get_user_notifications(user_name):
                 SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
-                JOIN rides r ON m.ride_id = r.id
-                LEFT JOIN reservations res ON m.ride_id = res.ride_id AND res.passenger_id = :user_id
                 WHERE m.created_at > :thirty_minutes_ago
                   AND m.sender_id != :user_id
-                  AND (r.user_id = :user_id OR res.passenger_id = :user_id)
+                  AND m.ride_id IN (
+                    SELECT r.id FROM rides r WHERE r.user_id = :user_id
+                    UNION
+                    SELECT res.ride_id FROM reservations res WHERE res.passenger_id = :user_id
+                  )
                 ORDER BY m.created_at DESC
                 LIMIT 10
             """), {
