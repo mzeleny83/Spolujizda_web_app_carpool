@@ -1383,8 +1383,9 @@
         function startNotificationCheck() {
             if (!currentUser || notificationInterval) return;
             
-            // Kontroluj notifikace každých 5 sekund
-            notificationInterval = setInterval(checkForNotifications, 5000);
+            console.log('Starting notification check');
+            // Kontroluj notifikace každých 30 sekund
+            notificationInterval = setInterval(checkForNotifications, 30000);
             
             // První kontrola okamžitě
             checkForNotifications();
@@ -1392,6 +1393,7 @@
         
         function stopNotificationCheck() {
             if (notificationInterval) {
+                console.log('Stopping notification check');
                 clearInterval(notificationInterval);
                 notificationInterval = null;
             }
@@ -1412,8 +1414,6 @@
                 const response = await fetch(url);
                 const notifications = await response.json();
                 
-                console.log('DEBUG: Got notifications:', notifications.length, notifications);
-                
                 if (notifications.length > 0) {
                     // Zobraz plovoucí notifikaci pro nejnovější zprávu
                     const latest = notifications[0];
@@ -1425,10 +1425,10 @@
                         openChat('passenger', latest.ride_id, latest.sender_name);
                     }
                 } else {
-                    console.log('DEBUG: No new notifications');
+                    
                 }
             } catch (error) {
-                console.log('DEBUG: Error checking notifications:', error);
+                
             }
         }
         
