@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=288&t=1735659800"></script>
+    <script src="/static/js/cookies.js?v=289&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1359,24 +1359,37 @@
         }
         
         async function checkForNotifications() {
-            if (!currentUser) return;
+            console.log('DEBUG: Checking notifications for user:', currentUser ? currentUser.name : 'NO USER');
+            
+            if (!currentUser) {
+                console.log('DEBUG: No current user, skipping notifications');
+                return;
+            }
             
             try {
-                const response = await fetch(`/api/notifications/${encodeURIComponent(currentUser.name)}`);
+                const url = `/api/notifications/${encodeURIComponent(currentUser.name)}`;
+                console.log('DEBUG: Fetching notifications from:', url);
+                
+                const response = await fetch(url);
                 const notifications = await response.json();
+                
+                console.log('DEBUG: Got notifications:', notifications.length, notifications);
                 
                 if (notifications.length > 0) {
                     // Zobraz plovoucí notifikaci pro nejnovější zprávu
                     const latest = notifications[0];
+                    console.log('DEBUG: Showing notification for:', latest);
                     
                     // Automaticky otevři chat s novou zprávou
                     const shouldOpen = confirm(`Nová zpráva od ${latest.sender_name}:\n"${latest.message}"\n\nChcete otevřít chat?`);
                     if (shouldOpen) {
                         openChat('passenger', latest.ride_id, latest.sender_name);
                     }
+                } else {
+                    console.log('DEBUG: No new notifications');
                 }
             } catch (error) {
-                console.log('Chyba při kontrole notifikací:', error);
+                console.log('DEBUG: Error checking notifications:', error);
             }
         }
         
