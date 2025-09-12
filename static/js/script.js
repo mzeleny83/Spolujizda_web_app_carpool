@@ -1,6 +1,26 @@
 // Chat functions for ride sharing app
 let chatMap, routeWaypoints = [], routeMarkers = [], routeLine = null, userMarker = null;
 
+// Function to create test reservation for notification testing
+async function createTestReservation() {
+  try {
+    const response = await fetch('/api/reservations/create', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        ride_id: 34,
+        passenger_id: 2, // Pokus Pokus user ID
+        seats_reserved: 1
+      })
+    });
+    
+    const result = await response.json();
+    console.log('Test reservation created:', result);
+  } catch (error) {
+    console.error('Error creating test reservation:', error);
+  }
+}
+
 // Missing function for showAll button
 function showAll() {
   const results = document.getElementById('searchResults');
