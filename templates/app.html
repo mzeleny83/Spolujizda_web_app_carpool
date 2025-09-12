@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=279"></script>
+    <script src="/static/js/cookies.js?v=280"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -998,18 +998,12 @@
             const chatTitle = document.getElementById('floatingChatTitle');
             const chatDiv = document.getElementById('floatingChat');
             const messageInput = document.getElementById('floatingMessageInput');
+            const messagesDiv = document.getElementById('floatingChatMessages');
             
             if (chatTitle) chatTitle.textContent = `💬 ${partnerName}`;
             if (chatDiv) chatDiv.style.display = 'block';
             if (messageInput) messageInput.value = '';
-            
-            // Načti zprávy s error handling
-            try {
-                loadFloatingChatMessages(rideId);
-            } catch (error) {
-                console.error('Error loading chat messages:', error);
-                document.getElementById('floatingChatMessages').innerHTML = '<p style="text-align: center; color: #666;">Chat je připraven...</p>';
-            }
+            if (messagesDiv) messagesDiv.innerHTML = '<p style="text-align: center; color: #666; font-size: 14px;">Chat je připraven k použití!</p>';
         }
         
         function closeFloatingChat() {
