@@ -352,49 +352,31 @@ async function loadChatMessages(rideId) {
 
 function testNotificationDisplay() {
   console.log('TEST - Forcing notification display');
+  alert('TEST NOTIFIKACE: Toto je testovací notifikace!');
   showFloatingNotification('Test Uživatel', 'Testovací zpráva pro ověření funkčnosti notifikací', 123);
 }
 
 function showFloatingNotification(senderName, message, rideId) {
-  console.log('NOTIFICATION v342 - Showing notification:', senderName, message, rideId);
+  console.log('NOTIFICATION v345 - Showing notification:', senderName, message, rideId);
   
-  const oldNotifications = document.querySelectorAll('.floating-notification');
-  oldNotifications.forEach(n => n.remove());
-  
+  // Jednoduchý test - vytvoř červený box
   const notification = document.createElement('div');
-  notification.className = 'floating-notification';
+  notification.innerHTML = 'NOTIFIKACE: ' + senderName + ' - ' + message;
   notification.style.position = 'fixed';
-  notification.style.top = '50px';
-  notification.style.left = '50px';
-  notification.style.background = '#4CAF50';
+  notification.style.top = '10px';
+  notification.style.left = '10px';
+  notification.style.background = 'red';
   notification.style.color = 'white';
-  notification.style.padding = '20px';
-  notification.style.borderRadius = '12px';
-  notification.style.boxShadow = '0 8px 25px rgba(0,0,0,0.4)';
+  notification.style.padding = '10px';
   notification.style.zIndex = '999999';
-  notification.style.width = '300px';
-  notification.style.fontFamily = 'Arial, sans-serif';
-  notification.style.opacity = '1';
-  notification.style.display = 'block';
-  
-  notification.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-      <div style="font-weight: bold; font-size: 16px;">📨 Nová zpráva!</div>
-      <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-size: 12px;">×</button>
-    </div>
-    <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">Od: ${senderName}</div>
-    <div style="font-size: 14px; line-height: 1.4; margin-bottom: 12px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">"${message}"</div>
-    <div style="text-align: center;">
-      <button onclick="openChat(${rideId}, '${senderName}'); this.closest('.floating-notification').remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">💬 Otevřít chat</button>
-    </div>
-  `;
+  notification.style.fontSize = '20px';
   
   document.body.appendChild(notification);
-  console.log('Notification element added to DOM, should be visible now');
+  console.log('Simple notification added to DOM');
   
   setTimeout(() => {
     if (document.body.contains(notification)) {
       notification.remove();
     }
-  }, 5000);
+  }, 3000);
 }
