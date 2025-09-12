@@ -357,26 +357,8 @@ function testNotificationDisplay() {
 }
 
 function showFloatingNotification(senderName, message, rideId) {
-  console.log('NOTIFICATION v345 - Showing notification:', senderName, message, rideId);
+  console.log('NOTIFICATION v346 - Showing notification:', senderName, message, rideId);
   
-  // Jednoduchý test - vytvoř červený box
-  const notification = document.createElement('div');
-  notification.innerHTML = 'NOTIFIKACE: ' + senderName + ' - ' + message;
-  notification.style.position = 'fixed';
-  notification.style.top = '10px';
-  notification.style.left = '10px';
-  notification.style.background = 'red';
-  notification.style.color = 'white';
-  notification.style.padding = '10px';
-  notification.style.zIndex = '999999';
-  notification.style.fontSize = '20px';
-  
-  document.body.appendChild(notification);
-  console.log('Simple notification added to DOM');
-  
-  setTimeout(() => {
-    if (document.body.contains(notification)) {
-      notification.remove();
-    }
-  }, 3000);
+  // Zkus alert místo DOM elementu
+  alert('NOTIFIKACE: ' + senderName + ' napsal: ' + message);
 }
