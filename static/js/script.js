@@ -363,23 +363,19 @@ function showFloatingNotification(senderName, message, rideId) {
   
   const notification = document.createElement('div');
   notification.className = 'floating-notification';
-  notification.style.cssText = `
-    position: fixed !important;
-    top: 20px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    background: #4CAF50 !important;
-    color: white !important;
-    padding: 20px !important;
-    border-radius: 12px !important;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
-    z-index: 999999 !important;
-    width: 350px !important;
-    cursor: pointer !important;
-    font-family: Arial, sans-serif !important;
-    opacity: 1 !important;
-    display: block !important;
-  `;
+  notification.style.position = 'fixed';
+  notification.style.top = '50px';
+  notification.style.left = '50px';
+  notification.style.background = '#4CAF50';
+  notification.style.color = 'white';
+  notification.style.padding = '20px';
+  notification.style.borderRadius = '12px';
+  notification.style.boxShadow = '0 8px 25px rgba(0,0,0,0.4)';
+  notification.style.zIndex = '999999';
+  notification.style.width = '300px';
+  notification.style.fontFamily = 'Arial, sans-serif';
+  notification.style.opacity = '1';
+  notification.style.display = 'block';
   
   notification.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
