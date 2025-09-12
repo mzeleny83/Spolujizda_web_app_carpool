@@ -356,7 +356,7 @@ function testNotificationDisplay() {
 }
 
 function showFloatingNotification(senderName, message, rideId) {
-  console.log('NOTIFICATION v340 - Showing notification:', senderName, message, rideId);
+  console.log('NOTIFICATION v342 - Showing notification:', senderName, message, rideId);
   
   const oldNotifications = document.querySelectorAll('.floating-notification');
   oldNotifications.forEach(n => n.remove());
@@ -375,9 +375,9 @@ function showFloatingNotification(senderName, message, rideId) {
     z-index: 999999 !important;
     max-width: 350px !important;
     cursor: pointer !important;
-    transform: translateX(100%) !important;
-    transition: transform 0.4s ease-out !important;
     font-family: Arial, sans-serif !important;
+    opacity: 1 !important;
+    display: block !important;
   `;
   
   notification.innerHTML = `
@@ -393,21 +393,11 @@ function showFloatingNotification(senderName, message, rideId) {
   `;
   
   document.body.appendChild(notification);
-  console.log('Notification element added to DOM');
-  
-  setTimeout(() => {
-    notification.style.transform = 'translateX(0) !important';
-    console.log('Notification animated in');
-  }, 100);
+  console.log('Notification element added to DOM, should be visible now');
   
   setTimeout(() => {
     if (document.body.contains(notification)) {
-      notification.style.transform = 'translateX(100%) !important';
-      setTimeout(() => {
-        if (document.body.contains(notification)) {
-          notification.remove();
-        }
-      }, 400);
+      notification.remove();
     }
-  }, 8000);
+  }, 5000);
 }
