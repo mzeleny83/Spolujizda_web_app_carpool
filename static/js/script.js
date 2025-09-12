@@ -368,10 +368,10 @@ function openChat(rideId, driverName) {
     
     // Vytvoříme modal okno místo popup
     const modal = document.createElement('div');
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; justify-content: center; align-items: center;';
+    modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.5) !important; z-index: 999999 !important; display: flex !important; justify-content: center !important; align-items: center !important;';
     
     const chatBox = document.createElement('div');
-    chatBox.style.cssText = 'background: white; width: 400px; height: 500px; border-radius: 10px; padding: 20px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+    chatBox.style.cssText = 'background: white !important; width: 400px !important; height: 500px !important; border-radius: 10px !important; padding: 20px !important; position: relative !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;';
     
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '✕';
