@@ -302,11 +302,21 @@ function displayAllRides(rides) {
         <h4>🚗 ${ride.driver_name || 'Neznámý řidič'}</h4>
         <p><strong>${ride.from_location}</strong> → <strong>${ride.to_location}</strong></p>
         <p>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</p>
-        <button onclick="alert('Test'); openChat(${ride.id}, '${(ride.driver_name || 'Řidič').replace(/'/g, '\\\'')}')" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
+        <button class="chat-btn" data-ride-id="${ride.id}" data-driver-name="${ride.driver_name || 'Řidič'}" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
       </div>
     `;
   });
   resultsContainer.innerHTML = html;
+  
+  // Add event listeners to chat buttons
+  document.querySelectorAll('.chat-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      alert('Button clicked!');
+      const rideId = this.getAttribute('data-ride-id');
+      const driverName = this.getAttribute('data-driver-name');
+      openChat(rideId, driverName);
+    });
+  });
 }
 
 function clearRoute() {
