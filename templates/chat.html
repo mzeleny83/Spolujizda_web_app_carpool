@@ -63,7 +63,7 @@
                     return;
                 }
                 chatMessages.innerHTML = messages.map(msg => {
-                    const isOwn = msg.sender_name === currentUser.name;
+                    const isOwn = msg.sender_id === currentUser.id;
                     const align = isOwn ? 'right' : 'left';
                     const bgColor = isOwn ? '#007bff' : '#6c757d';
                     return `
@@ -94,7 +94,7 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         ride_id: rideId,
-                        sender_name: currentUser.name,
+                        sender_id: currentUser.id,
                         message: message
                     })
                 });
