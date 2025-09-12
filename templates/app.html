@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=282"></script>
+    <script src="/static/js/cookies.js?v=283"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -991,11 +991,26 @@
                 return;
             }
             
-            // Jednoduchý chat s uložením do databáze
-            const message = prompt(`Chat s ${partnerName}\n\nNapište zprávu:`);
-            if (message && message.trim()) {
-                try {
-                    const response = await fetch('/api/chat/send', {
+            // Nejdříve zobraz existující zprávy
+            try {
+                const response = await fetch(`/api/chat/${rideId}/messages`);
+                const messages = await response.json();
+                
+                let chatHistory = `Chat s ${partnerName}\n\n`;
+                if (messages.length > 0) {
+                    chatHistory += 'Předchozí zprávy:\n';
+                    messages.forEach(msg => {
+                        const time = new Date(msg.created_at).toLocaleTimeString();
+                        chatHistory += `${msg.sender_name} (${time}): ${msg.message}\n`;
+                    });
+                    chatHistory += '\n';
+                } else {
+                    chatHistory += 'Zatím žádné zprávy\n\n';
+                }
+                
+                const message = prompt(chatHistory + 'Napište novou zprávu:');
+                if (message && message.trim()) {
+                    const sendResponse = await fetch('/api/chat/send', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
@@ -1005,14 +1020,14 @@
                         })
                     });
                     
-                    if (response.ok) {
-                        alert(`Zpráva "${message}" byla úspěšně odeslána uživateli ${partnerName}!`);
+                    if (sendResponse.ok) {
+                        alert(`Zpráva "${message}" byla úspěšně odeslána!`);
                     } else {
                         alert('Chyba při odesílání zprávy');
                     }
-                } catch (error) {
-                    alert('Chyba: ' + error.message);
                 }
+            } catch (error) {
+                alert('Chyba při načítání chatu: ' + error.message);
             }
         }
         
