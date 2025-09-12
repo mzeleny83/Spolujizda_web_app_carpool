@@ -986,58 +986,97 @@
         }
         
         async function openChat(type, rideId, partnerName) {
-            console.log('CHAT v285 - Opening chat with:', partnerName, 'for ride:', rideId);
+            console.log('CHAT v295 - Opening chat with:', partnerName, 'for ride:', rideId);
             
             if (!currentUser) {
                 alert('Musíte se přihlásit pro použití chatu!');
                 return;
             }
             
-            // Nejdříve zobraz existující zprávy
+            // Vytvoř modal okno
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center;';
+            
+            const chatBox = document.createElement('div');
+            chatBox.style.cssText = 'background: white; width: 400px; height: 500px; border-radius: 10px; padding: 20px; position: relative;';
+            
+            chatBox.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>Chat s ${partnerName}</h3>
+                    <button onclick="this.closest('.modal').remove()" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">✕</button>
+                </div>
+                <div id="modalChatMessages" style="height: 350px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="modalChatInput" placeholder="Napište zprávu..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" onkeypress="if(event.key==='Enter') sendModalMessage(${rideId})">
+                    <button onclick="sendModalMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Odeslat</button>
+                </div>
+            `;
+            
+            modal.className = 'modal';
+            modal.appendChild(chatBox);
+            document.body.appendChild(modal);
+            
+            // Načti zprávy
+            loadModalChatMessages(rideId);
+            
+            // Automatické obnovování
+            const interval = setInterval(() => loadModalChatMessages(rideId), 3000);
+            
+            // Vyčisti interval při zavření
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    clearInterval(interval);
+                    modal.remove();
+                }
+            });
+        }
+        
+        async function sendModalMessage(rideId) {
+            const input = document.getElementById('modalChatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
             try {
-                const response = await fetch(`/api/chat/${rideId}/messages`);
-                const messages = await response.json();
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ride_id: rideId,
+                        sender_name: currentUser.name,
+                        message: message
+                    })
+                });
                 
-                let chatHistory = `Chat s ${partnerName}\n\n`;
-                if (messages.length > 0) {
-                    chatHistory += 'Předchozí zprávy:\n';
-                    messages.forEach(msg => {
-                        const time = new Date(msg.created_at).toLocaleTimeString();
-                        chatHistory += `${msg.sender_name} (${time}): ${msg.message}\n`;
-                    });
-                    chatHistory += '\n';
-                } else {
-                    chatHistory += 'Zatím žádné zprávy\n\n';
-                }
-                
-                const action = prompt(chatHistory + '\nMožnosti:\n1. Napište zprávu\n2. Napište "refresh" pro obnovení\n\nVaše volba:');
-                
-                if (action && action.toLowerCase() === 'refresh') {
-                    // Rekurzivně znovu otevři chat pro obnovení
-                    openChat(type, rideId, partnerName);
-                    return;
-                }
-                
-                const message = action;
-                if (message && message.trim()) {
-                    const sendResponse = await fetch('/api/chat/send', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            ride_id: rideId,
-                            sender_id: currentUser.id,
-                            message: message.trim()
-                        })
-                    });
-                    
-                    if (sendResponse.ok) {
-                        alert(`Zpráva "${message}" byla úspěšně odeslána!`);
-                    } else {
-                        alert('Chyba při odesílání zprávy');
-                    }
+                if (response.ok) {
+                    input.value = '';
+                    loadModalChatMessages(rideId);
                 }
             } catch (error) {
-                alert('Chyba při načítání chatu: ' + error.message);
+                console.error('Chyba při odesílání:', error);
+            }
+        }
+        
+        async function loadModalChatMessages(rideId) {
+            try {
+                const response = await fetch('/api/chat/' + rideId + '/messages');
+                const messages = await response.json();
+                
+                const messagesDiv = document.getElementById('modalChatMessages');
+                if (!messagesDiv) return;
+                
+                messagesDiv.innerHTML = '';
+                
+                messages.forEach(msg => {
+                    const div = document.createElement('div');
+                    const isMyMessage = msg.sender_name === currentUser.name;
+                    div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #e3f2fd; text-align: right; margin-left: 50px;' : 'background: #f5f5f5; margin-right: 50px;'}`;
+                    div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${new Date(msg.timestamp).toLocaleString()}</small>`;
+                    messagesDiv.appendChild(div);
+                });
+                
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Chyba při načítání zpráv:', error);
             }
         }
         
