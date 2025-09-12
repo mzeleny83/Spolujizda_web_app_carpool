@@ -1097,6 +1097,29 @@ def get_user_notifications(user_name):
             for ride in user_rides:
                 print(f"  - Ride {ride[0]}: {ride[1]} -> {ride[2]} (driver: {ride[3]}, role: {ride[4]})")
             
+            # Debug: Najdi všechny zprávy v databázi
+            all_messages = db.session.execute(db.text("""
+                SELECT m.ride_id, m.message, m.created_at, u.name as sender_name, m.sender_id
+                FROM messages m
+                JOIN users u ON m.sender_id = u.id
+                ORDER BY m.created_at DESC
+                LIMIT 20
+            """)).fetchall()
+            
+            print(f"All messages in database:")
+            for msg in all_messages:
+                print(f"  - Ride {msg[0]}: '{msg[1]}' from {msg[3]} (ID {msg[4]}) at {msg[2]}")
+            
+            # Debug: Najdi jízdy uživatele
+            user_ride_ids = db.session.execute(db.text("""
+                SELECT r.id FROM rides r WHERE r.user_id = :user_id
+                UNION
+                SELECT res.ride_id FROM reservations res WHERE res.passenger_id = :user_id
+            """), {'user_id': user_id}).fetchall()
+            
+            ride_ids = [row[0] for row in user_ride_ids]
+            print(f"User {user_name} is involved in rides: {ride_ids}")
+            
             # Najdi jízdy kde je uživatel řidič nebo pasažér
             messages = db.session.execute(db.text("""
                 SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
@@ -1133,6 +1156,7 @@ def get_user_notifications(user_name):
         # Test notifications removed - checking real notifications only
         
         print(f"Final notifications for {user_name}: {len(result)} messages")
+        print(f"Returning: {result}")
         return jsonify(result), 200
         
     except Exception as e:
