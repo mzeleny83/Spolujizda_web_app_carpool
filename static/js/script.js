@@ -399,6 +399,12 @@ async function sendChatMessage(rideId) {
   if (!message) return;
   
   const userName = localStorage.getItem('user_name') || 'Anonym';
+  const userId = localStorage.getItem('user_id');
+  
+  if (!userId) {
+    alert('Musíte být přihlášeni pro odesílání zpráv');
+    return;
+  }
   
   try {
     const response = await fetch('/api/chat/send', {
@@ -406,7 +412,7 @@ async function sendChatMessage(rideId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ride_id: rideId,
-        sender_name: userName,
+        sender_id: parseInt(userId),
         message: message
       })
     });
@@ -414,6 +420,9 @@ async function sendChatMessage(rideId) {
     if (response.ok) {
       input.value = '';
       loadChatMessages(rideId);
+    } else {
+      const error = await response.json();
+      console.error('Chyba při odesílání:', error);
     }
   } catch (error) {
     console.error('Chyba při odesílání:', error);
@@ -428,14 +437,14 @@ async function loadChatMessages(rideId) {
     const messagesDiv = document.getElementById('chatMessages');
     if (!messagesDiv) return;
     
-    const userName = localStorage.getItem('user_name') || 'Anonym';
+    const userId = localStorage.getItem('user_id');
     messagesDiv.innerHTML = '';
     
     messages.forEach(msg => {
       const div = document.createElement('div');
-      const isMyMessage = msg.sender_name === userName;
+      const isMyMessage = msg.sender_id == userId;
       div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #e3f2fd; text-align: right; margin-left: 50px;' : 'background: #f5f5f5; margin-right: 50px;'}`;
-      div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${new Date(msg.timestamp).toLocaleString()}</small>`;
+      div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${new Date(msg.created_at).toLocaleString()}</small>`;
       messagesDiv.appendChild(div);
     });
     
