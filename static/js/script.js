@@ -354,5 +354,3 @@ function openChat(type, rideId, partnerName) {
     console.log('Opening chat:', type, rideId, partnerName);
     alert(`Chat s ${partnerName} - funkce bude brzy dostupná!`);
 }
-
-});
