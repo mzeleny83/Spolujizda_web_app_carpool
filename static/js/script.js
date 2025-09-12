@@ -366,10 +366,31 @@ function testNotificationDisplay() {
 }
 
 function showFloatingNotification(senderName, message, rideId) {
-  console.log('NOTIFICATION v347 - Showing notification:', senderName, message, rideId);
+  console.log('NOTIFICATION v350 - Showing notification:', senderName, message, rideId);
   
-  // Zkus alert místo DOM elementu
-  alert('NOTIFIKACE: ' + senderName + ' napsal: ' + message);
+  const notification = document.createElement('div');
+  notification.innerHTML = `
+    <div style="background: #4CAF50; color: white; padding: 15px; border-radius: 8px; margin: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: Arial, sans-serif;">
+      <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
+      <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
+      <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
+      <button onclick="openChat(${rideId}, '${senderName}'); this.parentElement.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">💬 Otevřít chat</button>
+      <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px;">×</button>
+    </div>
+  `;
+  
+  notification.style.position = 'fixed';
+  notification.style.top = '20px';
+  notification.style.right = '20px';
+  notification.style.zIndex = '999999';
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (document.body.contains(notification)) {
+      notification.remove();
+    }
+  }, 8000);
 }
 
 async function checkForNotifications() {
