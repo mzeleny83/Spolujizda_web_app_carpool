@@ -504,6 +504,7 @@
         }
 
         function logout() {
+            stopNotificationCheck();
             currentUser = null;
             localStorage.removeItem('currentUser');
             updateUI();
@@ -1294,10 +1295,112 @@
             if (savedUser) {
                 try {
                     currentUser = JSON.parse(savedUser);
+                    if (currentUser) {
+                        startNotificationCheck();
+                    }
                 } catch (e) {
                     localStorage.removeItem('currentUser');
                 }
             }
+        }
+        
+        let notificationInterval = null;
+        
+        function startNotificationCheck() {
+            if (!currentUser || notificationInterval) return;
+            
+            // Kontroluj notifikace každých 10 sekund
+            notificationInterval = setInterval(checkForNotifications, 10000);
+            
+            // První kontrola okamžitě
+            checkForNotifications();
+        }
+        
+        function stopNotificationCheck() {
+            if (notificationInterval) {
+                clearInterval(notificationInterval);
+                notificationInterval = null;
+            }
+        }
+        
+        async function checkForNotifications() {
+            if (!currentUser) return;
+            
+            try {
+                const response = await fetch(`/api/notifications/${encodeURIComponent(currentUser.name)}`);
+                const notifications = await response.json();
+                
+                if (notifications.length > 0) {
+                    // Zobraz plovoucí notifikaci pro nejnovější zprávu
+                    const latest = notifications[0];
+                    showFloatingNotification(latest.sender_name, latest.message, latest.ride_id);
+                }
+            } catch (error) {
+                console.log('Chyba při kontrole notifikací:', error);
+            }
+        }
+        
+        function showFloatingNotification(senderName, message, rideId) {
+            // Vytvoř plovoucí notifikaci
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #007bff;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 10000;
+                max-width: 300px;
+                cursor: pointer;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">💬 Nová zpráva od ${senderName}</div>
+                <div style="font-size: 14px; opacity: 0.9;">${message.substring(0, 50)}${message.length > 50 ? '...' : ''}</div>
+                <div style="font-size: 11px; opacity: 0.7; margin-top: 5px;">Klikněte pro otevření chatu</div>
+            `;
+            
+            // Přidej CSS animaci
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Kliknutí otevře chat
+            notification.onclick = () => {
+                openChat('passenger', rideId, senderName);
+                document.body.removeChild(notification);
+            };
+            
+            document.body.appendChild(notification);
+            
+            // Automaticky skryj po 5 sekundách
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.style.animation = 'slideOut 0.3s ease-in';
+                    setTimeout(() => {
+                        if (document.body.contains(notification)) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+            
+            // Přidej slideOut animaci
+            style.textContent += `
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
         }
         
         let isTracking = false;
@@ -1997,6 +2100,11 @@
         checkSavedLogin();
         updateUI();
         loadCities();
+        
+        // Spusť kontrolu notifikací
+        if (currentUser) {
+            startNotificationCheck();
+        }
         
         
         

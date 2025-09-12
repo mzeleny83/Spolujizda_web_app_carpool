@@ -1052,6 +1052,46 @@ def get_chat_messages(ride_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/notifications/<user_name>', methods=['GET'])
+def get_user_notifications(user_name):
+    try:
+        with db.session.begin():
+            # Najdi user_id podle jména
+            user = db.session.execute(db.text('SELECT id FROM users WHERE name = :name'), {'name': user_name}).fetchone()
+            if not user:
+                return jsonify([]), 200
+            
+            user_id = user[0]
+            
+            # Najdi nové zprávy pro tohoto uživatele
+            messages = db.session.execute(db.text("""
+                SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
+                FROM messages m
+                JOIN users u ON m.sender_id = u.id
+                JOIN rides r ON m.ride_id = r.id
+                WHERE (r.user_id = :user_id OR EXISTS (
+                    SELECT 1 FROM reservations res WHERE res.ride_id = r.id AND res.passenger_id = :user_id
+                )) AND m.sender_id != :user_id
+                AND m.created_at > datetime('now', '-1 hour')
+                ORDER BY m.created_at DESC
+                LIMIT 5
+            """), {'user_id': user_id}).fetchall()
+        
+        result = []
+        for msg in messages:
+            created_at_val = parse_datetime_str(msg[2])
+            result.append({
+                'ride_id': msg[0],
+                'message': msg[1],
+                'created_at': created_at_val.isoformat() if created_at_val else None,
+                'sender_name': msg[3]
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/ratings/create', methods=['POST'])
 def create_rating():
     try:
