@@ -1027,8 +1027,8 @@ def send_chat_message():
                 return jsonify({'error': 'Uživatel nenalezen'}), 404
             
             sender_id = user[0]
-            db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message) VALUES (:ride_id, :sender_id, :message)'),
-                             {'ride_id': ride_id, 'sender_id': sender_id, 'message': message})
+            db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message, created_at) VALUES (:ride_id, :sender_id, :message, :created_at)'),
+                             {'ride_id': ride_id, 'sender_id': sender_id, 'message': message, 'created_at': datetime.datetime.now()})
         
         return jsonify({'message': 'Zpráva odeslána'}), 201
         
