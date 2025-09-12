@@ -465,7 +465,7 @@
                 <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
                 <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
                 <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
-                <button onclick="alert('Chat pro jízdu ${rideId}'); this.remove();" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
+                <button onclick="openChat('passenger', ${rideId}, '${senderName}'); this.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
                 <button onclick="this.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
             `;
             
