@@ -1114,7 +1114,14 @@ def get_user_notifications(user_name):
                 'sender_name': msg[3]
             })
         
-        # Bez testovacích zpráv - zobraz jen skutečné notifikace
+        # Pro testování - přidej vždy jednu testovací notifikaci
+        if user_name == "Pokus Pokus":
+            result.append({
+                'ride_id': 34,
+                'message': f'TEST: Kontrola notifikací pro {user_name} - čas: {datetime.datetime.now().strftime("%H:%M:%S")}',
+                'created_at': datetime.datetime.now().isoformat(),
+                'sender_name': 'TestSystém'
+            })
         
         print(f"Final notifications for {user_name}: {len(result)} messages")
         for notif in result:
