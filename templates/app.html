@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=281"></script>
+    <script src="/static/js/cookies.js?v=282"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -985,16 +985,34 @@
             }
         }
         
-        function openChat(type, rideId, partnerName) {
+        async function openChat(type, rideId, partnerName) {
             if (!currentUser) {
                 alert('Musíte se přihlásit pro použití chatu!');
                 return;
             }
             
-            // Jednoduchý chat alert
+            // Jednoduchý chat s uložením do databáze
             const message = prompt(`Chat s ${partnerName}\n\nNapište zprávu:`);
             if (message && message.trim()) {
-                alert(`Zpráva "${message}" byla odeslána uživateli ${partnerName}!\n\n(Toto je základní verze chatu)`);
+                try {
+                    const response = await fetch('/api/chat/send', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            ride_id: rideId,
+                            sender_id: currentUser.id,
+                            message: message.trim()
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        alert(`Zpráva "${message}" byla úspěšně odeslána uživateli ${partnerName}!`);
+                    } else {
+                        alert('Chyba při odesílání zprávy');
+                    }
+                } catch (error) {
+                    alert('Chyba: ' + error.message);
+                }
             }
         }
         
