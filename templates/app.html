@@ -1013,7 +1013,7 @@
         
         async function loadFloatingChatMessages(rideId) {
             try {
-                const response = await fetch(`/api/rides/${rideId}/messages`);
+                const response = await fetch(`/api/chat/${rideId}/messages`);
                 const messages = await response.json();
                 
                 const chatMessages = document.getElementById('floatingChatMessages');
@@ -1057,7 +1057,7 @@
             
             try {
                 // Ulož zprávu do databáze
-                const response = await fetch('/api/messages/send', {
+                const response = await fetch('/api/chat/send', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -1081,7 +1081,7 @@
         
         async function loadChatMessages(rideId) {
             try {
-                const response = await fetch(`/api/rides/${rideId}/messages`);
+                const response = await fetch(`/api/chat/${rideId}/messages`);
                 const messages = await response.json();
                 
                 const chatMessages = document.getElementById('chatMessages');
@@ -1124,7 +1124,7 @@
             }
             
             try {
-                const response = await fetch('/api/messages/send', {
+                const response = await fetch('/api/chat/send', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
