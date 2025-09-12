@@ -26,11 +26,8 @@ async function loadChatMessages(rideId) {
       const isMyMessage = msg.sender_name === userName;
       div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #e3f2fd; text-align: right; margin-left: 50px;' : 'background: #f5f5f5; margin-right: 50px;'}`;
       
-      // Jednoduché zobrazení času
-      const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const timeStr = hours + ':' + (minutes < 10 ? '0' + minutes : minutes);
+      // Nejjednodušší zobrazení času pro mobily
+      const timeStr = 'teď';
       
       div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${timeStr}</small>`;
       messagesDiv.appendChild(div);
