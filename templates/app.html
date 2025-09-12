@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=306&t=1735659900"></script>
+    <script src="/static/js/cookies.js?v=307&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1429,8 +1429,11 @@
                     // Zobraz plovoucí notifikaci pro nejnovější zprávu
                     const latest = notifications[0];
                     
+                    // Test - použij alert místo modalu
+                    alert(`📨 Nová zpráva od ${latest.sender_name}: "${latest.message}"`);
+                    
                     // Automaticky otevři chat s novou zprávou
-                    const shouldOpen = confirm(`📨 Nová zpráva od ${latest.sender_name}:\n"${latest.message}"\n\nChcete otevřít chat?`);
+                    const shouldOpen = confirm(`Chcete otevřít chat?`);
                     if (shouldOpen) {
                         // Použij createChatModal přímo
                         createChatModal(latest.ride_id, latest.sender_name);
