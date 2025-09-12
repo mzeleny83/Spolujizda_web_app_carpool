@@ -349,8 +349,4 @@ function showAllUsers() { console.log('showAllUsers called'); }
 function clearRideMarkers() { console.log('clearRideMarkers called'); }
 function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 
-// Chat funkce
-function openChat(type, rideId, partnerName) {
-    console.log('Opening chat:', type, rideId, partnerName);
-    alert(`Chat s ${partnerName} - funkce bude brzy dostupná!`);
-}
+// Chat funkce - implementovana v app.html
