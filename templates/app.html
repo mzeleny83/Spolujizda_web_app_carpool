@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=307&t=1735659900"></script>
+    <script src="/static/js/cookies.js?v=308&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1422,12 +1422,15 @@
             
             try {
                 const url = `/api/notifications/${encodeURIComponent(currentUser.name)}`;
+                console.log('Checking notifications for:', currentUser.name, 'URL:', url);
                 const response = await fetch(url);
                 const notifications = await response.json();
+                console.log('Notifications response:', notifications);
                 
                 if (notifications.length > 0) {
                     // Zobraz plovoucí notifikaci pro nejnovější zprávu
                     const latest = notifications[0];
+                    console.log('Found notification:', latest);
                     
                     // Test - použij alert místo modalu
                     alert(`📨 Nová zpráva od ${latest.sender_name}: "${latest.message}"`);
@@ -1438,9 +1441,11 @@
                         // Použij createChatModal přímo
                         createChatModal(latest.ride_id, latest.sender_name);
                     }
+                } else {
+                    console.log('No notifications found');
                 }
             } catch (error) {
-                // Tichá chyba - neloguj do konzole
+                console.error('Notification check error:', error);
             }
         }
         

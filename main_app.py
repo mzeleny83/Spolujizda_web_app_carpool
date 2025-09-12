@@ -1073,7 +1073,7 @@ def get_user_notifications(user_name):
             
             user_id = user[0]
             
-            # Najdi nové zprávy pro tohoto uživatele
+            # Najdi nové zprávy pro tohoto uživatele (SQLite kompatibilní)
             messages = db.session.execute(db.text("""
                 SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
@@ -1082,7 +1082,7 @@ def get_user_notifications(user_name):
                 WHERE (r.user_id = :user_id OR EXISTS (
                     SELECT 1 FROM reservations res WHERE res.ride_id = r.id AND res.passenger_id = :user_id
                 )) AND m.sender_id != :user_id
-                AND m.created_at > NOW() - INTERVAL '1 hour'
+                AND m.created_at > datetime('now', '-1 hour')
                 ORDER BY m.created_at DESC
                 LIMIT 5
             """), {'user_id': user_id}).fetchall()
