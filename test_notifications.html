@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Notifikací</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        .log { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; height: 300px; overflow-y: auto; border: 1px solid #ddd; }
+        .user-box { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Test Notifikačního Systému</h1>
+        
+        <div class="user-box">
+            <h3>Přihlášení</h3>
+            <input type="text" id="userName" placeholder="Jméno uživatele" style="padding: 8px; margin: 5px;">
+            <button class="btn" onclick="setUser()">Nastavit uživatele</button>
+            <div id="currentUser" style="margin-top: 10px; font-weight: bold;"></div>
+        </div>
+        
+        <div>
+            <h3>Akce</h3>
+            <button class="btn btn-success" onclick="sendTestMessage()">📨 Odeslat testovací zprávu</button>
+            <button class="btn" onclick="checkNotifications()">🔍 Zkontrolovat notifikace</button>
+            <button class="btn btn-danger" onclick="showTestNotification()">🔔 Zobrazit test notifikaci</button>
+            <button class="btn" onclick="clearLog()">🗑️ Vymazat log</button>
+        </div>
+        
+        <div>
+            <h3>Log</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        function setUser() {
+            const userName = document.getElementById('userName').value.trim();
+            if (!userName) {
+                alert('Zadejte jméno uživatele');
+                return;
+            }
+            
+            currentUser = { name: userName };
+            document.getElementById('currentUser').textContent = `Aktuální uživatel: ${userName}`;
+            log(`Nastaven uživatel: ${userName}`);
+        }
+        
+        async function sendTestMessage() {
+            if (!currentUser) {
+                alert('Nejdříve nastavte uživatele');
+                return;
+            }
+            
+            try {
+                log('Hledám dostupné jízdy...');
+                const ridesResponse = await fetch('/api/rides/search');
+                const rides = await ridesResponse.json();
+                
+                if (rides.length === 0) {
+                    log('❌ Žádné jízdy k dispozici');
+                    return;
+                }
+                
+                const testRide = rides[0];
+                const testMessage = `Test zpráva od ${currentUser.name} - ${new Date().toLocaleTimeString()}`;
+                
+                log(`Odesílám zprávu do jízdy ${testRide.id}: ${testRide.from_location} → ${testRide.to_location}`);
+                
+                const sendResponse = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ride_id: testRide.id,
+                        sender_name: currentUser.name,
+                        message: testMessage
+                    })
+                });
+                
+                if (sendResponse.ok) {
+                    log(`✅ Zpráva odeslána: "${testMessage}"`);
+                } else {
+                    const error = await sendResponse.json();
+                    log(`❌ Chyba při odesílání: ${error.error || 'Neznámá chyba'}`);
+                }
+            } catch (error) {
+                log(`❌ Chyba: ${error.message}`);
+            }
+        }
+        
+        async function checkNotifications() {
+            if (!currentUser) {
+                alert('Nejdříve nastavte uživatele');
+                return;
+            }
+            
+            try {
+                log(`Kontroluji notifikace pro ${currentUser.name}...`);
+                const response = await fetch(`/api/notifications/${encodeURIComponent(currentUser.name)}`);
+                
+                if (!response.ok) {
+                    log(`❌ API chyba: ${response.status} ${response.statusText}`);
+                    return;
+                }
+                
+                const notifications = await response.json();
+                log(`📨 Nalezeno ${notifications.length} notifikací:`);
+                
+                notifications.forEach((notif, index) => {
+                    log(`  ${index + 1}. Od: ${notif.sender_name}, Zpráva: "${notif.message}", Jízda: ${notif.ride_id}, Čas: ${notif.created_at}`);
+                });
+                
+                if (notifications.length === 0) {
+                    log('📭 Žádné notifikace');
+                }
+            } catch (error) {
+                log(`❌ Chyba při kontrole notifikací: ${error.message}`);
+            }
+        }
+        
+        function showTestNotification() {
+            log('🔔 Zobrazuji testovací notifikaci...');
+            showFloatingNotification('Test Uživatel', 'Toto je testovací notifikace', 999);
+        }
+        
+        function showFloatingNotification(senderName, message, rideId) {
+            log(`Zobrazuji notifikaci od ${senderName}: "${message}"`);
+            
+            const notification = document.createElement('div');
+            notification.innerHTML = `
+                <div style="background: #4CAF50; color: white; padding: 15px; border-radius: 8px; margin: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: Arial, sans-serif;">
+                    <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
+                    <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
+                    <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">OK</button>
+                </div>
+            `;
+            
+            notification.style.cssText = 'position: fixed !important; top: 20px !important; right: 20px !important; z-index: 999999 !important;';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.remove();
+                }
+            }, 8000);
+        }
+        
+        // Automatická kontrola notifikací každých 10 sekund
+        setInterval(() => {
+            if (currentUser) {
+                checkNotifications();
+            }
+        }, 10000);
+        
+        log('🚀 Test notifikací připraven');
+    </script>
+</body>
+</html>

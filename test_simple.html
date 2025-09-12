@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Notifikací v358</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+    <h1>Test Notifikací v358</h1>
+    <button onclick="testNotificationDisplay()">🔔 Test notifikace</button>
+    <button onclick="createTestMessage()">🧪 Test zprávy</button>
+    
+    <div id="log" style="background: #f0f0f0; padding: 10px; margin: 10px 0; height: 200px; overflow-y: auto;"></div>
+    
+    <script>
+        // Simulace přihlášeného uživatele
+        localStorage.setItem('currentUser', JSON.stringify({name: 'Test User'}));
+    </script>
+    <script src="/static/js/notifications.js?v=358&t=1735660010&new=true"></script>
+    <script>
+        console.log('Test page loaded with notifications v358');
+        
+        // Spusť notifikační systém
+        setTimeout(() => {
+            if (typeof startNotificationCheck === 'function') {
+                startNotificationCheck();
+                console.log('Notification check started');
+            } else {
+                console.error('startNotificationCheck not found');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

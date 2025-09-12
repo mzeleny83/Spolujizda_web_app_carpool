@@ -4,6 +4,9 @@
     <title>Spolujízda - Sdílení jízd po celé České republice</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="description" content="Najděte spolujízdu nebo nabídněte volná místa ve svém autě. Levné cestování po České republice - Praha, Brno, Ostrava.">
     <meta name="keywords" content="spolujízda, sdílení jízd, levné cestování, Praha, Brno, Ostrava">
     <meta property="og:title" content="Spolujízda - Sdílení jízd">
@@ -90,8 +93,8 @@
                 <button type="button" class="btn btn-success" onclick="showAll()">📋 Všechny jízdy</button>
                 <button type="button" class="btn" onclick="clearDateTimeFilters()" style="background: #6c757d;">🗑️ Vymazat filtry</button>
                 <button type="button" class="btn" onclick="showMyLocation()" style="background: #17a2b8;">📍 Moje poloha</button>
-                <button type="button" class="btn" onclick="createTestReservation()" style="background: #dc3545;">🧪 Test notifikací</button>
-                <button type="button" class="btn" onclick="testNotificationDisplay()" style="background: #ff6b35;">🔔 Test zobrazení</button>
+                <button type="button" class="btn" onclick="createTestMessage()" style="background: #dc3545;">🧪 Test zprávy</button>
+                <button type="button" class="btn" onclick="testNotificationDisplay()" style="background: #ff6b35;">🔔 Test notifikací</button>
             </form>
             
             
@@ -350,7 +353,7 @@
         </div>
     </div>
 
-    <script src="/static/js/script.js?v=351&t=1735659900"></script>
+    <script src="/static/js/script.js?v=359&t=1735660020&rewrite=true"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -496,8 +499,14 @@
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     updateUI();
                     showMessage('Přihlášení úspěšné!');
-                    console.log('LOGIN: Starting notification check after login');
-                    startNotificationCheck();
+                    console.log('LOGIN v359: Starting notification check after login');
+                    setTimeout(() => {
+                        if (typeof startNotificationCheck === 'function') {
+                            startNotificationCheck();
+                        } else {
+                            console.error('startNotificationCheck function not found!');
+                        }
+                    }, 1000);
                     showSection('search');
                 } else {
                     showMessage(result.error, 'error');
@@ -508,7 +517,9 @@
         }
 
         function logout() {
-            stopNotificationCheck();
+            if (typeof stopNotificationCheck === 'function') {
+                stopNotificationCheck();
+            }
             currentUser = null;
             localStorage.removeItem('currentUser');
             updateUI();
@@ -1390,7 +1401,12 @@
                 try {
                     currentUser = JSON.parse(savedUser);
                     if (currentUser) {
-                        startNotificationCheck();
+                        console.log('INIT v359: Starting notification check for saved user');
+                        setTimeout(() => {
+                            if (typeof startNotificationCheck === 'function') {
+                                startNotificationCheck();
+                            }
+                        }, 2000);
                     }
                 } catch (e) {
                     localStorage.removeItem('currentUser');
@@ -1398,111 +1414,9 @@
             }
         }
         
-        let notificationInterval = null;
-        let shownNotifications = new Set(); // Sleduj již zobrazené notifikace
+        // Notification functions moved to script.js
         
-        function startNotificationCheck() {
-            if (!currentUser || notificationInterval) return;
-            
-            console.log('Starting notification check for user:', currentUser.name);
-            // Kontroluj notifikace každých 30 sekund pro rychlejší testování
-            notificationInterval = setInterval(checkForNotifications, 30000);
-            
-            // První kontrola za 5 sekund
-            setTimeout(checkForNotifications, 5000);
-        }
-        
-        function stopNotificationCheck() {
-            if (notificationInterval) {
-                console.log('Stopping notification check');
-                clearInterval(notificationInterval);
-                notificationInterval = null;
-                shownNotifications.clear(); // Vymaž sledované notifikace
-            }
-        }
-        
-        async function checkForNotifications() {
-            if (!currentUser) {
-                return;
-            }
-            
-            try {
-                const url = `/api/notifications/${encodeURIComponent(currentUser.name)}`;
-                console.log('NOTIF v349 - Checking notifications for:', currentUser.name, 'URL:', url);
-                const response = await fetch(url);
-                const notifications = await response.json();
-                console.log('NOTIF v349 - Notifications response:', notifications);
-                
-                if (notifications.length > 0) {
-                    // Zobraz všechny notifikace bez sledování
-                    notifications.forEach(notification => {
-                        console.log('NOTIF v349 - Showing notification:', notification);
-                        showFloatingNotification(notification.sender_name, notification.message, notification.ride_id);
-                    });
-                } else {
-                    console.log('NOTIF v349 - No notifications found');
-                }
-            } catch (error) {
-                console.error('NOTIF v349 - Notification check error:', error);
-            }
-        }
-        
-        function showFloatingNotification(senderName, message, rideId) {
-            // Odstraň staré notifikace
-            const oldNotifications = document.querySelectorAll('.floating-notification');
-            oldNotifications.forEach(n => n.remove());
-            
-            // Vytvoř plovoucí notifikaci
-            const notification = document.createElement('div');
-            notification.className = 'floating-notification';
-            notification.style.cssText = `
-                position: fixed !important;
-                top: 20px !important;
-                right: 20px !important;
-                background: #4CAF50 !important;
-                color: white !important;
-                padding: 20px !important;
-                border-radius: 12px !important;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
-                z-index: 999999 !important;
-                max-width: 350px !important;
-                cursor: pointer !important;
-                transform: translateX(100%) !important;
-                transition: transform 0.4s ease-out !important;
-                font-family: Arial, sans-serif !important;
-            `;
-            
-            notification.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                    <div style="font-weight: bold; font-size: 16px;">📨 Nová zpráva!</div>
-                    <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-size: 12px;">×</button>
-                </div>
-                <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">Od: ${senderName}</div>
-                <div style="font-size: 14px; line-height: 1.4; margin-bottom: 12px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px;">"${message}"</div>
-                <div style="text-align: center;">
-                    <button onclick="openChat('passenger', ${rideId}, '${senderName}'); this.closest('.floating-notification').remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">💬 Otevřít chat</button>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Animace příchodu
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0) !important';
-            }, 100);
-            
-            // Automaticky skryj po 8 sekundách
-            setTimeout(() => {
-                if (document.body.contains(notification)) {
-                    notification.style.transform = 'translateX(100%) !important';
-                    setTimeout(() => {
-                        if (document.body.contains(notification)) {
-                            notification.remove();
-                        }
-                    }, 400);
-                }
-            }, 8000);
-        }
+        // Notification functions are now in script.js file
         
         // Fallback funkce pro vytvoření chat modalu
         function createChatModal(rideId, driverName) {
@@ -2287,12 +2201,14 @@
         loadCities();
         
         // Spusť kontrolu notifikací
-        if (currentUser) {
-            console.log('AUTO-START: Starting notification check for logged user');
-            startNotificationCheck();
-        } else {
-            console.log('AUTO-START: No logged user, notification check not started');
-        }
+        setTimeout(() => {
+            if (currentUser && typeof startNotificationCheck === 'function') {
+                console.log('AUTO-START v359: Starting notification check for logged user');
+                startNotificationCheck();
+            } else {
+                console.log('AUTO-START v359: No logged user or function not available, notification check not started');
+            }
+        }, 3000);
         
         
         

@@ -112,6 +112,18 @@ def health_check():
 def test_page():
     return render_template('test.html')
 
+@app.route('/test-notifications')
+def test_notifications():
+    return send_from_directory('.', 'test_notifications.html')
+
+@app.route('/test-simple')
+def test_simple():
+    return send_from_directory('.', 'test_simple.html')
+
+@app.route('/clean')
+def clean_test():
+    return send_from_directory('.', 'app_clean.html')
+
 @app.route('/search')
 def search_page():
     return render_template('search.html')
@@ -1067,6 +1079,15 @@ def get_chat_messages(ride_id):
 
 @app.route('/api/notifications/<user_name>', methods=['GET'])
 def get_user_notifications(user_name):
+    # Detekce starého kódu podle User-Agent nebo referer
+    user_agent = request.headers.get('User-Agent', '')
+    referer = request.headers.get('Referer', '')
+    
+    # Pokud je to starý kód (obsahuje v349 nebo v351), vrať prázdný seznam
+    if 'v349' in referer or 'v351' in referer or 'index' in referer:
+        print(f"OLD CODE detected for {user_name}, returning empty list")
+        return jsonify([]), 200
+    
     try:
         with db.session.begin():
             # Najdi user_id podle jména
@@ -1078,9 +1099,9 @@ def get_user_notifications(user_name):
             user_id = user[0]
             print(f"Found user {user_name} with ID {user_id}")
             
-            # Najdi zprávy z posledních 30 minut kde je uživatel účastník jízdy ale není odesílatel
-            thirty_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=30)
-            print(f"Looking for messages after {thirty_minutes_ago}")
+            # Najdi zprávy z posledních 5 minut kde je uživatel účastník jízdy ale není odesílatel
+            five_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=5)
+            print(f"Looking for messages after {five_minutes_ago}")
             
             # Debug: Najdi všechny jízdy uživatele
             user_rides = db.session.execute(db.text("""
@@ -1128,7 +1149,7 @@ def get_user_notifications(user_name):
                 SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
                 FROM messages m
                 JOIN users u ON m.sender_id = u.id
-                WHERE m.created_at > :thirty_minutes_ago
+                WHERE m.created_at > :five_minutes_ago
                   AND m.sender_id != :user_id
                   AND m.ride_id IN (
                     SELECT r.id FROM rides r WHERE r.user_id = :user_id
@@ -1139,7 +1160,7 @@ def get_user_notifications(user_name):
                 LIMIT 10
             """), {
                 'user_id': user_id, 
-                'thirty_minutes_ago': thirty_minutes_ago
+                'five_minutes_ago': five_minutes_ago
             }).fetchall()
             
             print(f"Found {len(messages)} relevant messages for {user_name}")
@@ -1164,6 +1185,62 @@ def get_user_notifications(user_name):
         
     except Exception as e:
         print(f"Error in notifications: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/notifications/v361/<user_name>', methods=['GET'])
+def get_user_notifications_v361(user_name):
+    """Nový endpoint pro v361+ kód"""
+    try:
+        print(f"NEW CODE v361 - Getting notifications for {user_name}")
+        
+        with db.session.begin():
+            # Najdi user_id podle jména
+            user = db.session.execute(db.text('SELECT id FROM users WHERE name = :name'), {'name': user_name}).fetchone()
+            if not user:
+                print(f"User {user_name} not found")
+                return jsonify([]), 200
+            
+            user_id = user[0]
+            print(f"Found user {user_name} with ID {user_id}")
+            
+            # Najdi zprávy z posledních 5 minut
+            five_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=5)
+            
+            messages = db.session.execute(db.text("""
+                SELECT DISTINCT m.ride_id, m.message, m.created_at, u.name as sender_name
+                FROM messages m
+                JOIN users u ON m.sender_id = u.id
+                WHERE m.created_at > :five_minutes_ago
+                  AND m.sender_id != :user_id
+                  AND m.ride_id IN (
+                    SELECT r.id FROM rides r WHERE r.user_id = :user_id
+                    UNION
+                    SELECT res.ride_id FROM reservations res WHERE res.passenger_id = :user_id
+                  )
+                ORDER BY m.created_at DESC
+                LIMIT 10
+            """), {
+                'user_id': user_id, 
+                'five_minutes_ago': five_minutes_ago
+            }).fetchall()
+            
+            print(f"Found {len(messages)} messages for {user_name}")
+        
+        result = []
+        for msg in messages:
+            created_at_val = parse_datetime_str(msg[2])
+            result.append({
+                'ride_id': msg[0],
+                'message': msg[1],
+                'created_at': created_at_val.isoformat() if created_at_val else None,
+                'sender_name': msg[3]
+            })
+        
+        print(f"Returning {len(result)} notifications for {user_name}")
+        return jsonify(result), 200
+        
+    except Exception as e:
+        print(f"Error in v361 notifications: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/ratings/create', methods=['POST'])
