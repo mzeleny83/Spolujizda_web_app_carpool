@@ -997,6 +997,14 @@ def get_user_reviews(user_name):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/users/locations', methods=['GET'])
+def get_user_locations():
+    try:
+        # Vrátí prázdný seznam, protože SocketIO není aktivní
+        return jsonify([]), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/ratings/create', methods=['POST'])
 def create_rating():
     try:
