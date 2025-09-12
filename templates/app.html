@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js?v=285&t=1735659600"></script>
+    <script src="/static/js/cookies.js?v=287&t=1735659700"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -1010,7 +1010,15 @@
                     chatHistory += 'Zatím žádné zprávy\n\n';
                 }
                 
-                const message = prompt(chatHistory + 'Napište novou zprávu:');
+                const action = prompt(chatHistory + '\nMožnosti:\n1. Napište zprávu\n2. Napište "refresh" pro obnovení\n\nVaše volba:');
+                
+                if (action && action.toLowerCase() === 'refresh') {
+                    // Rekurzivně znovu otevři chat pro obnovení
+                    openChat(type, rideId, partnerName);
+                    return;
+                }
+                
+                const message = action;
                 if (message && message.trim()) {
                     const sendResponse = await fetch('/api/chat/send', {
                         method: 'POST',
