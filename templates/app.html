@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <script src="/static/js/cookies.js"></script>
+    <script src="/static/js/cookies.js?v=272"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -986,6 +986,8 @@
         }
         
         function openChat(type, rideId, partnerName) {
+            alert('NOVA VERZE - Chat s ' + partnerName);
+            
             if (!currentUser) {
                 alert('Musíte se přihlásit pro použití chatu!');
                 return;
