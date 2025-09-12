@@ -350,7 +350,7 @@
         </div>
     </div>
 
-    <script src="/static/js/script.js?v=350&t=1735659900"></script>
+    <script src="/static/js/script.js?v=351&t=1735659900"></script>
     <script>
         let currentUser = null;
         let currentChatRide = null;
@@ -496,6 +496,8 @@
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     updateUI();
                     showMessage('Přihlášení úspěšné!');
+                    console.log('LOGIN: Starting notification check after login');
+                    startNotificationCheck();
                     showSection('search');
                 } else {
                     showMessage(result.error, 'error');
@@ -2286,7 +2288,10 @@
         
         // Spusť kontrolu notifikací
         if (currentUser) {
+            console.log('AUTO-START: Starting notification check for logged user');
             startNotificationCheck();
+        } else {
+            console.log('AUTO-START: No logged user, notification check not started');
         }
         
         
