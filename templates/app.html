@@ -353,7 +353,7 @@
         </div>
     </div>
 
-    <script src="/static/js/script_v361.js?t=1735661500"></script>
+
     <script>
         // Force override cached functions
         function testNotificationDisplay() {
@@ -379,13 +379,9 @@
             alert('Test zprávy - funkce je dostupná!');
         }
         
-        // Complete notification system inline - conditional declarations
-        if (typeof shownNotifications === 'undefined') {
-            var shownNotifications = new Set();
-        }
-        if (typeof notificationInterval === 'undefined') {
-            var notificationInterval = null;
-        }
+        // Complete notification system inline
+        let shownNotifications = new Set();
+        let notificationInterval = null;
         
         function startNotificationCheck() {
             console.log('NOTIF v361 - Starting notification check');
