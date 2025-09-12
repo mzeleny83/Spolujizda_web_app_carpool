@@ -471,13 +471,6 @@
             
             document.body.appendChild(notification);
             console.log('NOTIFICATION v361 - Added to DOM, element:', notification);
-            
-            setTimeout(() => {
-                if (document.body.contains(notification)) {
-                    notification.remove();
-                    console.log('NOTIFICATION v361 - Auto-removed');
-                }
-            }, 8000);
         }
     </script>
     <script>

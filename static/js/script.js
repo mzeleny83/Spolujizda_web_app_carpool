@@ -296,14 +296,6 @@ function showFloatingNotification(senderName, message, rideId) {
   
   document.body.appendChild(notification);
   console.log('NOTIFICATION v361 - Added to DOM, element:', notification);
-  
-  // Automatické odstranění po 8 sekundách
-  setTimeout(() => {
-    if (document.body.contains(notification)) {
-      notification.remove();
-      console.log('NOTIFICATION v361 - Auto-removed');
-    }
-  }, 8000);
 }
 
 function testNotificationDisplay() {
