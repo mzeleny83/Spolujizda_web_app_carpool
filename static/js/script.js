@@ -375,26 +375,37 @@ function stopVoiceGuidance() { console.log('stopVoiceGuidance called'); }
 // Chat funkce
 function openChat(rideId, driverName) {
   try {
-    console.log('CHAT v340 - Opening chat with:', driverName, 'for ride:', rideId);
+    console.log('CHAT v387 - Opening chat with:', driverName, 'for ride:', rideId);
+    
+    // Detekce mobilního zařízení
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
     
     // Vytvoříme modal okno místo popup
     const modal = document.createElement('div');
-    modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.5) !important; z-index: 999999 !important; display: flex !important; justify-content: center !important; align-items: center !important;';
+    modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.5) !important; z-index: 999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 10px !important; box-sizing: border-box !important;';
     
     const chatBox = document.createElement('div');
-    chatBox.style.cssText = 'background: white !important; width: 400px !important; height: 500px !important; border-radius: 10px !important; padding: 20px !important; position: relative !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;';
+    if (isMobile) {
+      // Mobilní styl - celá šířka minus padding
+      chatBox.style.cssText = 'background: white !important; width: 100% !important; max-width: 100% !important; height: 90% !important; border-radius: 10px !important; padding: 15px !important; position: relative !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; box-sizing: border-box !important;';
+    } else {
+      // Desktop styl
+      chatBox.style.cssText = 'background: white !important; width: 400px !important; height: 500px !important; border-radius: 10px !important; padding: 20px !important; position: relative !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;';
+    }
     
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '✕';
     closeBtn.style.cssText = 'background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; position: absolute; top: 10px; right: 10px;';
     closeBtn.onclick = () => modal.remove();
     
+    const messagesHeight = isMobile ? 'calc(100% - 120px)' : '350px';
+    
     chatBox.innerHTML = `
-      <h3 style="margin-top: 0;">Chat s ${driverName}</h3>
-      <div id="chatMessages" style="height: 350px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
+      <h3 style="margin-top: 0; font-size: ${isMobile ? '18px' : '20px'};">Chat s ${driverName}</h3>
+      <div id="chatMessages" style="height: ${messagesHeight}; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
       <div style="display: flex; gap: 10px;">
-        <input type="text" id="chatInput" placeholder="Napište zprávu..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <button onclick="sendChatMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Odeslat</button>
+        <input type="text" id="chatInput" placeholder="Napište zprávu..." style="flex: 1; padding: ${isMobile ? '12px' : '8px'}; border: 1px solid #ccc; border-radius: 4px; font-size: ${isMobile ? '16px' : '14px'};">
+        <button onclick="sendChatMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: ${isMobile ? '12px 20px' : '8px 15px'}; border-radius: 4px; cursor: pointer; font-size: ${isMobile ? '16px' : '14px'};">Odeslat</button>
       </div>
     `;
     
