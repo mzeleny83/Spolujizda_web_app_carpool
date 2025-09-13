@@ -249,16 +249,24 @@ async function checkForNotifications() {
       let newCount = 0;
       notifications.forEach(notification => {
         const notifId = `${notification.ride_id}-${notification.sender_name}-${notification.created_at}`;
+        console.log('NOTIF v361 - Checking notification ID:', notifId);
+        console.log('NOTIF v361 - Already shown?', shownNotifications.has(notifId));
+        console.log('NOTIF v361 - Shown notifications cache:', Array.from(shownNotifications));
+        
         if (!shownNotifications.has(notifId)) {
           console.log('NOTIF v361 - NEW notification:', notification.sender_name, notification.message);
           showFloatingNotification(notification.sender_name, notification.message, notification.ride_id);
           shownNotifications.add(notifId);
           newCount++;
+        } else {
+          console.log('NOTIF v361 - SKIPPING already shown notification:', notification.sender_name);
         }
       });
       
       if (newCount > 0) {
         console.log(`NOTIF v361 - Showed ${newCount} new notifications`);
+      } else {
+        console.log('NOTIF v361 - No new notifications to show');
       }
     }
   } catch (error) {
@@ -266,8 +274,25 @@ async function checkForNotifications() {
   }
 }
 
+// Debug funkce pro vyčištění cache
+function clearNotificationCache() {
+  shownNotifications.clear();
+  console.log('NOTIF CACHE CLEARED');
+}
+
+// Vyvolání: clearNotificationCache() v konzoli
+window.clearNotificationCache = clearNotificationCache;
+
 function showFloatingNotification(senderName, message, rideId) {
-  console.log('NOTIFICATION v360 - Showing notification:', senderName, message, rideId);
+  console.log('NOTIFICATION v383 - Showing notification:', senderName, message, rideId);
+  
+  // Vyčisti staré notifikace
+  const oldNotifications = document.querySelectorAll('div[style*="position: fixed"][style*="top: 20px"]');
+  oldNotifications.forEach(notif => {
+    if (notif.innerHTML.includes('📨 Nová zpráva!')) {
+      notif.remove();
+    }
+  });
   
   // Vytvoř notifikaci přímo jako div
   const notification = document.createElement('div');
