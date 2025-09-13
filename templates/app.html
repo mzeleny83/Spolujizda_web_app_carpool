@@ -377,8 +377,6 @@
 
         
         // Complete notification system inline
-        let shownNotifications = new Set();
-        let notificationInterval = null;
         
         function startNotificationCheck() {
             console.log('NOTIF v361 - Starting notification check');
@@ -462,7 +460,7 @@
                 <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
                 <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
                 <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
-                <button onclick="openChat(${rideId}, '${senderName}'); this.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
+                <button onclick="openChat('notification', ${rideId}, '${senderName}'); this.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
                 <button onclick="this.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
             `;
             
