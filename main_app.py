@@ -1085,58 +1085,58 @@ def send_chat_message():
             db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message, created_at) VALUES (:ride_id, :sender_id, :message, :created_at)'),
                              {'ride_id': ride_id, 'sender_id': sender_id, 'message': message, 'created_at': datetime.datetime.now()})
 
-            # --- Push Notification Logic ---
-            # Find the recipient(s) of the message
-            # For a ride chat, recipients are the driver and passengers (excluding sender)
+            # --- Push Notification Logic (Temporarily Disabled) ---
+            # # Find the recipient(s) of the message
+            # # For a ride chat, recipients are the driver and passengers (excluding sender)
             
-            # Get ride details to find driver
-            ride = db.session.execute(db.text('SELECT user_id FROM rides WHERE id = :ride_id'), {'ride_id': ride_id}).fetchone()
-            if not ride:
-                print(f"Ride {ride_id} not found for sending push notification.")
-                return jsonify({'message': 'Zpráva odeslána, ale jízda nenalezena pro notifikaci'}), 201
+            # # Get ride details to find driver
+            # ride = db.session.execute(db.text('SELECT user_id FROM rides WHERE id = :ride_id'), {'ride_id': ride_id}).fetchone()
+            # if not ride:
+            #     print(f"Ride {ride_id} not found for sending push notification.")
+            #     return jsonify({'message': 'Zpráva odeslána, ale jízda nenalezena pro notifikaci'}), 201
 
-            driver_id = ride[0]
-            recipient_ids = [driver_id]
+            # driver_id = ride[0]
+            # recipient_ids = [driver_id]
 
-            # Get passengers for the ride
-            passengers = db.session.execute(db.text('SELECT passenger_id FROM reservations WHERE ride_id = :ride_id AND status = \'confirmed\''), {'ride_id': ride_id}).fetchall()
-            for passenger in passengers:
-                recipient_ids.append(passenger[0])
+            # # Get passengers for the ride
+            # passengers = db.session.execute(db.text('SELECT passenger_id FROM reservations WHERE ride_id = :ride_id AND status = \'confirmed\''), {'ride_id': ride_id}).fetchall()
+            # for passenger in passengers:
+            #     recipient_ids.append(passenger[0])
             
-            # Remove sender from recipients
-            recipient_ids = list(set([uid for uid in recipient_ids if uid != sender_id]))
+            # # Remove sender from recipients
+            # recipient_ids = list(set([uid for uid in recipient_ids if uid != sender_id]))
 
-            print(f"Sending push notification to recipient_ids: {recipient_ids} for ride {ride_id}")
+            # print(f"Sending push notification to recipient_ids: {recipient_ids} for ride {ride_id}")
 
-            for recipient_id in recipient_ids:
-                subscriptions = PushSubscription.query.filter_by(user_id=recipient_id).all()
-                for sub in subscriptions:
-                    try:
-                        payload = {
-                            "title": f"Nová zpráva od {sender_name}!",
-                            "body": message,
-                            "icon": "/static/icons/icon-192x192.png", # Path to your app icon
-                            "data": {"url": f"/?chat_ride_id={ride_id}&chat_partner_name={sender_name}"} # Deep link to chat
-                        }
-                        send_web_push(
-                            subscription_info={
-                                "endpoint": sub.endpoint,
-                                "keys": {"p256dh": sub.p256dh, "auth": sub.auth}
-                            },
-                            message=json.dumps(payload),
-                            vapid_private_key=VAPID_PRIVATE_KEY,
-                            vapid_claims=VAPID_CLAIMS
-                        )
-                        print(f"Push notification sent to user {recipient_id}")
-                    except WebPushException as e:
-                        print(f"Error sending push notification to user {recipient_id}: {e}")
-                        # Optionally, remove invalid subscriptions from DB
-                        if e.response and e.response.status_code == 410: # GONE status
-                            db.session.delete(sub)
-                            print(f"Deleted expired subscription for user {recipient_id}")
-                    except Exception as e:
-                        print(f"Unexpected error sending push notification to user {recipient_id}: {e}")
-            # --- End Push Notification Logic ---
+            # for recipient_id in recipient_ids:
+            #     subscriptions = PushSubscription.query.filter_by(user_id=recipient_id).all()
+            #     for sub in subscriptions:
+            #         try:
+            #             payload = {
+            #                 "title": f"Nová zpráva od {sender_name}!",
+            #                 "body": message,
+            #                 "icon": "/static/icons/icon-192x192.png", # Path to your app icon
+            #                 "data": {"url": f"/?chat_ride_id={ride_id}&chat_partner_name={sender_name}"} # Deep link to chat
+            #             }
+            #             send_web_push(
+            #                 subscription_info={
+            #                     "endpoint": sub.endpoint,
+            #                     "keys": {"p256dh": sub.p256dh, "auth": sub.auth}
+            #                 },
+            #                 message=json.dumps(payload),
+            #                 vapid_private_key=VAPID_PRIVATE_KEY,
+            #                 vapid_claims=VAPID_CLAIMS
+            #             )
+            #             print(f"Push notification sent to user {recipient_id}")
+            #         except WebPushException as e:
+            #             print(f"Error sending push notification to user {recipient_id}: {e}")
+            #             # Optionally, remove invalid subscriptions from DB
+            #             if e.response and e.response.status_code == 410: # GONE status
+            #                 db.session.delete(sub)
+            #                 print(f"Deleted expired subscription for user {recipient_id}")
+            #         except Exception as e:
+            #             print(f"Unexpected error sending push notification to user {recipient_id}: {e}")
+            # # --- End Push Notification Logic ---
         
         return jsonify({'message': 'Zpráva odeslána'}), 201
         
