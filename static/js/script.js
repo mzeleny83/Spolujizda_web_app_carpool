@@ -382,12 +382,16 @@ function openChat(rideId, driverName) {
     
     // Vytvoříme modal okno místo popup
     const modal = document.createElement('div');
-    modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.5) !important; z-index: 999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 10px !important; box-sizing: border-box !important;';
+    if (isMobile) {
+      modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.5) !important; z-index: 999999 !important; display: flex !important; justify-content: flex-start !important; align-items: flex-start !important; padding: 0 !important; box-sizing: border-box !important;';
+    } else {
+      modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.5) !important; z-index: 999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 10px !important; box-sizing: border-box !important;';
+    }
     
     const chatBox = document.createElement('div');
     if (isMobile) {
-      // Mobilní styl - celá šířka minus padding
-      chatBox.style.cssText = 'background: white !important; width: 100% !important; max-width: 100% !important; height: 90% !important; border-radius: 10px !important; padding: 15px !important; position: relative !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; box-sizing: border-box !important;';
+      // Mobilní styl - celá šířka a výška
+      chatBox.style.cssText = 'background: white !important; width: 100vw !important; height: 100vh !important; border-radius: 0 !important; padding: 15px !important; position: relative !important; box-sizing: border-box !important; overflow: hidden !important;';
     } else {
       // Desktop styl
       chatBox.style.cssText = 'background: white !important; width: 400px !important; height: 500px !important; border-radius: 10px !important; padding: 20px !important; position: relative !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;';
