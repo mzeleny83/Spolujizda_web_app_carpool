@@ -150,7 +150,7 @@ function displayAllRides(rides) {
         <h4>🚗 ${ride.driver_name || 'Neznámý řidič'}</h4>
         <p><strong>${ride.from_location}</strong> → <strong>${ride.to_location}</strong></p>
         <p>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</p>
-        <button class="chat-btn" data-ride-id="${ride.id}" data-driver-name="${ride.driver_name || 'Řidič'}" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
+        <button class="chat-btn" data-ride-id="${ride.id}" data-driver-name="${ride.driver_name || 'Řidič'}" onclick="openChat('passenger', parseInt(${ride.id}), '${ride.driver_name.replace(/'/g, "'" || 'Řidič'.replace(/'/g, "'"))}'); this.remove();" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
       </div>
     `;
   });
@@ -312,7 +312,7 @@ function showFloatingNotification(senderName, message, rideId) {
     // Mobilní fallback - použij alert + confirm
     const userChoice = confirm(`📨 Nová zpráva od ${senderName}:\n"${message}"\n\nChcete otevřít chat?`);
     if (userChoice) {
-      openChat(rideId, senderName);
+      openChat('passenger', rideId, senderName);
     }
     return;
   }
