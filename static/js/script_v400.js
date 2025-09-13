@@ -324,20 +324,7 @@ function showFloatingNotification(senderName, message, rideId) {
   
   const notification = document.createElement('div');
   notification.className = 'desktop-notification';
-  notification.style.cssText = '
-    position: fixed !important;
-    top: 20px !important;
-    left: 20px !important;
-    z-index: 999999 !important;
-    background: #4CAF50 !important;
-    color: white !important;
-    padding: 15px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-    font-family: Arial, sans-serif !important;
-    max-width: 300px !important;
-    pointer-events: auto !important;
-  ';
+  notification.style.cssText = 'position: fixed !important; top: 20px !important; left: 20px !important; z-index: 999999 !important; background: #4CAF50 !important; color: white !important; padding: 15px !important; border-radius: 8px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important; font-family: Arial, sans-serif !important; max-width: 300px !important; pointer-events: auto !important;';
   
   notification.innerHTML = `
     <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
