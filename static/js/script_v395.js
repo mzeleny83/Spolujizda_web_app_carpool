@@ -115,7 +115,7 @@ async function loadChatMessages(rideId) {
     
     messages.forEach(msg => {
       const div = document.createElement('div');
-      div.style.cssText = 'margin: 8px 0; padding: 8px; border-radius: 8px; background: #f5f5f5; text-align: left;';
+      div.style.cssText = 'margin: 8px 0; padding: 8px; border-radius: 8px; background: #f5f5f5; text-align: left; margin-right: 0;';
       div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}`;
       messagesDiv.appendChild(div);
     });
