@@ -15,6 +15,36 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/static/js/script_v400.js?v=400&t=1735736400"></script>
+    <script>
+    // Force override for message alignment
+    window.addEventListener('load', function() {
+        if (typeof loadChatMessages !== 'undefined') {
+            const originalLoadChatMessages = loadChatMessages;
+            window.loadChatMessages = async function(rideId) {
+                try {
+                    const response = await fetch('/api/chat/' + rideId + '/messages');
+                    const messages = await response.json();
+                    
+                    const messagesDiv = document.getElementById('chatMessages');
+                    if (!messagesDiv) return;
+                    
+                    messagesDiv.innerHTML = '';
+                    
+                    messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.style.cssText = 'margin: 8px 0; padding: 8px; border-radius: 8px; background: #f5f5f5; text-align: left !important; width: 100%; float: none !important; margin-left: 0 !important; margin-right: 0 !important;';
+                        div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}`;
+                        messagesDiv.appendChild(div);
+                    });
+                    
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } catch (error) {
+                    console.error('Chyba při načítání zpráv:', error);
+                }
+            };
+        }
+    });
+    </script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
