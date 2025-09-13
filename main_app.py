@@ -94,7 +94,25 @@ def add_header(response):
     response.headers['Expires'] = '-1'
     return response
 
-@app.route('/')
+@app.route('/api/debug/users')
+def get_all_users_debug():
+    try:
+        with db.session.begin():
+            users = db.session.execute(db.text('SELECT id, name, phone, email FROM users')).fetchall()
+        
+        result = []
+        for user in users:
+            result.append({
+                'id': user[0],
+                'name': user[1],
+                'phone': user[2],
+                'email': user[3]
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 def home():
     return render_template('app.html')
 
