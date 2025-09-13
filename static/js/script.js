@@ -1,6 +1,104 @@
 // Chat functions for ride sharing app
 let chatMap, routeWaypoints = [], routeMarkers = [], routeLine = null, userMarker = null;
 
+// Function to convert VAPID public key from base64 to Uint8Array
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+async function setupPushNotifications() {
+    console.log('Setting up push notifications...');
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.warn('Push notifications not supported by this browser.');
+        return;
+    }
+
+    try {
+        // Fetch VAPID public key from backend
+        const response = await fetch('/api/vapid-public-key');
+        const data = await response.json();
+        const vapidPublicKey = data.publicKey;
+
+        if (!vapidPublicKey || vapidPublicKey === 'BP_YOUR_PUBLIC_KEY_HERE') {
+            console.warn('VAPID Public Key not configured on the server. Push notifications will not work.');
+            return;
+        }
+
+        const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+
+        const registration = await navigator.serviceWorker.register('/static/js/sw.js');
+        console.log('Service Worker registered:', registration);
+
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            console.log('Notification permission granted.');
+
+            const subscribeOptions = {
+                userVisibleOnly: true,
+                applicationServerKey: applicationServerKey
+            };
+
+            const pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
+            console.log('Push Subscription:', pushSubscription);
+
+            // Get current user ID from localStorage
+            let userId = null;
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                try {
+                    const user = JSON.parse(currentUser);
+                    userId = user.user_id;
+                } catch (e) {
+                    console.error('Error parsing currentUser from localStorage:', e);
+                }
+            }
+
+            if (!userId) {
+                console.warn('User not logged in. Cannot save push subscription to backend.');
+                return;
+            }
+
+            // Send subscription to backend
+            const subscribeResponse = await fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    subscription: pushSubscription
+                })
+            });
+
+            if (subscribeResponse.ok) {
+                console.log('Push subscription sent to backend successfully.');
+            } else {
+                const error = await subscribeResponse.json();
+                console.error('Failed to send push subscription to backend:', error);
+            }
+
+        } else {
+            console.warn('Notification permission denied.');
+        }
+    } catch (error) {
+        console.error('Error setting up push notifications:', error);
+    }
+}
+
+// Call setupPushNotifications when the DOM is loaded
+document.addEventListener('DOMContentLoaded', setupPushNotifications);
+
 // Function to create test reservation for notification testing
 async function createTestReservation() {
   try {
@@ -150,7 +248,7 @@ function displayAllRides(rides) {
         <h4>🚗 ${ride.driver_name || 'Neznámý řidič'}</h4>
         <p><strong>${ride.from_location}</strong> → <strong>${ride.to_location}</strong></p>
         <p>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</p>
-        <button class="chat-btn" data-ride-id="${ride.id}" data-driver-name="${ride.driver_name || 'Řidič'}" onclick="openChat(parseInt(${ride.id}), '${ride.driver_name.replace(/'/g, "'") || 'Řidič'}'); this.remove();" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
+        <button class="chat-btn" data-ride-id="${ride.id}" data-driver-name="${ride.driver_name || 'Řidič'}" onclick="openChat(parseInt(${ride.id}), '${ride.driver_name.replace(/'/g, "'" )}'); this.remove();" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
       </div>
     `;
   });
@@ -322,7 +420,7 @@ function showFloatingNotification(senderName, message, rideId) {
   
   const notification = document.createElement('div');
   notification.className = 'desktop-notification';
-  notification.style.cssText = `
+  notification.style.cssText = '
     position: fixed !important;
     top: 20px !important;
     left: 20px !important;
@@ -335,17 +433,17 @@ function showFloatingNotification(senderName, message, rideId) {
     font-family: Arial, sans-serif !important;
     max-width: 300px !important;
     pointer-events: auto !important;
-  `;
+  ';
   
-  notification.innerHTML = `
+  notification.innerHTML = '
     <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
     <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
     <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
     <div>
-      <button onclick="openChat(parseInt(${rideId}), '${senderName.replace(/'/g, "\'" )}'); this.parentElement.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
+      <button onclick="openChat(parseInt(${rideId}), \'${senderName.replace(/\'/g, "'" )}\'); this.parentElement.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
       <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">×</button>
     </div>
-  `;
+  ';
   
   document.body.appendChild(notification);
   
@@ -394,14 +492,14 @@ function openChat(rideId, driverName) {
     
     const messagesHeight = isMobile ? 'calc(100% - 120px)' : '350px';
     
-    chatBox.innerHTML = `
+    chatBox.innerHTML = '
       <h3 style="margin-top: 0; font-size: ${isMobile ? '18px' : '20px'};">Chat s ${driverName}</h3>
       <div id="chatMessages" style="height: ${messagesHeight}; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
       <div style="display: flex; gap: 10px;">
         <input type="text" id="chatInput" placeholder="Napište zprávu..." style="flex: 1; padding: ${isMobile ? '12px' : '8px'}; border: 1px solid #ccc; border-radius: 4px; font-size: ${isMobile ? '16px' : '14px'};">
         <button onclick="sendChatMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: ${isMobile ? '12px 20px' : '8px 15px'}; border-radius: 4px; cursor: pointer; font-size: ${isMobile ? '16px' : '14px'};">Odeslat</button>
       </div>
-    `;
+    ';
     
     chatBox.appendChild(closeBtn);
     modal.appendChild(chatBox);
@@ -521,9 +619,6 @@ async function loadChatMessages(rideId) {
     console.error('Chyba při načítání zpráv:', error);
   }
 }
-
-
-
 
 
 

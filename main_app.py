@@ -26,6 +26,23 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Suppress a warning
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+# VAPID keys for Web Push (PLACEHOLDER - REPLACE WITH REAL KEYS FROM ENV VARS)
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', 'BP_YOUR_PUBLIC_KEY_HERE')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', 'YOUR_PRIVATE_KEY_HERE')
+VAPID_CLAIMS = {"sub": "mailto:your_email@example.com"} # Replace with your email
+
+# New model for Push Subscriptions
+class PushSubscription(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    endpoint = db.Column(db.String(512), unique=True, nullable=False)
+    p256dh = db.Column(db.String(256), nullable=False)
+    auth = db.Column(db.String(128), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+    def __repr__(self):
+        return f'<PushSubscription {self.endpoint}>'
+
 def parse_datetime_str(dt_str):
     if not dt_str:
         return None
@@ -1067,11 +1084,66 @@ def send_chat_message():
             sender_id = user[0]
             db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message, created_at) VALUES (:ride_id, :sender_id, :message, :created_at)'),
                              {'ride_id': ride_id, 'sender_id': sender_id, 'message': message, 'created_at': datetime.datetime.now()})
+
+            # --- Push Notification Logic ---
+            # Find the recipient(s) of the message
+            # For a ride chat, recipients are the driver and passengers (excluding sender)
+            
+            # Get ride details to find driver
+            ride = db.session.execute(db.text('SELECT user_id FROM rides WHERE id = :ride_id'), {'ride_id': ride_id}).fetchone()
+            if not ride:
+                print(f"Ride {ride_id} not found for sending push notification.")
+                return jsonify({'message': 'Zpráva odeslána, ale jízda nenalezena pro notifikaci'}), 201
+
+            driver_id = ride[0]
+            recipient_ids = [driver_id]
+
+            # Get passengers for the ride
+            passengers = db.session.execute(db.text('SELECT passenger_id FROM reservations WHERE ride_id = :ride_id AND status = \'confirmed\''), {'ride_id': ride_id}).fetchall()
+            for passenger in passengers:
+                recipient_ids.append(passenger[0])
+            
+            # Remove sender from recipients
+            recipient_ids = list(set([uid for uid in recipient_ids if uid != sender_id]))
+
+            print(f"Sending push notification to recipient_ids: {recipient_ids} for ride {ride_id}")
+
+            for recipient_id in recipient_ids:
+                subscriptions = PushSubscription.query.filter_by(user_id=recipient_id).all()
+                for sub in subscriptions:
+                    try:
+                        payload = {
+                            "title": f"Nová zpráva od {sender_name}!",
+                            "body": message,
+                            "icon": "/static/icons/icon-192x192.png", # Path to your app icon
+                            "data": {"url": f"/?chat_ride_id={ride_id}&chat_partner_name={sender_name}"} # Deep link to chat
+                        }
+                        send_web_push(
+                            subscription_info={
+                                "endpoint": sub.endpoint,
+                                "keys": {"p256dh": sub.p256dh, "auth": sub.auth}
+                            },
+                            message=json.dumps(payload),
+                            vapid_private_key=VAPID_PRIVATE_KEY,
+                            vapid_claims=VAPID_CLAIMS
+                        )
+                        print(f"Push notification sent to user {recipient_id}")
+                    except WebPushException as e:
+                        print(f"Error sending push notification to user {recipient_id}: {e}")
+                        # Optionally, remove invalid subscriptions from DB
+                        if e.response and e.response.status_code == 410: # GONE status
+                            db.session.delete(sub)
+                            print(f"Deleted expired subscription for user {recipient_id}")
+                    except Exception as e:
+                        print(f"Unexpected error sending push notification to user {recipient_id}: {e}")
+            # --- End Push Notification Logic ---
         
         return jsonify({'message': 'Zpráva odeslána'}), 201
         
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/chat/<int:ride_id>/messages', methods=['GET'])
 def get_chat_messages(ride_id):
@@ -1270,6 +1342,10 @@ def get_user_notifications_v361(user_name):
         print(f"Error in v361 notifications: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/vapid-public-key', methods=['GET'])
+def get_vapid_public_key():
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY}), 200
+
 @app.route('/api/ratings/create', methods=['POST'])
 def create_rating():
     try:
@@ -1306,6 +1382,50 @@ def create_rating():
         return jsonify({'message': 'Hodnocení odesláno'}), 201
         
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/push/subscribe', methods=['POST'])
+def subscribe():
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        subscription_info = data.get('subscription')
+
+        if not all([user_id, subscription_info]):
+            return jsonify({'error': 'Missing user_id or subscription data'}), 400
+
+        endpoint = subscription_info['endpoint']
+        p256dh = subscription_info['keys']['p256dh']
+        auth = subscription_info['keys']['auth']
+
+        with db.session.begin():
+            # Check if subscription already exists for this user and endpoint
+            existing_subscription = PushSubscription.query.filter_by(
+                user_id=user_id, endpoint=endpoint
+            ).first()
+
+            if existing_subscription:
+                # Update existing subscription if necessary (e.g., keys might change)
+                existing_subscription.p256dh = p256dh
+                existing_subscription.auth = auth
+                db.session.add(existing_subscription)
+                print(f"Updated existing push subscription for user {user_id}")
+            else:
+                # Create new subscription
+                new_subscription = PushSubscription(
+                    user_id=user_id,
+                    endpoint=endpoint,
+                    p256dh=p256dh,
+                    auth=auth
+                )
+                db.session.add(new_subscription)
+                print(f"Created new push subscription for user {user_id}")
+            db.session.commit()
+
+        return jsonify({'message': 'Subscription saved successfully'}), 201
+
+    except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
