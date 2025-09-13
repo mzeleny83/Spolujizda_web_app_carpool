@@ -529,3 +529,4 @@ async function loadChatMessages(rideId) {
 
 
 
+// v391 message alignment fix
