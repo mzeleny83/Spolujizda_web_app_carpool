@@ -459,6 +459,19 @@
             
             document.body.appendChild(notification);
             console.log('NOTIFICATION v361 - Added to DOM, element:', notification);
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 10000);
+        }
+        
+        // Test notification function
+        function showTestNotification() {
+            console.log('TEST - Showing test notification');
+            showFloatingNotification('Test User', 'Toto je testovací zpráva', 1);
         }
     </script>
     <script>
@@ -2318,6 +2331,14 @@
                 console.log('AUTO-START v359: No logged user or function not available, notification check not started');
             }
         }, 3000);
+        
+        // Test notification after 5 seconds
+        setTimeout(() => {
+            if (currentUser) {
+                console.log('TEST - Showing test notification for logged user');
+                showTestNotification();
+            }
+        }, 5000);
         
         
         
