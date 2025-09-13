@@ -1254,6 +1254,7 @@ def get_user_notifications_v361(user_name):
         
         result = []
         for msg in messages:
+            print(f"DEBUG: msg[0] (ride_id) type: {type(msg[0])}, value: {msg[0]}")
             created_at_val = parse_datetime_str(msg[2])
             result.append({
                 'ride_id': msg[0],
