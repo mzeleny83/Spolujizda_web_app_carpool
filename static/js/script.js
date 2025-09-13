@@ -483,7 +483,7 @@ function openChat(rideId, driverName) {
     
     const chatBox = document.createElement('div');
     // Jednotný styl pro mobil i desktop - centrované okno
-    chatBox.style.cssText = `position: absolute !important; top: 20px !important; left: 20px !important; background: white !important; width: ${isMobile ? '90vw' : '400px'} !important; height: ${isMobile ? '80vh' : '500px'} !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;`;
+    chatBox.style.cssText = `position: absolute !important; top: 20px !important; left: 20px !important; right: auto !important; bottom: auto !important; background: white !important; width: ${isMobile ? '90vw' : '400px'} !important; height: ${isMobile ? '80vh' : '500px'} !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;`;
     
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '✕';
