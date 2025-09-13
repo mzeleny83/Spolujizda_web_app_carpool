@@ -113,6 +113,7 @@ def get_all_users_debug():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+@app.route('/')
 def home():
     return render_template('app.html')
 
