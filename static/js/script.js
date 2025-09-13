@@ -312,7 +312,7 @@ function showFloatingNotification(senderName, message, rideId) {
     // Mobilní fallback - použij alert + confirm
     const userChoice = confirm(`📨 Nová zpráva od ${senderName}:\n"${message}"\n\nChcete otevřít chat?`);
     if (userChoice) {
-      openChat('passenger', rideId, senderName);
+      openChat(rideId, senderName);
     }
     return;
   }
