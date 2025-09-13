@@ -1141,7 +1141,7 @@ def send_chat_message():
         return jsonify({'message': 'Zpráva odeslána'}), 201
         
     except Exception as e:
-        traceback.print_exc()
+        app.logger.exception("Error in send_chat_message:")
         return jsonify({'error': str(e)}), 500
 
 
