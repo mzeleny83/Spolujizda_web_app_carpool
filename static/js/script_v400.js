@@ -11,7 +11,14 @@ function openChat(rideId, driverName) {
     modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.5) !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important;';
     
     const chatBox = document.createElement('div');
-    chatBox.style.cssText = `background: white !important; width: ${isMobile ? '90vw' : '400px'} !important; height: ${isMobile ? '80vh' : '500px'} !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; position: relative !important;`;
+    const chatBox = document.createElement('div');
+    let chatBoxStyle = `background: white !important; width: 400px !important; height: 500px !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; position: relative !important;`;
+
+    if (isMobile) {
+        chatBoxStyle = `background: white !important; width: 90vw !important; height: 80vh !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; position: fixed !important; left: 10px !important; top: 10px !important;`;
+    }
+
+    chatBox.style.cssText = chatBoxStyle;
     
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '✕';
