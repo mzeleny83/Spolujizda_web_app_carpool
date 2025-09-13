@@ -327,7 +327,7 @@ function showFloatingNotification(senderName, message, rideId) {
   notification.style.cssText = `
     position: fixed !important;
     top: 20px !important;
-    right: 20px !important;
+    left: 20px !important;
     z-index: 999999 !important;
     background: #4CAF50 !important;
     color: white !important;
