@@ -344,7 +344,7 @@ function showFloatingNotification(senderName, message, rideId) {
     <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
     <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
     <div>
-      <button onclick="openChat(${rideId}, '${senderName}'); this.parentElement.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
+      <button onclick="openChat(parseInt(${rideId}), '${senderName.replace(/'/g, "\'" )}'); this.parentElement.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
       <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">×</button>
     </div>
   `;
@@ -358,6 +358,7 @@ function showFloatingNotification(senderName, message, rideId) {
     }
   }, 8000);
   
+  console.log('NOTIFICATION v385 - rideId for onclick:', rideId, 'senderName for onclick:', senderName);
   console.log('NOTIFICATION v385 - Added to DOM');
 }
 
@@ -482,7 +483,12 @@ async function sendChatMessage(rideId) {
 
 async function loadChatMessages(rideId) {
   try {
-    const response = await fetch('/api/chat/' + rideId + '/messages');
+    const parsedRideId = parseInt(rideId, 10); // Ensure rideId is an integer
+    if (isNaN(parsedRideId)) {
+      console.error('Invalid rideId:', rideId);
+      return;
+    }
+    const response = await fetch('/api/chat/' + parsedRideId + '/messages');
     const messages = await response.json();
     
     const messagesDiv = document.getElementById('chatMessages');
