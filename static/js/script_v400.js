@@ -11,7 +11,6 @@ function openChat(rideId, driverName) {
     modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.5) !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important;';
     
     const chatBox = document.createElement('div');
-    const chatBox = document.createElement('div');
     let chatBoxStyle = `background: white !important; width: 400px !important; height: 500px !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; position: relative !important;`;
 
     if (isMobile) {
