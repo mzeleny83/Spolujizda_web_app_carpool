@@ -478,12 +478,7 @@
             document.body.appendChild(notification);
             console.log('NOTIFICATION v361 - Added to DOM, element:', notification);
             
-            // Auto-remove after 10 seconds
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 10000);
+            
         }
         
         // Test notification function
@@ -1252,9 +1247,16 @@
         }
         
         function closeFloatingChat() {
-            // document.getElementById('floatingChat').style.display = 'none';
+            document.getElementById('floatingChat').style.display = 'none';
             currentChatRide = null;
             currentChatType = null;
+        }
+        
+        function showFloatingChat(rideId, partnerName) {
+            document.getElementById('floatingChat').style.display = 'block';
+            document.getElementById('floatingChatTitle').textContent = `💬 Chat s ${partnerName}`;
+            currentChatRide = rideId;
+            loadFloatingChatMessages(rideId);
         }
         
         async function loadFloatingChatMessages(rideId) {

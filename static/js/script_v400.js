@@ -300,54 +300,7 @@ window.checkMobile = function() {
   alert(`Mobile: ${isMobile}\nWidth: ${window.innerWidth}\nUA: ${navigator.userAgent}`);
 };
 
-function showFloatingNotification(senderName, message, rideId) {
-  console.log('NOTIFICATION v385 - Showing notification:', senderName, message, rideId);
-  
-  // Detekce mobilního zařízení
-  const isMobile = /Android|webOS|iPhone|iPad|Ipod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-  console.log('MOBILE DETECTED:', isMobile, 'UserAgent:', navigator.userAgent, 'Width:', window.innerWidth);
-  
-  // Na mobilních zařízeních použij jednodušší přístup
-  if (isMobile) {
-    // Mobilní fallback - použij alert + confirm
-    const userChoice = confirm(`📨 Nová zpráva od ${senderName}:\n"${message}"\n\nChcete otevřít chat?`);
-    if (userChoice) {
-      openChat(rideId, senderName);
-    }
-    return;
-  }
-  
-  // Desktop verze
-  // Vyčisti staré notifikace
-  const oldNotifications = document.querySelectorAll('.desktop-notification');
-  oldNotifications.forEach(notif => notif.remove());
-  
-  const notification = document.createElement('div');
-  notification.className = 'desktop-notification';
-  notification.style.cssText = 'position: fixed !important; top: 20px !important; left: 20px !important; z-index: 999999 !important; background: #4CAF50 !important; color: white !important; padding: 15px !important; border-radius: 8px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important; font-family: Arial, sans-serif !important; max-width: 300px !important; pointer-events: auto !important;';
-  
-  notification.innerHTML = `
-    <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
-    <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
-    <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
-    <div>
-      <button onclick="openChat(parseInt(${rideId}), '${senderName.replace(/'/g, "\'" )}'); this.parentElement.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
-      <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">×</button>
-    </div>
-  `;
-  
-  document.body.appendChild(notification);
-  
-  // Auto-remove po 8 sekundách
-  setTimeout(() => {
-    if (notification.parentElement) {
-      notification.remove();
-    }
-  }, 8000);
-  
-  console.log('NOTIFICATION v385 - rideId for onclick:', rideId, 'senderName for onclick:', senderName);
-  console.log('NOTIFICATION v385 - Added to DOM');
-}
+
 
 
 
