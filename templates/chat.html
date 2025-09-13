@@ -9,6 +9,9 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        @media (max-width: 600px) {
+            .container { margin: 0; padding: 10px; border-radius: 0; }
+        }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #007bff; padding-bottom: 20px; }
         .nav { display: flex; gap: 15px; }
         .nav button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
@@ -69,6 +72,7 @@
                             return;
                         }
                         chatMessages.innerHTML = messages.map(msg => {
+                            console.log('msg.sender_id:', msg.sender_id, 'currentUser.id:', currentUser.id);
                             const isOwn = msg.sender_id === currentUser.id;
                             const align = isOwn ? 'right' : 'left';
                             const bgColor = isOwn ? '#007bff' : '#6c757d';
