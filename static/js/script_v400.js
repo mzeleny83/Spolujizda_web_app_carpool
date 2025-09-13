@@ -15,7 +15,7 @@ function openChat(rideId, driverName) {
     let chatBoxStyle = `background: white !important; width: 400px !important; height: 500px !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; position: relative !important;`;
 
     if (isMobile) {
-        chatBoxStyle = `background: white !important; width: 90vw !important; height: 80vh !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; position: fixed !important; left: 10px !important; top: 10px !important;`;
+        chatBoxStyle = `background: white !important; width: 90vw !important; height: 80vh !important; border-radius: 10px !important; padding: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; position: fixed !important; left: 10px !important; top: 50% !important; transform: translateY(-50%) !important;`;
     }
 
     chatBox.style.cssText = chatBoxStyle;
