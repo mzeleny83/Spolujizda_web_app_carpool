@@ -283,44 +283,92 @@ function clearNotificationCache() {
 // Vyvolání: clearNotificationCache() v konzoli
 window.clearNotificationCache = clearNotificationCache;
 
+// Test mobilní notifikace
+window.testMobileNotification = function() {
+  showFloatingNotification('Test User', 'Testovací mobilní notifikace', 1);
+};
+
 function showFloatingNotification(senderName, message, rideId) {
-  console.log('NOTIFICATION v383 - Showing notification:', senderName, message, rideId);
+  console.log('NOTIFICATION v384 - Showing notification:', senderName, message, rideId);
   
   // Vyčisti staré notifikace
-  const oldNotifications = document.querySelectorAll('div[style*="position: fixed"][style*="top: 20px"]');
-  oldNotifications.forEach(notif => {
-    if (notif.innerHTML.includes('📨 Nová zpráva!')) {
-      notif.remove();
-    }
-  });
+  const oldNotifications = document.querySelectorAll('.mobile-notification');
+  oldNotifications.forEach(notif => notif.remove());
   
-  // Vytvoř notifikaci přímo jako div
+  // Detekce mobilního zařízení
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+  
+  // Vytvoř notifikaci s mobilní kompatibilitou
   const notification = document.createElement('div');
-  notification.style.cssText = `
-    position: fixed !important;
-    top: 20px !important;
-    right: 20px !important;
-    z-index: 999999 !important;
-    background: #4CAF50 !important;
-    color: white !important;
-    padding: 15px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-    font-family: Arial, sans-serif !important;
-    max-width: 300px !important;
-    pointer-events: auto !important;
-  `;
+  notification.className = 'mobile-notification';
+  
+  if (isMobile) {
+    // Mobilní styl - celá šířka nahoře
+    notification.style.cssText = `
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 999999 !important;
+      background: #4CAF50 !important;
+      color: white !important;
+      padding: 15px !important;
+      font-family: Arial, sans-serif !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+      transform: translateY(-100%) !important;
+      transition: transform 0.3s ease !important;
+      pointer-events: auto !important;
+    `;
+  } else {
+    // Desktop styl
+    notification.style.cssText = `
+      position: fixed !important;
+      top: 20px !important;
+      right: 20px !important;
+      z-index: 999999 !important;
+      background: #4CAF50 !important;
+      color: white !important;
+      padding: 15px !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+      font-family: Arial, sans-serif !important;
+      max-width: 300px !important;
+      pointer-events: auto !important;
+    `;
+  }
   
   notification.innerHTML = `
     <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
     <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
     <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
-    <button onclick="openChat(${rideId}, '${senderName}'); this.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
-    <button onclick="this.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
+    <div style="display: flex; gap: 10px; justify-content: ${isMobile ? 'center' : 'flex-start'};">
+      <button onclick="openChat(${rideId}, '${senderName}'); this.parentElement.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; touch-action: manipulation;">💬 Chat</button>
+      <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; touch-action: manipulation;">×</button>
+    </div>
   `;
   
   document.body.appendChild(notification);
-  console.log('NOTIFICATION v361 - Added to DOM, element:', notification);
+  
+  // Animace pro mobilní
+  if (isMobile) {
+    setTimeout(() => {
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+  }
+  
+  // Auto-remove po 8 sekundách
+  setTimeout(() => {
+    if (notification.parentElement) {
+      if (isMobile) {
+        notification.style.transform = 'translateY(-100%)';
+        setTimeout(() => notification.remove(), 300);
+      } else {
+        notification.remove();
+      }
+    }
+  }, 8000);
+  
+  console.log('NOTIFICATION v384 - Added to DOM, mobile:', isMobile);
 }
 
 
