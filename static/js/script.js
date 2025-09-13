@@ -309,11 +309,9 @@ function showFloatingNotification(senderName, message, rideId) {
   
   // Na mobilních zařízeních použij jednodušší přístup
   if (isMobile) {
-    // Mobilní fallback - použij alert + confirm
-    const userChoice = confirm(`📨 Nová zpráva od ${senderName}:\n"${message}"\n\nChcete otevřít chat?`);
-    if (userChoice) {
-      openChat(rideId, senderName);
-    }
+    console.log(`MOBILE NOTIFICATION: New message from ${senderName}: "${message}"`);
+    // Directly open chat on mobile for testing purposes
+    openChat('notification', rideId, senderName);
     return;
   }
   
