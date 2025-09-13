@@ -2332,13 +2332,19 @@
             }
         }, 3000);
         
-        // Test notification after 5 seconds
-        setTimeout(() => {
-            if (currentUser) {
-                console.log('TEST - Showing test notification for logged user');
-                showTestNotification();
+        // Spusť pravidelnou kontrolu notifikací každých 10 sekund
+        setInterval(() => {
+            if (currentUser && typeof checkForNotifications === 'function') {
+                checkForNotifications();
             }
-        }, 5000);
+        }, 10000);
+        
+        // První kontrola po 3 sekundách
+        setTimeout(() => {
+            if (currentUser && typeof checkForNotifications === 'function') {
+                checkForNotifications();
+            }
+        }, 3000);
         
         
         
