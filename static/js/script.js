@@ -505,7 +505,7 @@ async function loadChatMessages(rideId) {
     messages.forEach(msg => {
       const div = document.createElement('div');
       const isMyMessage = msg.sender_name === userName;
-      div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #f5f5f5; text-align: left; margin-right: 50px;' : 'background: #e3f2fd; text-align: left; margin-right: 50px;'}`;
+      div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #f5f5f5; text-align: left;' : 'background: #e3f2fd; text-align: left;'}`;
       const now = new Date();
       const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
       div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${timeStr}</small>`;
