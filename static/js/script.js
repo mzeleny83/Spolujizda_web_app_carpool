@@ -423,7 +423,7 @@ function showFloatingNotification(senderName, message, rideId) {
   notification.style.cssText = '
     position: fixed !important;
     top: 20px !important;
-    left: 20px !important;
+    right: 20px !important;
     z-index: 999999 !important;
     background: #4CAF50 !important;
     color: white !important;
@@ -447,12 +447,7 @@ function showFloatingNotification(senderName, message, rideId) {
   
   document.body.appendChild(notification);
   
-  // Auto-remove po 8 sekundách
-  setTimeout(() => {
-    if (notification.parentElement) {
-      notification.remove();
-    }
-  }, 8000);
+  
   
   console.log('NOTIFICATION v385 - rideId for onclick:', rideId, 'senderName for onclick:', senderName);
   console.log('NOTIFICATION v385 - Added to DOM');
