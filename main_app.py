@@ -1431,6 +1431,78 @@ def subscribe():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/users/<int:user_id>/profile', methods=['PUT'])
+def update_user_profile(user_id):
+    try:
+        data = request.get_json()
+        home_city = data.get('home_city')
+        bio = data.get('bio')
+        email = data.get('email')
+
+        with db.session.begin():
+            # Check if the user exists
+            user = db.session.execute(db.text('SELECT id FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
+            if not user:
+                return jsonify({'error': 'Uživatel nenalezen'}), 404
+
+            # Update user profile
+            update_fields = {}
+            if home_city is not None:
+                update_fields['home_city'] = home_city
+            if bio is not None:
+                update_fields['bio'] = bio
+            if email is not None:
+                update_fields['email'] = email
+            
+            if update_fields:
+                set_clause = ", ".join([f"{key} = :{key}" for key in update_fields.keys()])
+                params = {'user_id': user_id, **update_fields}
+                db.session.execute(db.text(f'UPDATE users SET {set_clause} WHERE id = :user_id'), params)
+
+        return jsonify({'message': 'Profil úspěšně aktualizován'}), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/api/users/<int:user_id>/profile', methods=['PUT'])
+def update_user_profile(user_id):
+    try:
+        data = request.get_json()
+        home_city = data.get('home_city')
+        bio = data.get('bio')
+        email = data.get('email')
+
+        with db.session.begin():
+            # Check if the user exists
+            user = db.session.execute(db.text('SELECT id FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
+            if not user:
+                return jsonify({'error': 'Uživatel nenalezen'}), 404
+
+            # Update user profile
+            update_fields = {}
+            if home_city is not None:
+                update_fields['home_city'] = home_city
+            if bio is not None:
+                update_fields['bio'] = bio
+            if email is not None:
+                update_fields['email'] = email
+            
+            if update_fields:
+                set_clause = ", ".join([f"{key} = :{key}" for key in update_fields.keys()])
+                params = {'user_id': user_id, **update_fields}
+                db.session.execute(db.text(f'UPDATE users SET {set_clause} WHERE id = :user_id'), params)
+
+        return jsonify({'message': 'Profil úspěšně aktualizován'}), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"Starting server on port {port}")
