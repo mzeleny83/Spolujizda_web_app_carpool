@@ -562,7 +562,8 @@ def search_rides():
             'Zlín': [49.2265, 17.6679],
             'Rájec Jestřebí': [49.4186, 16.7486],
             'České Budějovice': [48.9745, 14.4743],
-            'Hradec Králové': [50.2103, 15.8327]
+            'Hradec Králové': [50.2103, 15.8327],
+            'Pardubice': [50.0386, 15.7792]
         }
 
         def calculate_distance(lat1, lng1, lat2, lng2):
