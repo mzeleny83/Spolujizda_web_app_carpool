@@ -506,15 +506,19 @@ function openChat(rideId, driverName) {
     loadChatMessages(rideId);
     
     // Automatické obnovování
-    const interval = setInterval(() => loadChatMessages(rideId), 3000);
+    const intervalId = setInterval(() => loadChatMessages(rideId), 3000); // Store the interval ID
     
     // Vyčistíme interval při zavření
     modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        clearInterval(interval);
+      if (e.target === modal || e.target === closeBtn) { // Also clear if closeBtn is clicked
+        clearInterval(intervalId); // Clear the specific interval
         modal.remove();
       }
     });
+    closeBtn.onclick = () => { // Modify closeBtn.onclick to also clear interval
+        clearInterval(intervalId);
+        modal.remove();
+    };
     
   } catch (error) {
     console.error('Error opening chat:', error);
