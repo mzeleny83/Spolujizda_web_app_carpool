@@ -418,15 +418,18 @@
             try {
                 const response = await fetch('/api/rides/search'); // Fetch all rides
                 const rides = await response.json();
+                console.log('Rides from API:', rides);
 
                 if (rides.length === 0) {
                     mapRidesList.innerHTML = '<div style="text-align:center;color:#666;margin:30px 0;">❌ Žádné jízdy nenalezeny pro zobrazení na mapě</div>';
                     return;
                 }
 
-                let bounds = L.latLngBounds(); // To fit all markers on the map 
+                let bounds = L.latLngBounds(); // To fit all markers on the map
+                mapRidesList.innerHTML = ''; // Clear the list
 
                 rides.forEach(ride => {
+                    console.log('Processing ride:', ride);
                     // Assuming ride.from_location and ride.to_location can be geocoded
                     // For now, we'll use dummy coordinates or skip if not available
                     // In a real app, you'd use a geocoding service to get lat/lng from location names
