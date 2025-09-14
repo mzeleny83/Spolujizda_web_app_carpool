@@ -1924,9 +1924,11 @@
         }
         
         // Inicializace
-        checkSavedLogin();
-        updateUI();
-        loadCities();
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSavedLogin();
+            updateUI();
+            loadCities();
+        });
         
         // Spusť kontrolu notifikací
         setTimeout(() => {
