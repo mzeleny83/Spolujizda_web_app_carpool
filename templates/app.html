@@ -59,434 +59,13 @@
           }
         }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚗 Spolujízda</h1>
-            <div class="nav">
-                <button onclick="showSection('login')" id="loginBtn">Přihlásit</button>
-                <button onclick="showSection('register')" id="registerBtn">Registrovat</button>
-                <button onclick="showSection('search')" class="active">Hledat jízdu</button>
-                <button onclick="showSection('offer')" id="offerBtn" style="display:none;">Nabídnout jízdu</button>
-                <button onclick="showSection('my-rides')" id="myRidesBtn" style="display:none;">🚗 Mnou nabízené jízdy</button>
-                <button onclick="showSection('reservations')" id="reservationsBtn" style="display:none;">🎫 Moje rezervace jízd</button>
-                <button onclick="showSection('map');">🗺️ Mapa jízd</button>
-                <button onclick="showSection('users')" id="usersBtn" style="display:none;">👥 Uživatelé</button>
-                <button onclick="logout()" id="logoutBtn" style="display:none;">Odhlásit</button>
-            </div>
-        </div>
-
-        <div id="userInfo" class="user-info" style="display:none;"></div>
-        <div id="message" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 999999; width: 100%; max-width: 400px; text-align: center;"></div>
-
-        <!-- Hledání jízd -->
-        <div id="search" class="section active">
-            <h2>Hledat jízdy</h2>
-            <form onsubmit="search(); return false;" class="search-form">
-                <input type="text" id="from" placeholder="Odkud - město (Praha, Brno, Ostrava...)" />
-                <input type="text" id="fromStreet" placeholder="Odkud - ulice (volitelné)" />
-                <input type="text" id="to" placeholder="Kam - město (Praha, Brno, Ostrava...)" />
-                <input type="text" id="toStreet" placeholder="Kam - ulice (volitelné)" />
-                <div style="display: flex; gap: 10px; margin: 10px 0;">
-                    <div style="flex: 1;">
-                        <label>Datum od:</label>
-                        <input type="date" id="dateFrom" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Datum do:</label>
-                        <input type="date" id="dateTo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Čas od:</label>
-                        <input type="time" id="timeFrom" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Čas do:</label>
-                        <input type="time" id="timeTo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    </div>
-                </div>
-                <div style="margin: 10px 0;">
-                    <label>Vzdálenost od mé polohy: <span id="rangeValue">50</span> km</label><br>
-                    <input type="range" id="searchRange" min="0" max="100" value="50" oninput="updateRangeValue(this.value)" style="width: 100%; margin: 5px 0;">
-                </div>
-                <button type="submit" class="btn">🔍 Hledat jízdy v zadaném okolí</button>
-                <button type="button" class="btn btn-success" onclick="showAll()">📋 Všechny jízdy</button>
-                <button type="button" class="btn" onclick="clearDateTimeFilters()" style="background: #6c757d;">🗑️ Vymazat filtry</button>
-                <button type="button" class="btn" onclick="showMyLocation()" style="background: #17a2b8;">📍 Moje poloha</button>
-
-            </form>
-            
-            
-            
-            <!-- MAPA PRO VYHLEDÁVÁNÍ -->
-            <div id="searchMap" style="width: 100%; height: 300px; border: 2px solid #ddd; border-radius: 8px; margin: 15px 0;"></div>
-
-            <div id="searchResults"></div>
-        </div>
-
-        <!-- PŘIHLÁŠENÍ -->
-        <div id="login" class="section">
-            <h2>Přihlášení</h2>
-            <div class="form-group">
-                <label>Telefon nebo email:</label>
-                <input type="text" id="loginPhone" placeholder="+420123456789 nebo email@example.com" onkeypress="if(event.key==='Enter') login()" />
-            </div>
-            <div class="form-group">
-                <label>Heslo:</label>
-                <div style="position: relative;">
-                    <input type="password" id="loginPassword" onkeypress="if(event.key==='Enter') login()" style="padding-right: 40px;" />
-                    <button type="button" onclick="togglePassword('loginPassword')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px;">👁️</button>
-                </div>
-            </div>
-            <button class="btn" onclick="login()">Přihlásit se</button>
-        </div>
-
-        <!-- REGISTRACE -->
-        <div id="register" class="section">
-            <h2>Registrace</h2>
-            <div class="form-group">
-                <label>Jméno:</label>
-                <input type="text" id="regName" placeholder="Jan Novák" onkeypress="if(event.key==='Enter') register()" />
-            </div>
-            <div class="form-group">
-                <label>Telefon:</label>
-                <input type="text" id="regPhone" placeholder="+420123456789" onkeypress="if(event.key==='Enter') register()" />
-            </div>
-            <div class="form-group">
-                <label>Email (volitelný):</label>
-                <input type="email" id="regEmail" placeholder="jan@example.com" onkeypress="if(event.key==='Enter') register()" />
-            </div>
-            <div class="form-group">
-                <label>Město bydliště:</label>
-                <select id="regCity" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px;">
-                    <option value="">Vyberte město...</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Heslo:</label>
-                <div style="position: relative;">
-                    <input type="password" id="regPassword" onkeypress="if(event.key==='Enter') register()" style="padding-right: 40px;" />
-                    <button type="button" onclick="togglePassword('regPassword')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px;">👁️</button>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Potvrzení hesla:</label>
-                <div style="position: relative;">
-                    <input type="password" id="regPasswordConfirm" onkeypress="if(event.key==='Enter') register()" style="padding-right: 40px;" />
-                    <button type="button" onclick="togglePassword('regPasswordConfirm')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px;">👁️</button>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>PayPal email (pro řidiče - volitelné):</label>
-                <input type="email" id="regPaypalEmail" placeholder="paypal@example.com" />
-                <small style="color: #666; font-size: 12px;">Pokud chcete přijímat platby online, zadejte váš PayPal email</small>
-            </div>
-            <div style="margin: 15px 0; font-size: 12px; color: #666;">
-                <label><input type="checkbox" id="agreeTerms" required> Souhlasím s <a href="/terms" target="_blank">obchodními podmínkami</a></label><br>
-                <label><input type="checkbox" id="agreePrivacy" required> Souhlasím se <a href="/privacy" target="_blank">zpracováním osobních údajů</a></label>
-            </div>
-            <button type="button" class="btn" onclick="register()">Registrovat se</button>
-        </div>
-
-        <!-- MAPA JÍZD -->
-        <div id="map" class="section">
-            <h2>🗺️ Mapa jízd</h2>
-            <div id="realMap" style="width: 100%; height: 500px; border: 2px solid #ddd; border-radius: 8px;"></div>
-            
-            <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;" id="mapRidesList">
-                <!-- Jízdy se načtou zde -->
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #dee2e6;">
-                <h4 style="margin: 0 0 10px 0; color: #495057;">🗺️ Legenda mapy:</h4>
-                <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 14px;">
-                    <div><span style="background: #4caf50; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-right: 8px; font-size: 10px;">START</span>Odkud jede auto</div>
-                    <div><span style="background: #f44336; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-right: 8px; font-size: 10px;">CÍL</span>Kam jede auto</div>
-                    <div><span style="color: #2196f3; font-weight: bold; margin-right: 8px;">—</span>Trasa mezi městy</div>
-                </div>
-            </div>
-            <button class="btn" style="margin-top: 15px;">🔄 Načíst jízdy</button>
-            <button class="btn" onclick="startLocationTracking()" id="trackingBtn" style="margin-top: 15px; margin-left: 10px;">📍 Sdílet polohu</button>
-            <button class="btn" onclick="showAllUserLocations()" style="margin-top: 15px; margin-left: 10px;">👥 Zobrazit uživatele</button>
-        </div>
-
-        <!-- REZERVAVOVANÉ JÍZDY -->
-        <div id="reservations" class="section">
-            <h2>🎫 Moje rezervace</h2>
-            <div id="reservationsList">
-                <p>Načítám vaše rezervace...</p>
-            </div>
-            <button class="btn" onclick="loadReservations()" style="margin-top: 15px;">🔄 Aktualizovat</button>
-        </div>
-
-        <!-- MOJE JÍZDY (PRO ŘIDIČE) -->
-        <div id="my-rides" class="section">
-            <h2>🚗 Moje jízdy</h2>
-            <div id="myRidesList">
-                <p>Načítám vaše jízdy...</p>
-            </div>
-            <button class="btn" onclick="loadMyRides()" style="margin-top: 15px;">🔄 Aktualizovat</button>
-        </div>
-
-        <!-- CHAT -->
-        <div id="chat" class="section">
-            <h2 id="chatTitle">💬 Chat</h2>
-            <div id="chatMessages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin: 15px 0; background: #f9f9f9;">
-                <p style="text-align: center; color: #666;">Vyberte chat...</p>
-            </div>
-            <div id="chatInput" style="display: none;">
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="messageInput" placeholder="Napište zprávu..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" onkeypress="if(event.key==='Enter') sendMessage()">
-                    <button class="btn" onclick="sendMessage()">📨 Odeslat</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- HODNOCENÍ -->
-        <div id="rating" class="section">
-            <h2 id="ratingTitle">⭐ Hodnocení</h2>
-            <div id="ratingContent" style="text-align: center; padding: 30px;">
-                <h3 id="ratingUserName">Hodnotit uživatele</h3>
-                <div style="margin: 20px 0;">
-                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(1)" id="star1">☆</span>
-                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(2)" id="star2">☆</span>
-                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(3)" id="star3">☆</span>
-                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(4)" id="star4">☆</span>
-                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(5)" id="star5">☆</span>
-                </div>
-                <div style="margin: 20px 0;">
-                    <textarea id="ratingComment" placeholder="Komentář (volitelný)..." style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
-                </div>
-                <div>
-                    <button class="btn btn-success" onclick="submitRating()">⭐ Odeslat hodnocení</button>
-                    <button class="btn" onclick="showSection('reservations')" style="margin-left: 10px;">❌ Zrušit</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- SEZNAM UŽIVATELŮ -->
-        <div id="users" class="section">
-            <h2>👥 Uživatelé</h2>
-            
-            <!-- VYHLEDÁVÁNÍ UŽIVATELŮ -->
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="text" id="userSearchQuery" placeholder="Hledat uživatele podle jména..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                    <button class="btn" onclick="searchUsers()">🔍 Hledat</button>
-                </div>
-                
-                <div style="display: flex; gap: 15px; align-items: center; font-size: 14px;">
-                    <label><input type="checkbox" id="verifiedOnly"> Pouze ověření ✓</label>
-                    <label>Min. hodnocení: 
-                        <select id="minRatingFilter" style="padding: 5px;">
-                            <option value="">Všechna</option>
-                            <option value="4.5">4.5+ ⭐</option>
-                            <option value="4.0">4.0+ ⭐</option>
-                            <option value="3.5">3.5+ ⭐</option>
-                        </select>
-                    </label>
-                    <label>Město: 
-                        <select id="cityFilter" style="padding: 5px;">
-                            <option value="">Všechna města</option>
-                        </select>
-                    </label>
-                    <button class="btn" onclick="loadAllUsers()" style="background: #28a745;">📊 Top uživatelé</button>
-                    <button class="btn" onclick="loadCompleteUserList()" style="background: #17a2b8;">📄 Všichni uživatelé</button>
-                </div>
-            </div>
-            
-            <!-- VÝSLEDKY -->
-            <div id="usersResults">
-                <p style="text-align: center; color: #666;">Použijte vyhledávání nebo klikněte na "Top uživatelé"</p>
-            </div>
-        </div>
-        
-        <!-- PROFIL UŽIVATELE -->
-        <div id="user-profile" class="section">
-            <h2 id="userProfileTitle">👤 Profil uživatele</h2>
-            <button class="btn" onclick="showSection('users')" style="margin-bottom: 20px;">← Zpět na seznam</button>
-            
-            <div id="userProfileContent">
-                <p>Načítám profil...</p>
-            </div>
-        </div>
-
-        <!-- NABÍDKA JÍZDY -->
-        <div id="offer" class="section">
-            <h2>Nabídnout jízdu</h2>
-            <div class="form-group">
-                <label>Odkud - město:</label>
-                <input type="text" id="offerFrom" placeholder="Praha, Brno, Ostrava..." onkeypress="if(event.key==='Enter') offerRide()" />
-            </div>
-            <div class="form-group">
-                <label>Odkud - ulice (volitelné):</label>
-                <input type="text" id="offerFromStreet" placeholder="Náměstí Míru, Hlavní nádraží..." onkeypress="if(event.key==='Enter') offerRide()" />
-            </div>
-            <div class="form-group">
-                <label>Kam - město:</label>
-                <input type="text" id="offerTo" placeholder="Praha, Brno, Ostrava..." onkeypress="if(event.key==='Enter') offerRide()" />
-            </div>
-            <div class="form-group">
-                <label>Kam - ulice (volitelné):</label>
-                <input type="text" id="offerToStreet" placeholder="Náměstí Míru, Hlavní nádraží..." onkeypress="if(event.key==='Enter') offerRide()" />
-            </div>
-            <div class="form-group">
-                <label>Datum a čas odjezdu:</label>
-                <input type="datetime-local" id="offerTime" />
-            </div>
-            <div class="form-group">
-                <label>Počet volných míst:</label>
-                <select id="offerSeats">
-                    <option value="1">1 místo</option>
-                    <option value="2">2 místa</option>
-                    <option value="3">3 místa</option>
-                    <option value="4">4 místa</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Cena za osobu (Kč):</label>
-                <input type="number" id="offerPrice" placeholder="Cena za osobu" onkeypress="if(event.key==='Enter') offerRide()" />
-            </div>
-            <button class="btn btn-success" onclick="offerRide()">🚗 Nabídnout jízdu</button>
-        </div>
-        <!-- FOOTER S PRÁVNÍMI INFORMACEMI -->
-        <footer style="margin-top: 50px; padding: 20px 0; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
-            <div style="margin-bottom: 10px;">
-                <a href="/terms" target="_blank" style="color: #007bff; text-decoration: none; margin: 0 10px;">Obchodní podmínky</a> |
-                <a href="/privacy" target="_blank" style="color: #007bff; text-decoration: none; margin: 0 10px;">Ochrana osobních údajů</a> |
-                <a href="mailto:m.zeleny@volny.cz" style="color: #007bff; text-decoration: none; margin: 0 10px;">Kontakt</a>
-            </div>
-            <div>
-                © 2024 Sveztese.cz - Aplikace pro sdílení jízd | IČ: 05402361
-            </div>
-        </footer>
-    </div>
-
-    
-
-    <!-- PLOVOUCÍ CHAT OKNO -->
-    <div id="floatingChat" style="display: none; position: fixed; top: 20px; left: 20px; width: 350px; height: 400px; background: white; border: 2px solid #007bff; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000;">
-        <div style="background: #007bff; color: white; padding: 10px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
-            <span id="floatingChatTitle">💬 Chat</span>
-            <button onclick="closeFloatingChat()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">×</button>
-        </div>
-        <div id="floatingChatMessages" style="height: 280px; overflow-y: auto; padding: 10px; background: #f9f9f9;">
-            <p style="text-align: center; color: #666;">Načítám zprávy...</p>
-        </div>
-        <div style="padding: 10px; border-top: 1px solid #ddd;">
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="floatingMessageInput" placeholder="Zpráva..." style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" onkeypress="if(event.key==='Enter') sendFloatingMessage()" autofocus>
-                <button onclick="sendFloatingMessage()" style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">📨</button>
-            </div>
-        </div>
-    </div>
-
-
     <script>
         // Force override cached functions
 
         
         // Complete notification system inline
         
-        function startNotificationCheck() {
-            console.log('NOTIF v361 - Starting notification check');
-            if (notificationInterval) {
-                clearInterval(notificationInterval);
-            }
-            checkForNotifications();
-            notificationInterval = setInterval(checkForNotifications, 10000);
-        }
         
-        function stopNotificationCheck() {
-            console.log('NOTIF v361 - Stopping notification check');
-            if (notificationInterval) {
-                clearInterval(notificationInterval);
-                notificationInterval = null;
-            }
-        }
-        
-        async function checkForNotifications() {
-            const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) {
-                console.log('NOTIF v361 - No current user');
-                return;
-            }
-            
-            try {
-                const user = JSON.parse(currentUser);
-                const url = `/api/notifications/v361/${encodeURIComponent(user.name)}`;
-                console.log('NOTIF v361 - Checking notifications for:', user.name, 'URL:', url);
-                
-                const response = await fetch(url);
-                if (!response.ok) {
-                    console.error('NOTIF v361 - API error:', response.status, response.statusText);
-                    return;
-                }
-                
-                const notifications = await response.json();
-                console.log('NOTIF v361 - Got', notifications.length, 'notifications:', notifications);
-                
-                if (notifications.length > 0) {
-                    let newCount = 0;
-                    notifications.forEach(notification => {
-                        const notifId = `${notification.ride_id}-${notification.sender_name}-${notification.created_at}`;
-                        if (!shownNotifications.has(notifId)) {
-                            console.log('NOTIF v361 - NEW notification:', notification.sender_name, notification.message);
-                            showFloatingNotification(notification.sender_name, notification.message, notification.ride_id);
-                            shownNotifications.add(notifId);
-                            newCount++;
-                        }
-                    });
-                    
-                    if (newCount > 0) {
-                        console.log(`NOTIF v361 - Showed ${newCount} new notifications`);
-                    }
-                }
-            } catch (error) {
-                console.error('NOTIF v361 - Error:', error);
-            }
-        }
-        
-        function showFloatingNotification(senderName, message, rideId) {
-            console.log('NOTIFICATION v361 - Showing notification:', senderName, message, rideId);
-            
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                z-index: 999999 !important;
-                background: #4CAF50 !important;
-                color: white !important;
-                padding: 15px !important;
-                border-radius: 8px !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-                font-family: Arial, sans-serif !important;
-                max-width: 300px !important;
-                pointer-events: auto !important;
-            `;
-            
-            notification.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 5px;">📨 Nová zpráva!</div>
-                <div style="margin-bottom: 5px;">Od: <strong>${senderName}</strong></div>
-                <div style="margin-bottom: 10px; font-style: italic;">"${message}"</div>
-                <button onclick="openChat('notification', ${rideId}, '${senderName}'); this.parentElement.remove();" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px;">💬 Chat</button>
-                <button onclick="this.parentElement.remove()" style="background: rgba(255,255,255,0.3); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
-            `;
-            
-            document.body.appendChild(notification);
-            console.log('NOTIFICATION v361 - Added to DOM, element:', notification);
-            
-            
-        }
-        
-        // Test notification function
-        function showTestNotification() {
-            console.log('TEST - Showing test notification');
-            showFloatingNotification('Test User', 'Toto je testovací zpráva', 1);
-        }
     </script>
     <script>
         let currentUser = null;
@@ -817,10 +396,10 @@
             // Přidej OpenStreetMap tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
-            '''            }).addTo(map);
+            }).addTo(map);
         }
 
-        ''
+
         
         
         
@@ -2397,5 +1976,330 @@
             }
         }
     </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Spolujízda</h1>
+            <div class="nav">
+                <button onclick="showSection('login')" id="loginBtn">Přihlásit</button>
+                <button onclick="showSection('register')" id="registerBtn">Registrovat</button>
+                <button onclick="showSection('search')" class="active">Hledat jízdu</button>
+                <button onclick="showSection('offer')" id="offerBtn" style="display:none;">Nabídnout jízdu</button>
+                <button onclick="showSection('my-rides')" id="myRidesBtn" style="display:none;">🚗 Mnou nabízené jízdy</button>
+                <button onclick="showSection('reservations')" id="reservationsBtn" style="display:none;">🎫 Moje rezervace jízd</button>
+                <button onclick="showSection('map');">🗺️ Mapa jízd</button>
+                <button onclick="showSection('users')" id="usersBtn" style="display:none;">👥 Uživatelé</button>
+                <button onclick="logout()" id="logoutBtn" style="display:none;">Odhlásit</button>
+            </div>
+        </div>
+
+        <div id="userInfo" class="user-info" style="display:none;"></div>
+        <div id="message" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 999999; width: 100%; max-width: 400px; text-align: center;"></div>
+
+        <!-- Hledání jízd -->
+        <div id="search" class="section active">
+            <h2>Hledat jízdy</h2>
+            <form onsubmit="search(); return false;" class="search-form">
+                <input type="text" id="from" placeholder="Odkud - město (Praha, Brno, Ostrava...)" />
+                <input type="text" id="fromStreet" placeholder="Odkud - ulice (volitelné)" />
+                <input type="text" id="to" placeholder="Kam - město (Praha, Brno, Ostrava...)" />
+                <input type="text" id="toStreet" placeholder="Kam - ulice (volitelné)" />
+                <div style="display: flex; gap: 10px; margin: 10px 0;">
+                    <div style="flex: 1;">
+                        <label>Datum od:</label>
+                        <input type="date" id="dateFrom" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Datum do:</label>
+                        <input type="date" id="dateTo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Čas od:</label>
+                        <input type="time" id="timeFrom" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Čas do:</label>
+                        <input type="time" id="timeTo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+                <div style="margin: 10px 0;">
+                    <label>Vzdálenost od mé polohy: <span id="rangeValue">50</span> km</label><br>
+                    <input type="range" id="searchRange" min="0" max="100" value="50" oninput="updateRangeValue(this.value)" style="width: 100%; margin: 5px 0;">
+                </div>
+                <button type="submit" class="btn">🔍 Hledat jízdy v zadaném okolí</button>
+                <button type="button" class="btn btn-success" onclick="showAll()">📋 Všechny jízdy</button>
+                <button type="button" class="btn" onclick="clearDateTimeFilters()" style="background: #6c757d;">🗑️ Vymazat filtry</button>
+                <button type="button" class="btn" onclick="showMyLocation()" style="background: #17a2b8;">📍 Moje poloha</button>
+
+            </form>
+            
+            
+            
+            <!-- MAPA PRO VYHLEDÁVÁNÍ -->
+            <div id="searchMap" style="width: 100%; height: 300px; border: 2px solid #ddd; border-radius: 8px; margin: 15px 0;"></div>
+
+            <div id="searchResults"></div>
+        </div>
+
+        <!-- PŘIHLÁŠENÍ -->
+        <div id="login" class="section">
+            <h2>Přihlášení</h2>
+            <div class="form-group">
+                <label>Telefon nebo email:</label>
+                <input type="text" id="loginPhone" placeholder="+420123456789 nebo email@example.com" onkeypress="if(event.key==='Enter') login()" />
+            </div>
+            <div class="form-group">
+                <label>Heslo:</label>
+                <div style="position: relative;">
+                    <input type="password" id="loginPassword" onkeypress="if(event.key==='Enter') login()" style="padding-right: 40px;" />
+                    <button type="button" onclick="togglePassword('loginPassword')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px;">👁️</button>
+                </div>
+            </div>
+            <button class="btn" onclick="login()">Přihlásit se</button>
+        </div>
+
+        <!-- REGISTRACE -->
+        <div id="register" class="section">
+            <h2>Registrace</h2>
+            <div class="form-group">
+                <label>Jméno:</label>
+                <input type="text" id="regName" placeholder="Jan Novák" onkeypress="if(event.key==='Enter') register()" />
+            </div>
+            <div class="form-group">
+                <label>Telefon:</label>
+                <input type="text" id="regPhone" placeholder="+420123456789" onkeypress="if(event.key==='Enter') register()" />
+            </div>
+            <div class="form-group">
+                <label>Email (volitelný):</label>
+                <input type="email" id="regEmail" placeholder="jan@example.com" onkeypress="if(event.key==='Enter') register()" />
+            </div>
+            <div class="form-group">
+                <label>Město bydliště:</label>
+                <select id="regCity" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px;">
+                    <option value="">Vyberte město...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Heslo:</label>
+                <div style="position: relative;">
+                    <input type="password" id="regPassword" onkeypress="if(event.key==='Enter') register()" style="padding-right: 40px;" />
+                    <button type="button" onclick="togglePassword('regPassword')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px;">👁️</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Potvrzení hesla:</label>
+                <div style="position: relative;">
+                    <input type="password" id="regPasswordConfirm" onkeypress="if(event.key==='Enter') register()" style="padding-right: 40px;" />
+                    <button type="button" onclick="togglePassword('regPasswordConfirm')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px;">👁️</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>PayPal email (pro řidiče - volitelné):</label>
+                <input type="email" id="regPaypalEmail" placeholder="paypal@example.com" />
+                <small style="color: #666; font-size: 12px;">Pokud chcete přijímat platby online, zadejte váš PayPal email</small>
+            </div>
+            <div style="margin: 15px 0; font-size: 12px; color: #666;">
+                <label><input type="checkbox" id="agreeTerms" required> Souhlasím s <a href="/terms" target="_blank">obchodními podmínkami</a></label><br>
+                <label><input type="checkbox" id="agreePrivacy" required> Souhlasím se <a href="/privacy" target="_blank">zpracováním osobních údajů</a></label>
+            </div>
+            <button type="button" class="btn" onclick="register()">Registrovat se</button>
+        </div>
+
+        <!-- MAPA JÍZD -->
+        <div id="map" class="section">
+            <h2>🗺️ Mapa jízd</h2>
+            <div id="realMap" style="width: 100%; height: 500px; border: 2px solid #ddd; border-radius: 8px;"></div>
+            
+            <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;" id="mapRidesList">
+                <!-- Jízdy se načtou zde -->
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #dee2e6;">
+                <h4 style="margin: 0 0 10px 0; color: #495057;">🗺️ Legenda mapy:</h4>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 14px;">
+                    <div><span style="background: #4caf50; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-right: 8px; font-size: 10px;">START</span>Odkud jede auto</div>
+                    <div><span style="background: #f44336; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-right: 8px; font-size: 10px;">CÍL</span>Kam jede auto</div>
+                    <div><span style="color: #2196f3; font-weight: bold; margin-right: 8px;">—</span>Trasa mezi městy</div>
+                </div>
+            </div>
+            <button class="btn" style="margin-top: 15px;">🔄 Načíst jízdy</button>
+            <button class="btn" onclick="startLocationTracking()" id="trackingBtn" style="margin-top: 15px; margin-left: 10px;">📍 Sdílet polohu</button>
+            <button class="btn" onclick="showAllUserLocations()" style="margin-top: 15px; margin-left: 10px;">👥 Zobrazit uživatele</button>
+        </div>
+
+        <!-- REZERVAVOVANÉ JÍZDY -->
+        <div id="reservations" class="section">
+            <h2>🎫 Moje rezervace</h2>
+            <div id="reservationsList">
+                <p>Načítám vaše rezervace...</p>
+            </div>
+            <button class="btn" onclick="loadReservations()" style="margin-top: 15px;">🔄 Aktualizovat</button>
+        </div>
+
+        <!-- MOJE JÍZDY (PRO ŘIDIČE) -->
+        <div id="my-rides" class="section">
+            <h2>🚗 Moje jízdy</h2>
+            <div id="myRidesList">
+                <p>Načítám vaše jízdy...</p>
+            </div>
+            <button class="btn" onclick="loadMyRides()" style="margin-top: 15px;">🔄 Aktualizovat</button>
+        </div>
+
+        <!-- CHAT -->
+        <div id="chat" class="section">
+            <h2 id="chatTitle">💬 Chat</h2>
+            <div id="chatMessages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin: 15px 0; background: #f9f9f9;">
+                <p style="text-align: center; color: #666;">Vyberte chat...</p>
+            </div>
+            <div id="chatInput" style="display: none;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="messageInput" placeholder="Napište zprávu..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button class="btn" onclick="sendMessage()">📨 Odeslat</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HODNOCENÍ -->
+        <div id="rating" class="section">
+            <h2 id="ratingTitle">⭐ Hodnocení</h2>
+            <div id="ratingContent" style="text-align: center; padding: 30px;">
+                <h3 id="ratingUserName">Hodnotit uživatele</h3>
+                <div style="margin: 20px 0;">
+                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(1)" id="star1">☆</span>
+                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(2)" id="star2">☆</span>
+                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(3)" id="star3">☆</span>
+                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(4)" id="star4">☆</span>
+                    <span style="font-size: 40px; cursor: pointer; margin: 0 5px;" onclick="setRating(5)" id="star5">☆</span>
+                </div>
+                <div style="margin: 20px 0;">
+                    <textarea id="ratingComment" placeholder="Komentář (volitelný)..." style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+                </div>
+                <div>
+                    <button class="btn btn-success" onclick="submitRating()">⭐ Odeslat hodnocení</button>
+                    <button class="btn" onclick="showSection('reservations')" style="margin-left: 10px;">❌ Zrušit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEZNAM UŽIVATELŮ -->
+        <div id="users" class="section">
+            <h2>👥 Uživatelé</h2>
+            
+            <!-- VYHLEDÁVÁNÍ UŽIVATELŮ -->
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="userSearchQuery" placeholder="Hledat uživatele podle jména..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button class="btn" onclick="searchUsers()">🔍 Hledat</button>
+                </div>
+                
+                <div style="display: flex; gap: 15px; align-items: center; font-size: 14px;">
+                    <label><input type="checkbox" id="verifiedOnly"> Pouze ověření ✓</label>
+                    <label>Min. hodnocení: 
+                        <select id="minRatingFilter" style="padding: 5px;">
+                            <option value="">Všechna</option>
+                            <option value="4.5">4.5+ ⭐</option>
+                            <option value="4.0">4.0+ ⭐</option>
+                            <option value="3.5">3.5+ ⭐</option>
+                        </select>
+                    </label>
+                    <label>Město: 
+                        <select id="cityFilter" style="padding: 5px;">
+                            <option value="">Všechna města</option>
+                        </select>
+                    </label>
+                    <button class="btn" onclick="loadAllUsers()" style="background: #28a745;">📊 Top uživatelé</button>
+                    <button class="btn" onclick="loadCompleteUserList()" style="background: #17a2b8;">📄 Všichni uživatelé</button>
+                </div>
+            </div>
+            
+            <!-- VÝSLEDKY -->
+            <div id="usersResults">
+                <p style="text-align: center; color: #666;">Použijte vyhledávání nebo klikněte na "Top uživatelé"</p>
+            </div>
+        </div>
+        
+        <!-- PROFIL UŽIVATELE -->
+        <div id="user-profile" class="section">
+            <h2 id="userProfileTitle">👤 Profil uživatele</h2>
+            <button class="btn" onclick="showSection('users')" style="margin-bottom: 20px;">← Zpět na seznam</button>
+            
+            <div id="userProfileContent">
+                <p>Načítám profil...</p>
+            </div>
+        </div>
+
+        <!-- NABÍDKA JÍZDY -->
+        <div id="offer" class="section">
+            <h2>Nabídnout jízdu</h2>
+            <div class="form-group">
+                <label>Odkud - město:</label>
+                <input type="text" id="offerFrom" placeholder="Praha, Brno, Ostrava..." onkeypress="if(event.key==='Enter') offerRide()" />
+            </div>
+            <div class="form-group">
+                <label>Odkud - ulice (volitelné):</label>
+                <input type="text" id="offerFromStreet" placeholder="Náměstí Míru, Hlavní nádraží..." onkeypress="if(event.key==='Enter') offerRide()" />
+            </div>
+            <div class="form-group">
+                <label>Kam - město:</label>
+                <input type="text" id="offerTo" placeholder="Praha, Brno, Ostrava..." onkeypress="if(event.key==='Enter') offerRide()" />
+            </div>
+            <div class="form-group">
+                <label>Kam - ulice (volitelné):</label>
+                <input type="text" id="offerToStreet" placeholder="Náměstí Míru, Hlavní nádraží..." onkeypress="if(event.key==='Enter') offerRide()" />
+            </div>
+            <div class="form-group">
+                <label>Datum a čas odjezdu:</label>
+                <input type="datetime-local" id="offerTime" />
+            </div>
+            <div class="form-group">
+                <label>Počet volných míst:</label>
+                <select id="offerSeats">
+                    <option value="1">1 místo</option>
+                    <option value="2">2 místa</option>
+                    <option value="3">3 místa</option>
+                    <option value="4">4 místa</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Cena za osobu (Kč):</label>
+                <input type="number" id="offerPrice" placeholder="Cena za osobu" onkeypress="if(event.key==='Enter') offerRide()" />
+            </div>
+            <button class="btn btn-success" onclick="offerRide()">🚗 Nabídnout jízdu</button>
+        </div>
+        <!-- FOOTER S PRÁVNÍMI INFORMACEMI -->
+        <footer style="margin-top: 50px; padding: 20px 0; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
+            <div style="margin-bottom: 10px;">
+                <a href="/terms" target="_blank" style="color: #007bff; text-decoration: none; margin: 0 10px;">Obchodní podmínky</a> |
+                <a href="/privacy" target="_blank" style="color: #007bff; text-decoration: none; margin: 0 10px;">Ochrana osobních údajů</a> |
+                <a href="mailto:m.zeleny@volny.cz" style="color: #007bff; text-decoration: none; margin: 0 10px;">Kontakt</a>
+            </div>
+            <div>
+                © 2024 Sveztese.cz - Aplikace pro sdílení jízd | IČ: 05402361
+            </div>
+        </footer>
+    </div>
+
+    
+
+    <!-- PLOVOUCÍ CHAT OKNO -->
+    <div id="floatingChat" style="display: none; position: fixed; top: 20px; left: 20px; width: 350px; height: 400px; background: white; border: 2px solid #007bff; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000;">
+        <div style="background: #007bff; color: white; padding: 10px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <span id="floatingChatTitle">💬 Chat</span>
+            <button onclick="closeFloatingChat()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">×</button>
+        </div>
+        <div id="floatingChatMessages" style="height: 280px; overflow-y: auto; padding: 10px; background: #f9f9f9;">
+            <p style="text-align: center; color: #666;">Načítám zprávy...</p>
+        </div>
+        <div style="padding: 10px; border-top: 1px solid #ddd;">
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="floatingMessageInput" placeholder="Zpráva..." style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" onkeypress="if(event.key==='Enter') sendFloatingMessage()" autofocus>
+                <button onclick="sendFloatingMessage()" style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">📨</button>
+            </div>
+        </div>
+    </div>
+
+
+    
 </body>
 </html>
