@@ -868,7 +868,7 @@ def get_driver_reservations(driver_id):
                        u.name as passenger_name, u.id as passenger_id
                 FROM reservations res
                 JOIN rides r ON res.ride_id = r.id
-                JOIN users u ON res.passenger_id = u.id
+                JOIN users u ON r.user_id = u.id
                 WHERE r.user_id = :driver_id AND res.status = 'confirmed'
                 ORDER BY r.departure_time DESC
             """), {'driver_id': driver_id}).fetchall()
@@ -929,145 +929,6 @@ def cancel_reservation_new(reservation_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/messages/send', methods=['POST'])
-def send_message():
-    try:
-        data = request.get_json()
-        ride_id = data.get('ride_id')
-        sender_id = data.get('sender_id')
-        
-        if not sender_id:
-            return jsonify({'error': 'Přihlášení je vyžadováno'}), 401
-        message = data.get('message')
-        
-        with db.session.begin():
-            db.session.execute(db.text('INSERT INTO messages (ride_id, sender_id, message) VALUES (:ride_id, :sender_id, :message)'),
-                             {'ride_id': ride_id, 'sender_id': sender_id, 'message': message})
-        
-        return jsonify({'message': 'Zpráva odeslána'}), 201
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users/<int:user_id>/profile', methods=['GET'])
-def get_user_profile(user_id):
-    try:
-        with db.session.begin():
-            user = db.session.execute(db.text('SELECT id, name, phone, email, rating, created_at, home_city FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
-            
-            if not user:
-                return jsonify({'error': 'Uživatel nenalezen'}), 404
-            
-            # Základní profil
-            profile = {
-                'id': user[0],
-                'name': user[1],
-                'phone': user[2],
-                'email': user[3] or '',
-                'rating': float(user[4]) if user[4] is not None else 5.0,
-                'member_since': parse_datetime_str(user[5]).isoformat() if user[5] else None,
-                'home_city': user[6] or 'Neznámé',
-                'verified': False,
-                'bio': ''
-            }
-            
-            # Počet jízd jako řidič
-            driver_rides = db.session.execute(db.text('SELECT COUNT(*) FROM rides WHERE user_id = :user_id'), {'user_id': user_id}).fetchone()
-            profile['rides_as_driver'] = driver_rides[0] if driver_rides else 0
-            
-            # Počet jízd jako pasažér
-            passenger_rides = db.session.execute(db.text('SELECT COUNT(*) FROM reservations WHERE passenger_id = :user_id AND status = "confirmed"'), {'user_id': user_id}).fetchone()
-            profile['rides_as_passenger'] = passenger_rides[0] if passenger_rides else 0
-            
-            profile['total_rides'] = profile['rides_as_driver'] + profile['rides_as_passenger']
-            
-            # Načtení recenzí
-            reviews_data = db.session.execute(db.text("""
-                SELECT r.rating, r.comment, r.created_at, u.name as rater_name
-                FROM ratings r
-                JOIN users u ON r.rater_id = u.id
-                WHERE r.rated_id = :user_id AND r.comment IS NOT NULL AND r.comment != ''
-                ORDER BY r.created_at DESC
-                LIMIT 10
-            """), {'user_id': user_id}).fetchall()
-            
-            profile['reviews'] = []
-            for review in reviews_data:
-                profile['reviews'].append({
-                    'rating': review[0],
-                    'comment': review[1],
-                    'date': parse_datetime_str(review[2]).isoformat() if review[2] else None,
-                    'reviewer': review[3]
-                })
-            
-            # Načtení posledních jízd
-            recent_rides_data = db.session.execute(db.text("""
-                SELECT 'driver' as role, from_location, to_location, departure_time as date FROM rides WHERE user_id = :user_id
-                UNION ALL
-                SELECT 'passenger' as role, r.from_location, r.to_location, r.departure_time as date FROM reservations res JOIN rides r ON res.ride_id = r.id WHERE res.passenger_id = :user_id AND res.status = 'confirmed'
-                ORDER BY date DESC
-                LIMIT 5
-            """), {'user_id': user_id}).fetchall()
-            
-            profile['recent_rides'] = []
-            for ride in recent_rides_data:
-                profile['recent_rides'].append({
-                    'role': ride[0],
-                    'from': ride[1],
-                    'to': ride[2],
-                    'date': parse_datetime_str(ride[3]).isoformat() if ride[3] else None
-                })
-            
-            print(f"Returning profile for user {user_id}: {json.dumps(profile, indent=2, default=str)}")
-        return jsonify(profile), 200
-        
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users/<user_name>/reviews', methods=['GET'])
-def get_user_reviews(user_name):
-    try:
-        with db.session.begin():
-            user = db.session.execute(db.text('SELECT id FROM users WHERE name = :user_name'), {'user_name': user_name}).fetchone()
-            
-            if not user:
-                return jsonify({'error': 'Uživatel nenalezen'}), 404
-            
-            user_id = user[0]
-            
-            reviews = db.session.execute(db.text("""
-                SELECT r.rating, r.comment, r.created_at, u.name as rater_name
-                FROM ratings r
-                JOIN users u ON r.rater_id = u.id
-                WHERE r.rated_id = :user_id AND r.comment IS NOT NULL AND r.comment != ''
-                ORDER BY r.created_at DESC
-                LIMIT 5
-            """), {'user_id': user_id}).fetchall()
-        
-        result = []
-        for review in reviews:
-            created_at_val = parse_datetime_str(review[2])
-            result.append({
-                'rating': review[0],
-                'comment': review[1],
-                'created_at': created_at_val.isoformat() if created_at_val else None,
-                'rater_name': review[3]
-            })
-        
-        return jsonify(result), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users/locations', methods=['GET'])
-def get_user_locations():
-    try:
-        # Vrátí prázdný seznam, protože SocketIO není aktivní
-        return jsonify([]), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/chat/send', methods=['POST'])
 def send_chat_message():
     try:
         data = request.get_json()
@@ -1430,42 +1291,6 @@ def subscribe():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/users/<int:user_id>/profile', methods=['PUT'])
-def update_user_profile(user_id):
-    try:
-        data = request.get_json()
-        home_city = data.get('home_city')
-        bio = data.get('bio')
-        email = data.get('email')
-
-        with db.session.begin():
-            # Check if the user exists
-            user = db.session.execute(db.text('SELECT id FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
-            if not user:
-                return jsonify({'error': 'Uživatel nenalezen'}), 404
-
-            # Update user profile
-            update_fields = {}
-            if home_city is not None:
-                update_fields['home_city'] = home_city
-            if bio is not None:
-                update_fields['bio'] = bio
-            if email is not None:
-                update_fields['email'] = email
-            
-            if update_fields:
-                set_clause = ", ".join([f"{key} = :{key}" for key in update_fields.keys()])
-                params = {'user_id': user_id, **update_fields}
-                db.session.execute(db.text(f'UPDATE users SET {set_clause} WHERE id = :user_id'), params)
-
-        return jsonify({'message': 'Profil úspěšně aktualizován'}), 200
-
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
-
 
 
 @app.route('/api/users/<int:user_id>/profile', methods=['PUT'])
