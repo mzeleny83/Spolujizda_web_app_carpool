@@ -63,7 +63,7 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     try {
-      final response = await http.get(Uri.parse('http://localhost:8080/api/rides/all'));
+      final response = await http.get(Uri.parse('http://localhost:5000/api/rides/all'));
 
       if (response.statusCode == 200) {
         final List<dynamic> ridesData = json.decode(response.body);
