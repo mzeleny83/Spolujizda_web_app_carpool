@@ -430,13 +430,11 @@
 
                 rides.forEach(ride => {
                     console.log('Processing ride:', ride);
-                    // Assuming ride.from_location and ride.to_location can be geocoded
-                    // For now, we'll use dummy coordinates or skip if not available
-                    // In a real app, you'd use a geocoding service to get lat/lng from location names
 
-                    // Example: If ride object contains lat/lng for from and to locations
-                    if (ride.from_lat && ride.from_lng) {
+                    if (ride.from_lat && ride.from_lng && ride.to_lat && ride.to_lng) {
                         const fromLatLng = [ride.from_lat, ride.from_lng];
+                        const toLatLng = [ride.to_lat, ride.to_lng];
+
                         const fromMarker = L.marker(fromLatLng, {
                             icon: L.divIcon({
                                 html: '<div style="background: #4caf50; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">START</div>',
@@ -447,10 +445,7 @@
                         fromMarker.bindPopup(`<b>${ride.from_location}</b><br>Odkud`);
                         rideMarkers.push(fromMarker);
                         bounds.extend(fromLatLng);
-                    }
 
-                    if (ride.to_lat && ride.to_lng) {
-                        const toLatLng = [ride.to_lat, ride.to_lng];
                         const toMarker = L.marker(toLatLng, {
                             icon: L.divIcon({
                                 html: '<div style="background: #f44336; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">CÍL</div>',
@@ -461,6 +456,9 @@
                         toMarker.bindPopup(`<b>${ride.to_location}</b><br>Kam`);
                         rideMarkers.push(toMarker);
                         bounds.extend(toLatLng);
+
+                        const routeLine = L.polyline([fromLatLng, toLatLng], { color: '#2196f3', weight: 3 }).addTo(map);
+                        rideMarkers.push(routeLine);
                     }
 
                     // Display ride details in the list
