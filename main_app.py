@@ -621,8 +621,10 @@ def search_rides():
                 'distance': round(distance, 1),
                 'is_own': is_own,
                 'is_reserved': is_reserved,
-                'from_coords': from_coords if from_coords else None,
-                'to_coords': to_coords if to_coords else None
+                'from_lat': from_coords[0] if from_coords else None,
+                'from_lng': from_coords[1] if from_coords else None,
+                'to_lat': to_coords[0] if to_coords else None,
+                'to_lng': to_coords[1] if to_coords else None
             })
         
         if user_lat and user_lng:
