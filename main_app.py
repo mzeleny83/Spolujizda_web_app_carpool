@@ -1293,6 +1293,27 @@ def subscribe():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/users/<int:user_id>/profile', methods=['GET'])
+def get_user_profile(user_id):
+    try:
+        with db.session.begin():
+            user = db.session.execute(db.text('SELECT id, name, email, phone, home_city, bio, rating FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
+            if not user:
+                return jsonify({'error': 'Uživatel nenalezen'}), 404
+            
+            return jsonify({
+                'id': user[0],
+                'name': user[1],
+                'email': user[2],
+                'phone': user[3],
+                'home_city': user[4],
+                'bio': user[5],
+                'rating': float(user[6]) if user[6] is not None else 5.0
+            }), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/users/<int:user_id>/profile', methods=['PUT'], endpoint='update_user_profile_endpoint')
 def update_user_profile(user_id):
     try:
@@ -1322,6 +1343,26 @@ def update_user_profile(user_id):
                 db.session.execute(db.text(f'UPDATE users SET {set_clause} WHERE id = :user_id'), params)
 
         return jsonify({'message': 'Profil úspěšně aktualizován'}), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/users/location', methods=['POST'])
+def update_user_location():
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+
+        if not all([user_id, latitude, longitude]):
+            return jsonify({'error': 'Missing user_id, latitude, or longitude'}), 400
+
+        user_locations[user_id] = {'latitude': latitude, 'longitude': longitude, 'timestamp': datetime.datetime.now().isoformat()}
+        print(f"User {user_id} location updated: {user_locations[user_id]}")
+
+        return jsonify({'message': 'User location updated successfully'}), 200
 
     except Exception as e:
         traceback.print_exc()
