@@ -71,7 +71,7 @@
                 <button onclick="showSection('offer')" id="offerBtn" style="display:none;">Nabídnout jízdu</button>
                 <button onclick="showSection('my-rides')" id="myRidesBtn" style="display:none;">🚗 Mnou nabízené jízdy</button>
                 <button onclick="showSection('reservations')" id="reservationsBtn" style="display:none;">🎫 Moje rezervace jízd</button>
-                <button onclick="showSection('map'); loadMapRides();">🗺️ Mapa jízd</button>
+                <button onclick="showSection('map');">🗺️ Mapa jízd</button>
                 <button onclick="showSection('users')" id="usersBtn" style="display:none;">👥 Uživatelé</button>
                 <button onclick="logout()" id="logoutBtn" style="display:none;">Odhlásit</button>
             </div>
@@ -206,7 +206,7 @@
                     <div><span style="color: #2196f3; font-weight: bold; margin-right: 8px;">—</span>Trasa mezi městy</div>
                 </div>
             </div>
-            <button class="btn" onclick="loadMapRides()" style="margin-top: 15px;">🔄 Načíst jízdy</button>
+            <button class="btn" style="margin-top: 15px;">🔄 Načíst jízdy</button>
             <button class="btn" onclick="startLocationTracking()" id="trackingBtn" style="margin-top: 15px; margin-left: 10px;">📍 Sdílet polohu</button>
             <button class="btn" onclick="showAllUserLocations()" style="margin-top: 15px; margin-left: 10px;">👥 Zobrazit uživatele</button>
         </div>
@@ -529,6 +529,10 @@
                 setTimeout(() => {
                     autoUpdateLocation();
                 }, 1000);
+            } else if (section === 'map') {
+                setTimeout(() => {
+                    if (!map) initRealMap();
+                }, 100);
             }
         }
 
@@ -813,8 +817,10 @@
             // Přidej OpenStreetMap tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
+            '''            }).addTo(map);
         }
+
+        ''
         
         
         
