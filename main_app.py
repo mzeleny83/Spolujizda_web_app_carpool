@@ -1301,6 +1301,14 @@ def get_user_profile(user_id):
             if not user:
                 return jsonify({'error': 'Uživatel nenalezen'}), 404
             
+            # Calculate rides as driver
+            rides_as_driver_count = db.session.execute(db.text('SELECT COUNT(*) FROM rides WHERE user_id = :user_id'), {'user_id': user_id}).scalar()
+            
+            # Calculate rides as passenger
+            rides_as_passenger_count = db.session.execute(db.text('SELECT COUNT(DISTINCT ride_id) FROM reservations WHERE passenger_id = :user_id AND status = \'confirmed\''), {'user_id': user_id}).scalar()
+            
+            total_rides_count = rides_as_driver_count + rides_as_passenger_count
+
             return jsonify({
                 'id': user[0],
                 'name': user[1],
@@ -1308,7 +1316,10 @@ def get_user_profile(user_id):
                 'phone': user[3],
                 'home_city': user[4],
                 'bio': user[5],
-                'rating': float(user[6]) if user[6] is not None else 5.0
+                'rating': float(user[6]) if user[6] is not None else 5.0,
+                'total_rides': total_rides_count,
+                'rides_as_driver': rides_as_driver_count,
+                'rides_as_passenger': rides_as_passenger_count
             }), 200
     except Exception as e:
         traceback.print_exc()
