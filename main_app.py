@@ -1293,7 +1293,7 @@ def subscribe():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/users/<int:user_id>/profile', methods=['PUT'])
+@app.route('/api/users/<int:user_id>/profile', methods=['PUT'], endpoint='update_user_profile_endpoint')
 def update_user_profile(user_id):
     try:
         data = request.get_json()
