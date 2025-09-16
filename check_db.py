@@ -1,20 +1,22 @@
 import sqlite3
 
-DATABASE = 'spolujizda.db'
+db_file = 'spolujizda.db'
 
-def check_db():
-    try:
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        print("--- Rides ---")
-        for row in c.execute("SELECT * FROM rides"):
-            print(row)
-        print("--- Users ---")
-        for row in c.execute("SELECT * FROM users"):
-            print(row)
-        conn.close()
-    except Exception as e:
-        print(f"Error: {e}")
+try:
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
 
-if __name__ == '__main__':
-    check_db()
+    cursor.execute("SELECT COUNT(*) FROM users")
+    count = cursor.fetchone()[0]
+    print(f"Number of users: {count}")
+
+    cursor.execute("SELECT id, name, created_at FROM users")
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(f"User ID: {row[0]}, Name: {row[1]}, Created At: {row[2]}")
+
+    conn.close()
+
+except Exception as e:
+    print(f"An error occurred: {e}")
