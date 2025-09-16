@@ -1297,15 +1297,15 @@ def subscribe():
 def get_user_profile(user_id):
     try:
         with db.session.begin():
-            user = db.session.execute(db.text('SELECT id, name, email, phone, home_city, bio, rating FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
+            user = db.session.execute(db.text('SELECT id, name, email, phone, home_city, bio, rating, created_at FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
             if not user:
                 return jsonify({'error': 'Uživatel nenalezen'}), 404
             
             # Calculate rides as driver
-            rides_as_driver_count = db.session.execute(db.text('SELECT COUNT(*) FROM rides WHERE user_id = :user_id'), {'user_id': user_id}).scalar()
+            rides_as_driver_count = db.session.execute(db.text('SELECT COUNT(*) FROM rides WHERE user_id = :user_id'), {'user_id': user_id}).scalar() or 0
             
             # Calculate rides as passenger
-            rides_as_passenger_count = db.session.execute(db.text('SELECT COUNT(DISTINCT ride_id) FROM reservations WHERE passenger_id = :user_id AND status = \'confirmed\''), {'user_id': user_id}).scalar()
+            rides_as_passenger_count = db.session.execute(db.text('SELECT COUNT(DISTINCT ride_id) FROM reservations WHERE passenger_id = :user_id AND status = \'confirmed\''), {'user_id': user_id}).scalar() or 0
             
             total_rides_count = rides_as_driver_count + rides_as_passenger_count
 
@@ -1317,6 +1317,7 @@ def get_user_profile(user_id):
                 'home_city': user[4],
                 'bio': user[5],
                 'rating': float(user[6]) if user[6] is not None else 5.0,
+                'member_since': user[7].isoformat() if user[7] else None,
                 'total_rides': total_rides_count,
                 'rides_as_driver': rides_as_driver_count,
                 'rides_as_passenger': rides_as_passenger_count
@@ -1324,6 +1325,7 @@ def get_user_profile(user_id):
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/users/<int:user_id>/profile', methods=['PUT'], endpoint='update_user_profile_endpoint')
 def update_user_profile(user_id):
