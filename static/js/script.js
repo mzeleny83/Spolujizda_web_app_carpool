@@ -236,6 +236,7 @@ async function searchRides() {
 function displayAllRides(rides) {
   const resultsContainer = document.getElementById("results");
   
+  // Ensure rides is an array before proceeding
   if (!Array.isArray(rides) || rides.length === 0) {
     resultsContainer.innerHTML = "<p>Žádné jízdy nenalezeny.</p>";
     return;
@@ -243,12 +244,25 @@ function displayAllRides(rides) {
   
   let html = `<h3>Dostupné jízdy (${rides.length}):</h3>`;
   rides.forEach((ride) => {
+    // Use nullish coalescing operator (??) for better handling of null/undefined
+    const driverName = ride.driver_name ?? 'Neznámý řidič';
+    const fromLocation = ride.from_location ?? 'Neznámé';
+    const toLocation = ride.to_location ?? 'Neznámé';
+    const departureTime = ride.departure_time ?? 'Neznámý čas';
+    const availableSeats = ride.available_seats ?? 'N/A';
+    const pricePerPerson = ride.price_per_person ?? 'N/A';
+
+    // Escape single quotes in driverName for the onclick attribute
+    const escapedDriverName = driverName.replace(/'/g, "'");
+
     html += `
       <div style="margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
-        <h4>🚗 ${ride.driver_name || 'Neznámý řidič'}</h4>
-        <p><strong>${ride.from_location}</strong> → <strong>${ride.to_location}</strong></p>
-        <p>🕐 ${ride.departure_time} | 👥 ${ride.available_seats} míst | 💰 ${ride.price_per_person} Kč</p>
-        <button class="chat-btn" data-ride-id="${ride.id}" data-driver-name="${ride.driver_name || 'Řidič'}" onclick="openChat(parseInt(${ride.id}), '${ride.driver_name.replace(/'/g, "'" )}'); this.remove();" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
+        <h4>🚗 ${fromLocation} → ${toLocation}</h4>
+        <div>🕐 ${departureTime} | 👥 ${availableSeats} míst | 💰 ${pricePerPerson} Kč</div>
+        <div>🚗 ${driverName}</div>
+        <div style="margin-top: 10px;">
+          <button class="chat-btn" data-ride-id="${ride.id}" data-driver-name="${driverName}" onclick="openChat(parseInt(${ride.id}), '${escapedDriverName}'); this.remove();" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">💬 Chat s řidičem</button>
+        </div>
       </div>
     `;
   });
@@ -487,14 +501,17 @@ function openChat(rideId, driverName) {
     
     const messagesHeight = isMobile ? 'calc(100% - 120px)' : '350px';
     
-    chatBox.innerHTML = '
-      <h3 style="margin-top: 0; font-size: ${isMobile ? '18px' : '20px'};">Chat s ${driverName}</h3>
-      <div id="chatMessages" style="height: ${messagesHeight}; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;"></div>
-      <div style="display: flex; gap: 10px;">
-        <input type="text" id="chatInput" placeholder="Napište zprávu..." style="flex: 1; padding: ${isMobile ? '12px' : '8px'}; border: 1px solid #ccc; border-radius: 4px; font-size: ${isMobile ? '16px' : '14px'};">
-        <button onclick="sendChatMessage(${rideId})" style="background: #4CAF50; color: white; border: none; padding: ${isMobile ? '12px 20px' : '8px 15px'}; border-radius: 4px; cursor: pointer; font-size: ${isMobile ? '16px' : '14px'};">Odeslat</button>
+    // Ensure driverName is a string before using it in the template literal
+    const displayDriverName = driverName ?? 'Neznámý';
+
+    chatBox.innerHTML = `
+      <h3 style=\"margin-top: 0; font-size: ${isMobile ? '18px' : '20px'};\">Chat s ${displayDriverName}</h3>
+      <div id=\"chatMessages\" style=\"height: ${messagesHeight}; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9;\"></div>
+      <div style=\"display: flex; gap: 10px;\">
+        <input type=\"text\" id=\"chatInput\" placeholder=\"Napište zprávu...\" style=\"flex: 1; padding: ${isMobile ? '12px' : '8px'}; border: 1px solid #ccc; border-radius: 4px; font-size: ${isMobile ? '16px' : '14px'};\">
+        <button onclick=\"sendChatMessage(${rideId})\" style=\"background: #4CAF50; color: white; border: none; padding: ${isMobile ? '12px 20px' : '8px 15px'}; border-radius: 4px; cursor: pointer; font-size: ${isMobile ? '16px' : '14px'};\">Odeslat</button>
       </div>
-    ';
+    `;
     
     chatBox.appendChild(closeBtn);
     modal.appendChild(chatBox);
@@ -537,7 +554,7 @@ async function sendChatMessage(rideId) {
   if (currentUser) {
     try {
       const user = JSON.parse(currentUser);
-      userName = user.name || 'Anonym';
+      userName = user.name ?? 'Anonym'; // Use nullish coalescing
     } catch (e) {
       console.error('Error parsing currentUser:', e);
     }
@@ -595,7 +612,7 @@ async function loadChatMessages(rideId) {
     if (currentUser) {
       try {
         const user = JSON.parse(currentUser);
-        userName = user.name || 'Anonym';
+        userName = user.name ?? 'Anonym'; // Use nullish coalescing
       } catch (e) {
         console.error('Error parsing currentUser:', e);
       }
@@ -609,7 +626,7 @@ async function loadChatMessages(rideId) {
       div.style.cssText = `margin: 8px 0; padding: 8px; border-radius: 8px; ${isMyMessage ? 'background: #f5f5f5; text-align: left;' : 'background: #e3f2fd; text-align: left;'}`;
       const now = new Date();
       const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-      div.innerHTML = `<strong>${msg.sender_name}:</strong> ${msg.message}<br><small style="color: #666;">${timeStr}</small>`;
+      div.innerHTML = `<strong>${msg.sender_name ?? 'Neznámý'}:</strong> ${msg.message ?? 'Prázdná zpráva'}<br><small style="color: #666;">${timeStr}</small>`;
       messagesDiv.appendChild(div);
     });
     

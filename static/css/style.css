@@ -646,10 +646,16 @@ input[title]:hover::before {
         font-size: 14px;
     }
     
-    /* Skrytí tooltipů na mobilu */
+        /* Skrytí tooltipů na mobilu */
     [title]:hover::after,
     [title]:hover::before {
         display: none;
+    }
+
+    .user-info {
+        max-width: 100%;
+        flex-wrap: wrap;
+        justify-content: center; /* Center items if they wrap */
     }
 }
 
