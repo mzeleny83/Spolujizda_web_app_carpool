@@ -472,7 +472,6 @@ async function loadChatMessages(rideId) {
 // GPS Location function
 function showMyLocation() {
     console.log('GPS location requested');
-    alert('GPS test - tlačítko funguje!');
     
     if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
         alert('GPS vyžaduje HTTPS! Přesměrovávám...');
