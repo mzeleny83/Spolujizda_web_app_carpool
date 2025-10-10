@@ -471,14 +471,6 @@ async function loadChatMessages(rideId) {
 
 // GPS Location function
 function showMyLocation() {
-    console.log('GPS location requested');
-    
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        alert('GPS vyžaduje HTTPS! Přesměrovávám...');
-        window.location.href = 'https://' + location.host + location.pathname;
-        return;
-    }
-    
     if (!navigator.geolocation) {
         alert('GPS není podporováno');
         return;
@@ -489,17 +481,32 @@ function showMyLocation() {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             
-            console.log('GPS found:', lat, lng);
-            alert(`GPS poloha nalezena!\nLat: ${lat.toFixed(6)}\nLng: ${lng.toFixed(6)}`);
+            // Vyplň GPS souřadnice do formuláře
+            const fromInput = document.querySelector('input[placeholder*="odkud"], input[placeholder*="Odkud"]');
+            if (fromInput) {
+                fromInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            }
+            
+            // Vytvoř jednoduchou mapu bez Leaflet
+            const mapDiv = document.createElement('div');
+            mapDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 300px; background: white; border: 2px solid #ccc; border-radius: 10px; padding: 20px; z-index: 999999; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+            
+            mapDiv.innerHTML = `
+                <h3>📍 Vaše GPS poloha</h3>
+                <p><strong>Zeměpisná šířka:</strong> ${lat.toFixed(6)}</p>
+                <p><strong>Zeměpisná délka:</strong> ${lng.toFixed(6)}</p>
+                <div style="margin: 15px 0;">
+                    <button onclick="window.open('https://www.google.com/maps?q=${lat},${lng}', '_blank')" style="background: #4285f4; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-right: 10px;">🗺️ Google Maps</button>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">✕ Zavřít</button>
+                </div>
+                <small style="color: #666;">Souřadnice byly vyplněny do formuláře</small>
+            `;
+            
+            document.body.appendChild(mapDiv);
         },
         function(error) {
-            console.error('GPS error:', error);
             alert('GPS chyba: ' + error.message);
         },
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 }

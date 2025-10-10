@@ -642,14 +642,6 @@ async function loadChatMessages(rideId) {
 
 // GPS Location function
 function showMyLocation() {
-    console.log('GPS location requested');
-    
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        alert('GPS vyžaduje HTTPS! Přesměrovávám...');
-        window.location.href = 'https://' + location.host + location.pathname;
-        return;
-    }
-    
     if (!navigator.geolocation) {
         alert('GPS není podporováno');
         return;
@@ -660,30 +652,17 @@ function showMyLocation() {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             
-            console.log('GPS found:', lat, lng);
-            alert(`GPS poloha nalezena!\nLat: ${lat.toFixed(6)}\nLng: ${lng.toFixed(6)}`);
-            
-            // Pokud existuje mapa, vycentruj ji
-            if (window.searchMap) {
-                window.searchMap.setView([lat, lng], 13);
-                
-                // Přidej marker
-                if (window.myLocationMarker) {
-                    window.searchMap.removeLayer(window.myLocationMarker);
-                }
-                
-                window.myLocationMarker = L.marker([lat, lng]).addTo(window.searchMap);
-                window.myLocationMarker.bindPopup('📍 Vaše poloha').openPopup();
+            // Vyplň GPS souřadnice do formuláře
+            const fromInput = document.querySelector('input[placeholder*="odkud"], input[placeholder*="Odkud"]');
+            if (fromInput) {
+                fromInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
             }
+            
+            alert(`GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}\nSouřadnice vyplněny do formuláře`);
         },
         function(error) {
-            console.error('GPS error:', error);
             alert('GPS chyba: ' + error.message);
         },
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 }
