@@ -1401,6 +1401,28 @@ def update_user_location():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/users/locations', methods=['GET'])
+def get_user_locations():
+    try:
+        result = []
+        for user_id, location_data in user_locations.items():
+            # Get user name from database
+            with db.session.begin():
+                user = db.session.execute(db.text('SELECT name FROM users WHERE id = :user_id'), {'user_id': user_id}).fetchone()
+                user_name = user[0] if user else f'User {user_id}'
+            
+            result.append({
+                'user_id': user_id,
+                'user_name': user_name,
+                'lat': location_data['latitude'],
+                'lng': location_data['longitude'],
+                'updated_at': location_data['timestamp']
+            })
+        
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
