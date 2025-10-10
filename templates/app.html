@@ -2205,7 +2205,7 @@
                 <button type="submit" class="btn">🔍 Hledat jízdy v zadaném okolí</button>
                 <button type="button" class="btn btn-success" onclick="showAll()">📋 Všechny jízdy</button>
                 <button type="button" class="btn" onclick="clearDateTimeFilters()" style="background: #6c757d;">🗑️ Vymazat filtry</button>
-                <button type="button" class="btn" onclick="showMyLocation()" style="background: #28a745;">📍 Moje poloha</button>
+                <button type="button" class="btn" onclick="alert('Test GPS'); navigator.geolocation.getCurrentPosition(pos => alert('GPS: ' + pos.coords.latitude + ', ' + pos.coords.longitude), err => alert('GPS chyba: ' + err.message))" style="background: #28a745;">📍 Moje poloha</button>
 
             </form>
             
