@@ -468,3 +468,39 @@ async function loadChatMessages(rideId) {
 
 
 // v391 message alignment fix
+
+// GPS Location function
+function showMyLocation() {
+    console.log('GPS location requested');
+    alert('GPS test - tlačítko funguje!');
+    
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        alert('GPS vyžaduje HTTPS! Přesměrovávám...');
+        window.location.href = 'https://' + location.host + location.pathname;
+        return;
+    }
+    
+    if (!navigator.geolocation) {
+        alert('GPS není podporováno');
+        return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            console.log('GPS found:', lat, lng);
+            alert(`GPS poloha nalezena!\nLat: ${lat.toFixed(6)}\nLng: ${lng.toFixed(6)}`);
+        },
+        function(error) {
+            console.error('GPS error:', error);
+            alert('GPS chyba: ' + error.message);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
