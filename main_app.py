@@ -12,9 +12,12 @@ import sys
 import requests
 import stripe
 import traceback
+import bcrypt
+import secrets
+from markupsafe import escape
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-in-production'
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
 # Configure SQLAlchemy
 db_url = os.environ.get('DATABASE_URL')
@@ -22,6 +25,14 @@ if db_url and db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql+psycopg2://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'sqlite:///spolujizda.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Suppress a warning
+
+# Security configuration
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=3600  # 1 hour
+)
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -109,6 +120,12 @@ def add_header(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '-1'
+    # Security headers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
     return response
 
 @app.route('/api/debug/users')
@@ -368,8 +385,8 @@ def get_user_hash(phone):
 def register():
     try:
         data = request.get_json()
-        name = data.get('name', '').strip()
-        phone = data.get('phone')
+        name = escape(data.get('name', '').strip())
+        phone = escape(data.get('phone', '').strip())
         password = data.get('password')
         
         forbidden_names = ['neznámý řidič', 'neznámý', 'unknown', 'driver', 'řidič', 'neznámy ridic', 'test', 'user', 'anonym', 'guest', 'admin', 'null', 'undefined', 'testovací', 'robot']
@@ -406,7 +423,7 @@ def register():
         if email and '@' not in email:
             return jsonify({'error': 'Neplatný formát emailu'}), 400
         
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         with db.session.begin():
             existing_phone = db.session.execute(db.text('SELECT id FROM users WHERE phone = :phone'), {'phone': phone_full}).fetchone()
@@ -436,20 +453,23 @@ def login():
         if not all([login_field, password]):
             return jsonify({'error': 'Telefon/email a heslo jsou povinné'}), 400
         
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        
         with db.session.begin():
             if '@' in login_field:
-                user = db.session.execute(db.text('SELECT id, name, rating FROM users WHERE email = :login_field AND password_hash = :password_hash'),
-                                         {'login_field': login_field, 'password_hash': password_hash}).fetchone()
+                user_data = db.session.execute(db.text('SELECT id, name, rating, password_hash FROM users WHERE email = :login_field'),
+                                         {'login_field': login_field}).fetchone()
             else:
                 phone_clean = ''.join(filter(str.isdigit, login_field))
                 if phone_clean.startswith('420'):
                     phone_clean = phone_clean[3:]
                 phone_full = f'+420{phone_clean}'
                 
-                user = db.session.execute(db.text('SELECT id, name, rating FROM users WHERE phone = :phone AND password_hash = :password_hash'),
-                                         {'phone': phone_full, 'password_hash': password_hash}).fetchone()
+                user_data = db.session.execute(db.text('SELECT id, name, rating, password_hash FROM users WHERE phone = :phone'),
+                                         {'phone': phone_full}).fetchone()
+        
+        if user_data and bcrypt.checkpw(password.encode('utf-8'), user_data[3].encode('utf-8')):
+            user = user_data
+        else:
+            user = None
         
         if user:
             return jsonify({

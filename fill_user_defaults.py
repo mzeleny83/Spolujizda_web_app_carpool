@@ -1,0 +1,83 @@
+import os
+import sys
+import traceback
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+import datetime
+
+# --- Configuration (should match your main_app.py) ---
+# You might need to adjust the DATABASE_URL if it's different in your environment
+db_url = os.environ.get('DATABASE_URL')
+if db_url and db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql+psycopg2://', 1)
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'sqlite:///spolujizda.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+# --- Define a minimal User model for updates ---
+# This assumes your 'users' table has 'email', 'home_city', 'bio' columns
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    home_city = db.Column(db.String(100), nullable=True)
+    bio = db.Column(db.Text, nullable=True)
+    # Add other columns if you need to reference them, but only email, home_city, bio are needed for update
+
+    def __repr__(self):
+        return f'<User {self.id} {self.email}>'
+
+# --- Default values ---
+DEFAULT_EMAIL = "neznamy@example.com"
+DEFAULT_HOME_CITY = "Neznámé město"
+DEFAULT_BIO = "Uživatel bez popisu"
+
+def update_user_defaults():
+    with app.app_context():
+        print("Starting user data cleanup...")
+        updated_count = 0
+        
+        try:
+            # Fetch all users
+            users = User.query.all()
+
+            for user in users:
+                changes_made = False
+                
+                # Update email if it's None or an empty string
+                if user.email is None or user.email.strip() == "":
+                    user.email = DEFAULT_EMAIL
+                    changes_made = True
+                    print(f"  - User ID {user.id}: Email updated to '{DEFAULT_EMAIL}'")
+                
+                # Update home_city if it's None or an empty string
+                if user.home_city is None or user.home_city.strip() == "":
+                    user.home_city = DEFAULT_HOME_CITY
+                    changes_made = True
+                    print(f"  - User ID {user.id}: Home city updated to '{DEFAULT_HOME_CITY}'")
+                
+                # Update bio if it's None or an empty string
+                if user.bio is None or user.bio.strip() == "":
+                    user.bio = DEFAULT_BIO
+                    changes_made = True
+                    print(f"  - User ID {user.id}: Bio updated to '{DEFAULT_BIO}'")
+                
+                if changes_made:
+                    updated_count += 1
+            
+            db.session.commit()
+            print(f"Data cleanup complete. Total users updated: {updated_count}")
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"An error occurred: {e}", file=sys.stderr)
+            traceback.print_exc()
+            print("Database transaction rolled back.", file=sys.stderr)
+
+if __name__ == '__main__':
+    # This ensures the script runs within the Flask application context
+    # which is necessary for SQLAlchemy to find the database.
+    update_user_defaults()
