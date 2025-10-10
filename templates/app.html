@@ -14,6 +14,33 @@
     <link rel="canonical" href="https://www.sveztese.cz/">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Google Ads Conversion Tracking -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-XXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-XXXXXXXXX');
+      
+      // Track registrations
+      function trackRegistration() {
+        gtag('event', 'conversion', {
+          'send_to': 'AW-XXXXXXXXX/AbC-DEFG1234',
+          'value': 1.0,
+          'currency': 'CZK'
+        });
+      }
+      
+      // Track ride bookings
+      function trackBooking() {
+        gtag('event', 'conversion', {
+          'send_to': 'AW-XXXXXXXXX/XyZ-HIJK5678',
+          'value': 50.0,
+          'currency': 'CZK'
+        });
+      }
+    </script>
+    
     <script src="/static/js/script_v400.js"></script>
     <script src="/static/js/location_fix.js"></script>
     <script>
@@ -198,6 +225,7 @@
                 
                 if (response.ok) {
                     showMessage('Registrace úspěšná! Nyní se můžete přihlásit.');
+                    if (typeof trackRegistration === 'function') trackRegistration();
                     showSection('login');
                 } else {
                     showMessage(result.error, 'error');
@@ -528,6 +556,7 @@
                 
                 if (response.ok) {
                     showMessage('Jízda úspěšně rezervována!');
+                    if (typeof trackBooking === 'function') trackBooking();
                     // Obnov seznam jízd
                     if (document.getElementById('search').classList.contains('active')) {
                         showAll();

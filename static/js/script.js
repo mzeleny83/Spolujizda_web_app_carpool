@@ -663,6 +663,6 @@ function showMyLocation() {
         function(error) {
             alert('GPS chyba: ' + error.message);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
 }
