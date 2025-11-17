@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('user_id', data['user_id']);
         await prefs.setString('user_name', data['name']);
-        await prefs.setDouble('user_rating', data['rating']);
+        await prefs.setDouble('user_rating', (data['rating'] ?? 5.0).toDouble());
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Přihlášení úspěšné!')),

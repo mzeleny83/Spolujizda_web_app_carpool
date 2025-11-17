@@ -97,7 +97,7 @@ def login():
                 'message': 'Přihlášení úspěšné',
                 'user_id': user[0],
                 'name': user[1],
-                'rating': user[2]
+                'rating': float(user[2]) if user[2] is not None else 5.0
             }), 200
         else:
             return jsonify({'error': 'Neplatné přihlašovací údaje'}), 401
