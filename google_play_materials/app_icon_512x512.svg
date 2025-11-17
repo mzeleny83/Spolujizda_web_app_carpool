@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bg)"/>
+  
+  <!-- Car body -->
+  <rect x="120" y="200" width="272" height="120" rx="20" fill="#FFFFFF"/>
+  
+  <!-- Car windows -->
+  <rect x="140" y="180" width="80" height="40" rx="8" fill="#E3F2FD"/>
+  <rect x="292" y="180" width="80" height="40" rx="8" fill="#E3F2FD"/>
+  
+  <!-- Car wheels -->
+  <circle cx="160" cy="340" r="25" fill="#424242"/>
+  <circle cx="352" cy="340" r="25" fill="#424242"/>
+  <circle cx="160" cy="340" r="15" fill="#757575"/>
+  <circle cx="352" cy="340" r="15" fill="#757575"/>
+  
+  <!-- People icons -->
+  <circle cx="180" cy="250" r="12" fill="#2196F3"/>
+  <rect x="172" y="262" width="16" height="20" rx="8" fill="#2196F3"/>
+  
+  <circle cx="220" cy="250" r="12" fill="#FF9800"/>
+  <rect x="212" y="262" width="16" height="20" rx="8" fill="#FF9800"/>
+  
+  <circle cx="292" cy="250" r="12" fill="#9C27B0"/>
+  <rect x="284" y="262" width="16" height="20" rx="8" fill="#9C27B0"/>
+  
+  <circle cx="332" cy="250" r="12" fill="#F44336"/>
+  <rect x="324" y="262" width="16" height="20" rx="8" fill="#F44336"/>
+  
+  <!-- Route line -->
+  <path d="M 80 400 Q 256 350 432 400" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-dasharray="10,5"/>
+</svg>

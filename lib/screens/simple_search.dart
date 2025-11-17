@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class SimpleSearchScreen extends StatefulWidget {
+  const SimpleSearchScreen({super.key});
+  
   @override
   _SimpleSearchScreenState createState() => _SimpleSearchScreenState();
 }
@@ -17,7 +19,7 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
     
     try {
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8080/api/rides/search?from=${_controller.text}'),
+        Uri.parse('https://spolujizda-backend.herokuapp.com/api/rides/search?from=${_controller.text}'),
         headers: {'Content-Type': 'application/json'},
       );
       

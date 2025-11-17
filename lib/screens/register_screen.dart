@@ -25,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8081/api/users/register'),
+        Uri.parse('https://spolujizda-backend.herokuapp.com/api/users/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'name': _nameController.text.trim(),

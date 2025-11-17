@@ -1,0 +1,32 @@
+POZNÁMKY K VYDÁNÍ - Verze 1.0.0
+
+🎉 První vydání aplikace Spolujízda!
+
+✨ NOVÉ FUNKCE:
+• Registrace a přihlášení uživatelů
+• Hledání dostupných jízd podle trasy
+• Nabídka vlastních jízd s volnými místy
+• Chat pro komunikaci mezi řidiči a spolucestujícími
+• Geolokace pro automatické určení polohy
+• Systém hodnocení uživatelů
+• Push notifikace pro nové shody
+• Mapa s vizualizací tras
+• Správa rezervací pro řidiče
+
+🔧 TECHNICKÉ VLASTNOSTI:
+• Multiplatformní aplikace (Android, iOS, Web)
+• Offline režim pro základní funkce
+• Bezpečné šifrování komunikace
+• Optimalizované pro rychlost a úsporu baterie
+
+📱 PODPOROVANÉ ZAŘÍZENÍ:
+• Android 5.0 a novější
+• Připojení k internetu vyžadováno
+
+🚀 PLÁNOVANÉ AKTUALIZACE:
+• Rozšířené filtry vyhledávání
+• Platební systém
+• Skupinové jízdy
+• Pokročilé statistiky
+
+Děkujeme za stažení a těšíme se na vaši zpětnou vazbu!

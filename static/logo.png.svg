@@ -1,0 +1,26 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pozadí -->
+  <rect width="512" height="512" fill="#007bff" rx="50"/>
+  
+  <!-- Auto ikona -->
+  <g transform="translate(256,200)">
+    <!-- Karoserie -->
+    <rect x="-80" y="-20" width="160" height="40" fill="white" rx="20"/>
+    <!-- Okna -->
+    <rect x="-60" y="-35" width="120" height="25" fill="white" rx="12"/>
+    <!-- Kola -->
+    <circle cx="-50" cy="25" r="15" fill="white"/>
+    <circle cx="50" cy="25" r="15" fill="white"/>
+    <!-- Světla -->
+    <circle cx="-75" cy="-10" r="5" fill="#ffc107"/>
+    <circle cx="75" cy="-10" r="5" fill="#dc3545"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="256" y="320" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">Svezte</text>
+  <text x="256" y="370" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">se.cz</text>
+  
+  <!-- Šipky pohybu -->
+  <path d="M150 150 L180 150 L170 140 M180 150 L170 160" stroke="white" stroke-width="3" fill="none"/>
+  <path d="M362 150 L332 150 L342 140 M332 150 L342 160" stroke="white" stroke-width="3" fill="none"/>
+</svg>

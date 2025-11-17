@@ -1,22 +1,39 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import hashlib
-import sqlite3
+import os
 import datetime
+try:
+    import psycopg2
+    import psycopg2.extras
+except ImportError:
+    import sqlite3
 
 app = Flask(__name__)
 CORS(app)
 
 def init_db():
-    conn = sqlite3.connect('simple_app.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users
-                 (id INTEGER PRIMARY KEY, name TEXT, phone TEXT UNIQUE, password_hash TEXT, rating REAL DEFAULT 5.0)''')
-    conn.commit()
-    conn.close()
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # PostgreSQL for Heroku
+        conn = psycopg2.connect(database_url)
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS users
+                     (id SERIAL PRIMARY KEY, name TEXT, phone TEXT UNIQUE, password_hash TEXT, rating REAL DEFAULT 5.0)''')
+        conn.commit()
+        conn.close()
+    else:
+        # SQLite for local
+        conn = sqlite3.connect('simple_app.db')
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS users
+                     (id INTEGER PRIMARY KEY, name TEXT, phone TEXT UNIQUE, password_hash TEXT, rating REAL DEFAULT 5.0)''')
+        conn.commit()
+        conn.close()
 
 @app.route('/api/users/register', methods=['POST'])
 def register():
+    init_db()  # Ensure DB exists
     try:
         data = request.get_json()
         name = data.get('name')
@@ -48,6 +65,7 @@ def register():
 
 @app.route('/api/users/login', methods=['POST'])
 def login():
+    init_db()  # Ensure DB exists
     try:
         data = request.get_json()
         phone = data.get('phone')

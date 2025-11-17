@@ -214,7 +214,7 @@ def register():
             return jsonify({'error': 'Email již registrován'}), 409
         
         # Create user
-        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
         
         user = User(
             name=name,
@@ -253,7 +253,9 @@ def login():
             phone_full = f'+420{phone_clean}'
             user = User.query.filter_by(phone=phone_full).first()
         
-        if user and bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
+        if user:
+            password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            if user.password_hash == password_hash:
             return jsonify({
                 'message': 'Přihlášení úspěšné',
                 'user_id': user.id,

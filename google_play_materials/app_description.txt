@@ -1,0 +1,35 @@
+KRÁTKÝ POPIS:
+Spolujízda - sdílení jízd pro každodenní dojíždění. Najdi spolucestující nebo nabídni volná místa ve svém autě.
+
+DLOUHÝ POPIS:
+🚗 Spolujízda - Aplikace pro sdílení jízd
+
+Mobilní aplikace pro každodenní dojíždění a sdílení jízd mezi obyvateli města. Ušetři peníze, poznej nové lidi a přispěj k ochraně životního prostředí.
+
+✨ HLAVNÍ FUNKCE:
+• 🔍 Hledání jízd - Najdi spolujízdu na své trase
+• 🚗 Nabídka jízd - Nabídni volná místa ve svém autě
+• 💬 Chat - Komunikace mezi řidiči a spolucestujícími
+• 📍 Geolokace - Automatické určení polohy
+• 🔔 Notifikace - Upozornění na nové shody
+• ⭐ Hodnocení - Systém hodnocení uživatelů
+
+🎯 PRO KOHO:
+• Studenti dojíždějící do školy
+• Zaměstnanci cestující do práce
+• Lidé hledající úsporu na dopravě
+• Ekologicky smýšlející cestující
+
+💰 VÝHODY:
+• Úspora nákladů na dopravu
+• Snížení dopravního zatížení
+• Nové sociální kontakty
+• Ochrana životního prostředí
+
+📱 JEDNODUCHÉ POUŽITÍ:
+1. Zaregistruj se
+2. Vyhledej jízdu nebo nabídni místo
+3. Komunikuj přes chat
+4. Cestuj a hodnoť
+
+Stáhni si aplikaci a začni sdílet jízdy ještě dnes!

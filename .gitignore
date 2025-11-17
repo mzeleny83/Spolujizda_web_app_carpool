@@ -25,3 +25,79 @@ coverage.xml
 *.sqlite
 *.sqlite3
 spolujizda.db
+
+# Flutter/Dart specifické soubory
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Soubory generované Android Studiem / IntelliJ
+*.iml
+.idea/
+
+# Soubory generované Visual Studio Code
+.vscode/
+
+# Lokální nastavení Androidu (cesta k SDK atd.)
+local.properties
+.gradle/
+Celkový doporučený .gitignore
+Když to vše spojíme, váš kompletní .gitignore by mohl vypadat takto (můžete ho celý zkopírovat a nahradit jím ten stávající):
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Testování a coverage
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Logy a databáze
+*.log
+*.db
+*.sqlite
+*.sqlite3
+spolujizda.db
+
+# Verzovací systém a OS soubory
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+.DS_Store
+
+# --- DOPLNĚNÍ ---
+
+# Tajné klíče pro Android
+/android/key.properties
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# Android lokální nastavení
+local.properties
+.gradle/
