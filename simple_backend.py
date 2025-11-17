@@ -12,24 +12,26 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
-def init_db():
+def get_db_connection():
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
-        # PostgreSQL for Heroku
-        conn = psycopg2.connect(database_url)
-        c = conn.cursor()
+        return psycopg2.connect(database_url)
+    else:
+        import sqlite3
+        return sqlite3.connect('simple_app.db')
+
+def init_db():
+    conn = get_db_connection()
+    c = conn.cursor()
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
         c.execute('''CREATE TABLE IF NOT EXISTS users
                      (id SERIAL PRIMARY KEY, name TEXT, phone TEXT UNIQUE, password_hash TEXT, rating REAL DEFAULT 5.0)''')
-        conn.commit()
-        conn.close()
     else:
-        # SQLite for local
-        conn = sqlite3.connect('simple_app.db')
-        c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS users
                      (id INTEGER PRIMARY KEY, name TEXT, phone TEXT UNIQUE, password_hash TEXT, rating REAL DEFAULT 5.0)''')
-        conn.commit()
-        conn.close()
+    conn.commit()
+    conn.close()
 
 @app.route('/api/users/register', methods=['POST'])
 def register():
@@ -43,18 +45,23 @@ def register():
         # Simple hash
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         
-        conn = sqlite3.connect('simple_app.db')
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Check if user exists
-        c.execute("SELECT id FROM users WHERE phone = ?", (phone,))
+        c.execute("SELECT id FROM users WHERE phone = %s" if os.environ.get('DATABASE_URL') else "SELECT id FROM users WHERE phone = ?", (phone,))
         if c.fetchone():
             return jsonify({'error': 'Telefon již registrován'}), 409
         
         # Insert user
-        c.execute("INSERT INTO users (name, phone, password_hash) VALUES (?, ?, ?)",
-                  (name, phone, password_hash))
-        user_id = c.lastrowid
+        if os.environ.get('DATABASE_URL'):
+            c.execute("INSERT INTO users (name, phone, password_hash) VALUES (%s, %s, %s) RETURNING id",
+                      (name, phone, password_hash))
+            user_id = c.fetchone()[0]
+        else:
+            c.execute("INSERT INTO users (name, phone, password_hash) VALUES (?, ?, ?)",
+                      (name, phone, password_hash))
+            user_id = c.lastrowid
         conn.commit()
         conn.close()
         
@@ -74,10 +81,14 @@ def login():
         # Simple hash
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         
-        conn = sqlite3.connect('simple_app.db')
+        conn = get_db_connection()
         c = conn.cursor()
-        c.execute("SELECT id, name, rating FROM users WHERE phone = ? AND password_hash = ?",
-                  (phone, password_hash))
+        if os.environ.get('DATABASE_URL'):
+            c.execute("SELECT id, name, rating FROM users WHERE phone = %s AND password_hash = %s",
+                      (phone, password_hash))
+        else:
+            c.execute("SELECT id, name, rating FROM users WHERE phone = ? AND password_hash = ?",
+                      (phone, password_hash))
         user = c.fetchone()
         conn.close()
         
