@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OfferRideScreen extends StatefulWidget {
   const OfferRideScreen({super.key});
@@ -13,6 +16,55 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
   final _timeController = TextEditingController();
   final _seatsController = TextEditingController();
   final _priceController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _offerRide() async {
+    if (_fromController.text.isEmpty || _toController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vyplňte všechna povinná pole')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('user_id');
+
+      final response = await http.post(
+        Uri.parse('https://spolujizda-backend.herokuapp.com/api/rides/offer'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'driver_id': userId,
+          'from_location': _fromController.text.trim(),
+          'to_location': _toController.text.trim(),
+          'departure_time': DateTime.now().add(Duration(hours: 1)).toIso8601String(),
+          'available_seats': int.tryParse(_seatsController.text) ?? 1,
+          'price': double.tryParse(_priceController.text) ?? 0.0,
+          'description': 'Jízda nabídnuta přes mobilní aplikaci'
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Jízda byla úspěšně nabídnuta!')),
+        );
+        Navigator.pop(context);
+      } else {
+        final data = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Chyba při nabídce jízdy')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Chyba připojení: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,13 +137,10 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Jízda byla nabídnuta!')),
-                    );
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Nabídnout jízdu'),
+                  onPressed: _isLoading ? null : _offerRide,
+                  child: _isLoading 
+                    ? const CircularProgressIndicator()
+                    : const Text('Nabídnout jízdu'),
                 ),
               ),
             ],

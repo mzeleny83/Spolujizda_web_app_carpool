@@ -27,9 +27,17 @@ def init_db():
     if database_url:
         c.execute('''CREATE TABLE IF NOT EXISTS users
                      (id SERIAL PRIMARY KEY, name TEXT, phone TEXT UNIQUE, password_hash TEXT, rating REAL DEFAULT 5.0)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS rides
+                     (id SERIAL PRIMARY KEY, driver_id INTEGER, from_location TEXT, to_location TEXT, 
+                      departure_time TIMESTAMP, available_seats INTEGER, price REAL, description TEXT,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     else:
         c.execute('''CREATE TABLE IF NOT EXISTS users
                      (id INTEGER PRIMARY KEY, name TEXT, phone TEXT UNIQUE, password_hash TEXT, rating REAL DEFAULT 5.0)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS rides
+                     (id INTEGER PRIMARY KEY, driver_id INTEGER, from_location TEXT, to_location TEXT, 
+                      departure_time TEXT, available_seats INTEGER, price REAL, description TEXT,
+                      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
     conn.commit()
     conn.close()
 
@@ -105,9 +113,68 @@ def login():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/rides/offer', methods=['POST'])
+def offer_ride():
+    init_db()
+    try:
+        data = request.get_json()
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        if os.environ.get('DATABASE_URL'):
+            c.execute("INSERT INTO rides (driver_id, from_location, to_location, departure_time, available_seats, price, description) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                      (data.get('driver_id'), data.get('from_location'), data.get('to_location'), 
+                       data.get('departure_time'), data.get('available_seats'), data.get('price'), data.get('description', '')))
+        else:
+            c.execute("INSERT INTO rides (driver_id, from_location, to_location, departure_time, available_seats, price, description) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                      (data.get('driver_id'), data.get('from_location'), data.get('to_location'), 
+                       data.get('departure_time'), data.get('available_seats'), data.get('price'), data.get('description', '')))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Jízda nabídnuta', 'ride_id': c.lastrowid}), 201
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/rides/search', methods=['GET'])
 def search_rides():
-    return jsonify([]), 200
+    init_db()
+    try:
+        from_location = request.args.get('from', '')
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        if from_location:
+            if os.environ.get('DATABASE_URL'):
+                c.execute("SELECT r.*, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id WHERE r.from_location ILIKE %s", (f'%{from_location}%',))
+            else:
+                c.execute("SELECT r.*, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id WHERE r.from_location LIKE ?", (f'%{from_location}%',))
+        else:
+            c.execute("SELECT r.*, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id ORDER BY r.created_at DESC LIMIT 20")
+        
+        rides = c.fetchall()
+        conn.close()
+        
+        result = []
+        for ride in rides:
+            result.append({
+                'id': ride[0],
+                'driver_id': ride[1],
+                'from_location': ride[2],
+                'to_location': ride[3],
+                'departure_time': ride[4],
+                'available_seats': ride[5],
+                'price_per_person': ride[6],
+                'description': ride[7],
+                'driver_name': ride[9],
+                'driver_rating': ride[10]
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     init_db()
