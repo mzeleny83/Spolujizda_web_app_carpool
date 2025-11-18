@@ -506,6 +506,16 @@ def get_all_reservations():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/rides/my', methods=['GET'])
+def get_my_rides():
+    try:
+        user_id = request.args.get('user_id', 1)
+        # Vrátí jízdy nabídnuté aktuálním uživatelem
+        my_rides = [r for r in user_rides if r['driver_id'] == int(user_id)]
+        return jsonify(my_rides), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/test')
 def test_page():
     return send_from_directory('.', 'test.html')
