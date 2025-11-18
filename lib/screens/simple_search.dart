@@ -19,7 +19,7 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
     
     try {
       final response = await http.get(
-        Uri.parse('https://spolujizda-backend.herokuapp.com/api/rides/search?from=${_controller.text}'),
+        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search?from=${_controller.text}'),
         headers: {'Content-Type': 'application/json'},
       );
       

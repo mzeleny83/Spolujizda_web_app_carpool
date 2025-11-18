@@ -7,6 +7,8 @@ import 'screens/offer_ride_screen.dart';
 import 'screens/matches_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/map_screen.dart';
+import 'screens/simple_map_screen.dart';
+import 'screens/basic_map_screen.dart';
 import 'screens/simple_search.dart';
 import 'screens/rating_screen.dart';
 import 'screens/driver_reservations_screen.dart';
@@ -35,7 +37,7 @@ class MyApp extends StatelessWidget {
         '/offer': (context) => const OfferRideScreen(),
         '/matches': (context) => const MatchesScreen(),
         '/chat': (context) => const ChatScreen(),
-        '/map': (context) => const MapScreen(),
+        '/map': (context) => const BasicMapScreen(),
         '/simple': (context) => const SimpleSearchScreen(),
         '/rating': (context) => const RatingScreen(),
         '/driver-reservations': (context) => const DriverReservationsScreen(),

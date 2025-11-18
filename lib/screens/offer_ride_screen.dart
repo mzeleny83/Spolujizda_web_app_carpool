@@ -33,7 +33,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
       final userId = prefs.getInt('user_id');
 
       final response = await http.post(
-        Uri.parse('https://spolujizda-backend.herokuapp.com/api/rides/offer'),
+        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/offer'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'driver_id': userId,

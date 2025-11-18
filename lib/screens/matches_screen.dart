@@ -28,9 +28,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
       // Use the correct API endpoint - if no search term, get all rides
       String url;
       if (from.isEmpty) {
-        url = 'http://localhost:8081/api/rides/all';
+        url = 'https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search';
       } else {
-        url = 'http://localhost:8081/api/rides/search?from=$from';
+        url = 'https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search?from=$from';
       }
       final response = await http.get(Uri.parse(url));
 

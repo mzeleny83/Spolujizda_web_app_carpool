@@ -63,7 +63,7 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     try {
-      final response = await http.get(Uri.parse('http://localhost:5000/api/rides/all'));
+      final response = await http.get(Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search'));
 
       if (response.statusCode == 200) {
         final List<dynamic> ridesData = json.decode(response.body);

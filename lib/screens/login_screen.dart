@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
     
     try {
       final response = await http.post(
-        Uri.parse('https://spolujizda-backend.herokuapp.com/api/users/login'),
+        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/users/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'phone': _phoneController.text.trim(),

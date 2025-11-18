@@ -42,13 +42,39 @@ def home():
             <h1>🚗 Spolujízda - Sdílení jízd</h1>
             
             <div class="flex-container">
-                <div class="section">
+                <div class="section" id="loginSection">
                     <h3>👤 Přihlášení</h3>
                     <input type="tel" id="loginPhone" placeholder="Telefon (721745084)">
                     <input type="password" id="loginPassword" placeholder="Heslo (heslo123)">
                     <button onclick="loginUser()">Přihlásit se</button>
                     <button onclick="registerUser()" style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
                     <div id="loginResult" style="margin-top: 10px; font-weight: bold;"></div>
+                </div>
+                
+                <div class="section" id="userSection" style="display: none;">
+                    <h3>👤 Můj profil</h3>
+                    <div id="userInfo"></div>
+                    <button onclick="logoutUser()" style="background: #dc3545;">Odhlásit se</button>
+                    
+                    <h4>🚗 Moje nabízené jízdy</h4>
+                    <div id="myOffers">
+                        <div class="ride">
+                            <strong>Praha → Brno</strong><br>
+                            Čas: 2025-11-19 09:00 | Cena: 200 Kč | Volná místa: 3<br>
+                            <button style="background: #28a745; font-size: 12px; padding: 5px 10px;">Upravit</button>
+                            <button style="background: #dc3545; font-size: 12px; padding: 5px 10px; margin-left: 5px;">Zrušit</button>
+                        </div>
+                    </div>
+                    
+                    <h4>🎫 Moje rezervace</h4>
+                    <div id="myBookings">
+                        <div class="ride">
+                            <strong>Brno → Praha</strong><br>
+                            Řidič: Marie Svobodová | Čas: 2025-11-18 17:30<br>
+                            <button style="background: #17a2b8; font-size: 12px; padding: 5px 10px;">Kontakt</button>
+                            <button style="background: #dc3545; font-size: 12px; padding: 5px 10px; margin-left: 5px;">Zrušit rezervaci</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="section map-section">
@@ -149,7 +175,12 @@ def home():
                 .then(response => response.json())
                 .then(data => {
                     if (data.user_id) {
-                        resultDiv.innerHTML = '<span style="color: green;">✓ Přihlášen jako ' + data.name + '</span>';
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('userSection').style.display = 'block';
+                        document.getElementById('userInfo').innerHTML = 
+                            '<strong>' + data.name + '</strong><br>' +
+                            'Hodnocení: ' + data.rating + '/5 ⭐<br>' +
+                            'Telefon: ' + phone;
                     } else {
                         resultDiv.innerHTML = '<span style="color: red;">✗ ' + (data.error || 'Chyba přihlášení') + '</span>';
                     }
@@ -157,6 +188,14 @@ def home():
                 .catch(error => {
                     resultDiv.innerHTML = '<span style="color: red;">✗ Chyba připojení</span>';
                 });
+            }
+            
+            function logoutUser() {
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('userSection').style.display = 'none';
+                document.getElementById('loginPhone').value = '';
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginResult').innerHTML = '';
             }
             
             function registerUser() {
