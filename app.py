@@ -12,6 +12,14 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/')
+def home():
+    return jsonify({'message': 'Spolujizda API', 'status': 'running', 'endpoints': ['/api/users/register', '/api/users/login', '/api/rides/offer', '/api/rides/search']})
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'healthy'})
+
 def get_db_connection():
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
