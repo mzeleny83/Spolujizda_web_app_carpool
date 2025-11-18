@@ -139,36 +139,54 @@ def offer_ride():
 
 @app.route('/api/rides/search', methods=['GET'])
 def search_rides():
-    init_db()
     try:
         from_location = request.args.get('from', '')
-        conn = get_db_connection()
-        c = conn.cursor()
         
-        # Simple query without JOIN since we don't have rides data yet
-        if from_location:
-            c.execute("SELECT * FROM users WHERE name LIKE %s" if os.environ.get('DATABASE_URL') else "SELECT * FROM users WHERE name LIKE ?", (f'%{from_location}%',))
-        else:
-            c.execute("SELECT * FROM users LIMIT 5")
-        
-        users = c.fetchall()
-        conn.close()
-        
-        # Return mock ride data based on users
-        result = []
-        for i, user in enumerate(users):
-            result.append({
-                'id': i + 1,
-                'driver_id': user[0],
+        # Mock ride data
+        mock_rides = [
+            {
+                'id': 1,
+                'driver_id': 1,
                 'from_location': 'Praha',
                 'to_location': 'Brno',
                 'departure_time': '2025-11-18 15:00',
                 'available_seats': 3,
                 'price_per_person': 200,
                 'description': 'Pohodová jízda',
-                'driver_name': user[1],
+                'driver_name': 'Jan Novák',
+                'driver_rating': 4.8
+            },
+            {
+                'id': 2,
+                'driver_id': 2,
+                'from_location': 'Brno',
+                'to_location': 'Praha',
+                'departure_time': '2025-11-18 17:30',
+                'available_seats': 2,
+                'price_per_person': 250,
+                'description': 'Rychlá jízda',
+                'driver_name': 'Marie Svobodová',
+                'driver_rating': 4.9
+            },
+            {
+                'id': 3,
+                'driver_id': 3,
+                'from_location': 'Ostrava',
+                'to_location': 'Praha',
+                'departure_time': '2025-11-18 14:00',
+                'available_seats': 1,
+                'price_per_person': 300,
+                'description': 'Komfortní auto',
+                'driver_name': 'Petr Dvořák',
                 'driver_rating': 5.0
-            })
+            }
+        ]
+        
+        # Filter by from_location if provided
+        if from_location:
+            result = [ride for ride in mock_rides if from_location.lower() in ride['from_location'].lower()]
+        else:
+            result = mock_rides
         
         return jsonify(result), 200
         
