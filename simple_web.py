@@ -87,21 +87,7 @@ def home():
                         </iframe>
                         
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                            <!-- Praha → Brno (JV směr) -->
-                            <line x1="140" y1="140" x2="240" y2="240" stroke="#1976d2" stroke-width="4" stroke-dasharray="8,4"/>
-                            <!-- Brno → Ostrava (SV směr) -->
-                            <line x1="240" y1="240" x2="340" y2="100" stroke="#388e3c" stroke-width="4" stroke-dasharray="8,4"/>
-                            <!-- Praha → Plzeň (JZ směr) -->
-                            <line x1="140" y1="140" x2="60" y2="220" stroke="#f57c00" stroke-width="4" stroke-dasharray="8,4"/>
-                            <!-- Praha → Ostrava (SV směr) -->
-                            <line x1="140" y1="140" x2="340" y2="100" stroke="#9c27b0" stroke-width="3" stroke-dasharray="6,6"/>
-                        </svg>
-                        
-                        <!-- Auta na trasách -->
-                        <div style="position: absolute; top: 190px; left: 190px; font-size: 24px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚗</div>
-                        <div style="position: absolute; top: 160px; right: 120px; font-size: 24px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚙</div>
-                        <div style="position: absolute; top: 180px; left: 90px; font-size: 24px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚕</div>
+
                         
                         <!-- Kompas -->
                         <div style="position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; border: 2px solid #666;">N</div>
