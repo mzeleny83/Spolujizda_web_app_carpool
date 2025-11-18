@@ -154,7 +154,8 @@ def search_rides():
                 'price_per_person': 200,
                 'description': 'Pohodová jízda',
                 'driver_name': 'Jan Novák',
-                'driver_rating': 4.8
+                'driver_rating': 4.8,
+                'route_waypoints': [{'lat': 50.0755, 'lng': 14.4378}, {'lat': 49.1951, 'lng': 16.6068}]
             },
             {
                 'id': 2,
@@ -166,11 +167,25 @@ def search_rides():
                 'price_per_person': 250,
                 'description': 'Rychlá jízda',
                 'driver_name': 'Marie Svobodová',
-                'driver_rating': 4.9
+                'driver_rating': 4.9,
+                'route_waypoints': [{'lat': 49.1951, 'lng': 16.6068}, {'lat': 50.0755, 'lng': 14.4378}]
             },
             {
                 'id': 3,
                 'driver_id': 3,
+                'from_location': 'Brno',
+                'to_location': 'Ostrava',
+                'departure_time': '2025-11-18 16:00',
+                'available_seats': 4,
+                'price_per_person': 180,
+                'description': 'Společná cesta',
+                'driver_name': 'Tomáš Novotný',
+                'driver_rating': 4.7,
+                'route_waypoints': [{'lat': 49.1951, 'lng': 16.6068}, {'lat': 49.8209, 'lng': 18.2625}]
+            },
+            {
+                'id': 4,
+                'driver_id': 4,
                 'from_location': 'Ostrava',
                 'to_location': 'Praha',
                 'departure_time': '2025-11-18 14:00',
@@ -178,7 +193,8 @@ def search_rides():
                 'price_per_person': 300,
                 'description': 'Komfortní auto',
                 'driver_name': 'Petr Dvořák',
-                'driver_rating': 5.0
+                'driver_rating': 5.0,
+                'route_waypoints': [{'lat': 49.8209, 'lng': 18.2625}, {'lat': 50.0755, 'lng': 14.4378}]
             }
         ]
         
