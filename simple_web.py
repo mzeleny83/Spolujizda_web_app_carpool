@@ -45,7 +45,7 @@ def home():
                 <div class="section" id="loginSection">
                     <h3>👤 Přihlášení</h3>
                     <input type="tel" id="loginPhone" placeholder="Telefon (721745084)">
-                    <input type="password" id="loginPassword" placeholder="Heslo (heslo123)">
+                    <input type="password" id="loginPassword" placeholder="Heslo (123)">
                     <button onclick="loginUser()">Přihlásit se</button>
                     <button onclick="registerUser()" style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
                     <div id="loginResult" style="margin-top: 10px; font-weight: bold;"></div>
@@ -244,7 +244,7 @@ def login():
         password = data.get('password')
         
         # Test účty
-        if phone in ['+420721745084', '721745084', '+420123456789', '123456789', 'miroslav.zeleny@volny.cz'] and password in ['heslo123', 'password', 'admin']:
+        if phone in ['+420721745084', '721745084', '+420123456789', '123456789', 'miroslav.zeleny@volny.cz'] and password in ['123', 'password', 'admin', 'heslo']:
             return jsonify({
                 'message': 'Přihlášení úspěšné',
                 'user_id': 1,
