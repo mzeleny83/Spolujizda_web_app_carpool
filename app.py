@@ -167,7 +167,7 @@ def search_rides():
                 'price_per_person': 200,
                 'description': 'Pohodová jízda',
                 'driver_name': user[1],
-                'driver_rating': float(user[4]) if len(user) > 4 and user[4] else 5.0
+                'driver_rating': 5.0
             })
         
         return jsonify(result), 200
