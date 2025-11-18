@@ -26,173 +26,139 @@ def home():
             'endpoints': ['/api/users/register', '/api/users/login', '/api/rides/offer', '/api/rides/search']
         })
     
-    # Web browser gets full HTML page
-    return render_template_string('''
+    # Web browser gets simple HTML page
+    return '''
     <!DOCTYPE html>
-    <html lang="cs">
+    <html>
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Spolujízda - Sdílení jízd</title>
+        <title>Spolujízda</title>
+        <meta charset="utf-8">
         <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-            .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 1rem 0; }
-            .nav { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
-            .logo { color: white; font-size: 1.8rem; font-weight: bold; }
-            .nav-links { display: flex; gap: 2rem; }
-            .nav-links a { color: white; text-decoration: none; transition: opacity 0.3s; }
-            .nav-links a:hover { opacity: 0.8; }
-            .hero { text-align: center; padding: 4rem 2rem; color: white; }
-            .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
-            .hero p { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
-            .cta-button { background: #ff6b6b; color: white; padding: 1rem 2rem; border: none; border-radius: 50px; font-size: 1.1rem; cursor: pointer; transition: transform 0.3s; }
-            .cta-button:hover { transform: translateY(-2px); }
-            .features { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
-            .feature { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 2rem; border-radius: 15px; text-align: center; color: white; }
-            .feature-icon { font-size: 3rem; margin-bottom: 1rem; }
-            .rides-section { background: rgba(255,255,255,0.05); padding: 4rem 2rem; }
-            .rides-container { max-width: 800px; margin: 0 auto; }
-            .rides-title { text-align: center; color: white; font-size: 2rem; margin-bottom: 2rem; }
-            .ride-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 1.5rem; margin-bottom: 1rem; border-radius: 10px; color: white; }
-            .ride-route { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
-            .ride-details { opacity: 0.9; }
-            .footer { text-align: center; padding: 2rem; color: rgba(255,255,255,0.8); }
+            body { font-family: Arial; margin: 20px; background: #f0f0f0; }
+            .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+            h1 { color: #333; text-align: center; }
+            .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+            .form-group { margin: 10px 0; }
+            input, textarea, select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+            button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer; }
+            button:hover { background: #0056b3; }
+            .ride { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+            .tabs { display: flex; margin-bottom: 20px; }
+            .tab { padding: 10px 20px; background: #e9ecef; margin-right: 5px; cursor: pointer; border-radius: 5px 5px 0 0; }
+            .tab.active { background: #007bff; color: white; }
+            .tab-content { display: none; }
+            .tab-content.active { display: block; }
         </style>
     </head>
     <body>
-        <header class="header">
-            <nav class="nav">
-                <div class="logo">🚗 Spolujízda</div>
-                <div class="nav-links">
-                    <a href="#home">Domů</a>
-                    <a href="#rides">Jízdy</a>
-                    <a href="#about">O nás</a>
-                    <a href="#contact">Kontakt</a>
-                </div>
-            </nav>
-        </header>
+        <div class="container">
+            <h1>🚗 Spolujízda - Sdílení jízd</h1>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('search')">Hledat jízdu</div>
+                <div class="tab" onclick="showTab('offer')">Nabídnout jízdu</div>
+                <div class="tab" onclick="showTab('login')">Přihlášení</div>
+                <div class="tab" onclick="showTab('rides')">Všechny jízdy</div>
+            </div>
         
-        <section class="hero" id="home">
-            <h1>Sdílejte jízdy, šetřete peníze</h1>
-            <p>Najděte spolucestující nebo nabídněte volná místa ve svém autě</p>
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
-                <button class="cta-button" onclick="showSection('search')">Hledat jízdu</button>
-                <button class="cta-button" onclick="showSection('offer')">Nabídnout jízdu</button>
-                <button class="cta-button" onclick="showSection('login')">Přihlásit se</button>
-            </div>
-        </section>
-        
-        <section class="features">
-            <div class="feature">
-                <div class="feature-icon">📱</div>
-                <h3>Mobilní aplikace</h3>
-                <p>K dispozici pro Android a iOS</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🗺️</div>
-                <h3>GPS navigace</h3>
-                <p>Automatické určení polohy a tras</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">💬</div>
-                <h3>Chat</h3>
-                <p>Komunikace mezi řidiči a spolucestujícími</p>
-            </div>
-        </section>
-        
-        <!-- Search Section -->
-        <section class="rides-section" id="search" style="display: none;">
-            <div class="rides-container">
-                <h2 class="rides-title">Hledat jízdu</h2>
-                <div style="background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 15px; margin-bottom: 2rem;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                        <input type="text" id="searchFrom" placeholder="Odkud" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <input type="text" id="searchTo" placeholder="Kam" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+            <!-- Search Tab -->
+            <div id="search" class="tab-content active">
+                <div class="section">
+                    <h3>Hledat jízdu</h3>
+                    <div class="form-group">
+                        <input type="text" id="searchFrom" placeholder="Odkud (např. Praha)">
                     </div>
-                    <button onclick="searchRides()" style="width: 100%; padding: 1rem; background: #ff6b6b; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Hledat</button>
-                </div>
-                <div id="search-results"></div>
-            </div>
-        </section>
-        
-        <!-- Offer Section -->
-        <section class="rides-section" id="offer" style="display: none;">
-            <div class="rides-container">
-                <h2 class="rides-title">Nabídnout jízdu</h2>
-                <div style="background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 15px;">
-                    <div style="display: grid; gap: 1rem;">
-                        <input type="text" id="offerFrom" placeholder="Odkud" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <input type="text" id="offerTo" placeholder="Kam" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <input type="datetime-local" id="offerTime" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <input type="number" id="offerSeats" placeholder="Počet volných míst" min="1" max="8" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <input type="number" id="offerPrice" placeholder="Cena za osobu (Kč)" min="0" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <textarea id="offerDescription" placeholder="Poznámka (volitelné)" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem; min-height: 80px; resize: vertical;"></textarea>
-                        <button onclick="offerRide()" style="padding: 1rem; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Nabídnout jízdu</button>
+                    <div class="form-group">
+                        <input type="text" id="searchTo" placeholder="Kam (např. Brno)">
                     </div>
+                    <button onclick="searchRides()">Hledat jízdy</button>
+                    <div id="search-results"></div>
                 </div>
             </div>
-        </section>
         
-        <!-- Login Section -->
-        <section class="rides-section" id="login" style="display: none;">
-            <div class="rides-container">
-                <h2 class="rides-title">Přihlášení</h2>
-                <div style="background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 15px; max-width: 400px; margin: 0 auto;">
-                    <div style="display: grid; gap: 1rem;">
-                        <input type="tel" id="loginPhone" placeholder="Telefon (+420123456789)" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <input type="password" id="loginPassword" placeholder="Heslo" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <button onclick="loginUser()" style="padding: 1rem; background: #2196F3; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Přihlásit se</button>
-                        <button onclick="showSection('register')" style="padding: 1rem; background: transparent; color: white; border: 2px solid white; border-radius: 8px; font-size: 1rem; cursor: pointer;">Registrovat se</button>
+            <!-- Offer Tab -->
+            <div id="offer" class="tab-content">
+                <div class="section">
+                    <h3>Nabídnout jízdu</h3>
+                    <div class="form-group">
+                        <input type="text" id="offerFrom" placeholder="Odkud">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="offerTo" placeholder="Kam">
+                    </div>
+                    <div class="form-group">
+                        <input type="datetime-local" id="offerTime">
+                    </div>
+                    <div class="form-group">
+                        <input type="number" id="offerSeats" placeholder="Počet volných míst" min="1" max="8">
+                    </div>
+                    <div class="form-group">
+                        <input type="number" id="offerPrice" placeholder="Cena za osobu (Kč)" min="0">
+                    </div>
+                    <div class="form-group">
+                        <textarea id="offerDescription" placeholder="Poznámka (volitelné)"></textarea>
+                    </div>
+                    <button onclick="offerRide()">Nabídnout jízdu</button>
+                </div>
+            </div>
+        
+            <!-- Login Tab -->
+            <div id="login" class="tab-content">
+                <div class="section">
+                    <h3>Přihlášení</h3>
+                    <div class="form-group">
+                        <input type="tel" id="loginPhone" placeholder="Telefon (+420123456789)">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="loginPassword" placeholder="Heslo">
+                    </div>
+                    <button onclick="loginUser()">Přihlásit se</button>
+                    <button onclick="showRegister()" style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
+                    
+                    <div id="register-form" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <h4>Registrace nového uživatele</h4>
+                        <div class="form-group">
+                            <input type="text" id="registerName" placeholder="Jméno a příjmení">
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" id="registerPhone" placeholder="Telefon (+420123456789)">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="registerPassword" placeholder="Heslo">
+                        </div>
+                        <button onclick="registerUser()">Registrovat se</button>
                     </div>
                 </div>
             </div>
-        </section>
         
-        <!-- Register Section -->
-        <section class="rides-section" id="register" style="display: none;">
-            <div class="rides-container">
-                <h2 class="rides-title">Registrace</h2>
-                <div style="background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 15px; max-width: 400px; margin: 0 auto;">
-                    <div style="display: grid; gap: 1rem;">
-                        <input type="text" id="registerName" placeholder="Jméno a příjmení" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <input type="tel" id="registerPhone" placeholder="Telefon (+420123456789)" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <input type="password" id="registerPassword" placeholder="Heslo" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                        <button onclick="registerUser()" style="padding: 1rem; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Registrovat se</button>
-                        <button onclick="showSection('login')" style="padding: 1rem; background: transparent; color: white; border: 2px solid white; border-radius: 8px; font-size: 1rem; cursor: pointer;">Zpět na přihlášení</button>
-                    </div>
+            <!-- Rides Tab -->
+            <div id="rides" class="tab-content">
+                <div class="section">
+                    <h3>Všechny dostupné jízdy</h3>
+                    <div id="rides-list">Načítám jízdy...</div>
                 </div>
             </div>
-        </section>
-        
-        <section class="rides-section" id="rides">
-            <div class="rides-container">
-                <h2 class="rides-title">Aktuální jízdy</h2>
-                <div id="rides-list">Načítám jízdy...</div>
-            </div>
-        </section>
-        
-        <footer class="footer">
-            <p>&copy; 2025 Spolujízda. Všechna práva vyhrazena.</p>
-        </footer>
+        </div>
         
         <script>
             let currentUser = null;
             
-            function showSection(sectionId) {
-                // Hide all sections
-                const sections = ['search', 'offer', 'login', 'register'];
-                sections.forEach(id => {
-                    const section = document.getElementById(id);
-                    if (section) section.style.display = 'none';
-                });
+            function showTab(tabId) {
+                // Hide all tabs
+                const tabs = document.querySelectorAll('.tab-content');
+                tabs.forEach(tab => tab.classList.remove('active'));
                 
-                // Show selected section
-                const targetSection = document.getElementById(sectionId);
-                if (targetSection) {
-                    targetSection.style.display = 'block';
-                    targetSection.scrollIntoView({ behavior: 'smooth' });
-                }
+                const tabButtons = document.querySelectorAll('.tab');
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Show selected tab
+                document.getElementById(tabId).classList.add('active');
+                event.target.classList.add('active');
+            }
+            
+            function showRegister() {
+                const form = document.getElementById('register-form');
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
             }
             
             function searchRides() {
@@ -211,17 +177,13 @@ def home():
                             return;
                         }
                         
-                        resultsDiv.innerHTML = '<h3 style="color: white; margin-bottom: 1rem;">Výsledky hledání:</h3>' + 
+                        resultsDiv.innerHTML = '<h4>Výsledky hledání:</h4>' + 
                             rides.map(ride => `
-                                <div class="ride-card">
-                                    <div class="ride-route">${ride.from_location} → ${ride.to_location}</div>
-                                    <div class="ride-details">
-                                        Řidič: ${ride.driver_name} | 
-                                        Čas: ${ride.departure_time} | 
-                                        Cena: ${ride.price_per_person} Kč | 
-                                        Volná místa: ${ride.available_seats}
-                                    </div>
-                                    <button onclick="contactDriver(${ride.id})" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #ff6b6b; color: white; border: none; border-radius: 5px; cursor: pointer;">Kontaktovat</button>
+                                <div class="ride">
+                                    <strong>${ride.from_location} → ${ride.to_location}</strong><br>
+                                    Řidič: ${ride.driver_name} | Čas: ${ride.departure_time}<br>
+                                    Cena: ${ride.price_per_person} Kč | Volná místa: ${ride.available_seats}<br>
+                                    <button onclick="contactDriver(${ride.id})" style="margin-top: 5px;">Kontaktovat řidiče</button>
                                 </div>
                             `).join('');
                     })
