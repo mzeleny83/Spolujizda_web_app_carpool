@@ -147,11 +147,14 @@ def search_rides():
         
         if from_location:
             if os.environ.get('DATABASE_URL'):
-                c.execute("SELECT r.*, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id WHERE r.from_location ILIKE %s", (f'%{from_location}%',))
+                c.execute("SELECT r.id, r.driver_id, r.from_location, r.to_location, r.departure_time, r.available_seats, r.price, r.description, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id WHERE r.from_location ILIKE %s", (f'%{from_location}%',))
             else:
-                c.execute("SELECT r.*, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id WHERE r.from_location LIKE ?", (f'%{from_location}%',))
+                c.execute("SELECT r.id, r.driver_id, r.from_location, r.to_location, r.departure_time, r.available_seats, r.price, r.description, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id WHERE r.from_location LIKE ?", (f'%{from_location}%',))
         else:
-            c.execute("SELECT r.*, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id ORDER BY r.created_at DESC LIMIT 20")
+            if os.environ.get('DATABASE_URL'):
+                c.execute("SELECT r.id, r.driver_id, r.from_location, r.to_location, r.departure_time, r.available_seats, r.price, r.description, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id ORDER BY r.created_at DESC LIMIT 20")
+            else:
+                c.execute("SELECT r.id, r.driver_id, r.from_location, r.to_location, r.departure_time, r.available_seats, r.price, r.description, u.name, u.rating FROM rides r JOIN users u ON r.driver_id = u.id ORDER BY r.created_at DESC LIMIT 20")
         
         rides = c.fetchall()
         conn.close()
@@ -163,12 +166,12 @@ def search_rides():
                 'driver_id': ride[1],
                 'from_location': ride[2],
                 'to_location': ride[3],
-                'departure_time': ride[4],
+                'departure_time': str(ride[4]) if ride[4] else '',
                 'available_seats': ride[5],
                 'price_per_person': ride[6],
-                'description': ride[7],
-                'driver_name': ride[9],
-                'driver_rating': ride[10]
+                'description': ride[7] or '',
+                'driver_name': ride[8],
+                'driver_rating': float(ride[9]) if ride[9] else 5.0
             })
         
         return jsonify(result), 200
