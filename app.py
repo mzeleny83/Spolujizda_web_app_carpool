@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import hashlib
 import os
@@ -14,32 +14,134 @@ CORS(app)
 
 @app.route('/')
 def home():
-    return '''
+    # Detect if request is from mobile app or web browser
+    user_agent = request.headers.get('User-Agent', '').lower()
+    accept_header = request.headers.get('Accept', '')
+    
+    # Mobile app sends JSON requests
+    if 'application/json' in accept_header or 'dart' in user_agent or 'flutter' in user_agent:
+        return jsonify({
+            'message': 'Spolujizda API',
+            'status': 'running',
+            'endpoints': ['/api/users/register', '/api/users/login', '/api/rides/offer', '/api/rides/search']
+        })
+    
+    # Web browser gets full HTML page
+    return render_template_string('''
     <!DOCTYPE html>
-    <html>
+    <html lang="cs">
     <head>
-        <title>Spolujízda API</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Spolujízda - Sdílení jízd</title>
         <style>
-            body { font-family: Arial; margin: 40px; background: #f5f5f5; }
-            .container { background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; }
-            h1 { color: #2196F3; }
-            .endpoint { background: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+            .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 1rem 0; }
+            .nav { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
+            .logo { color: white; font-size: 1.8rem; font-weight: bold; }
+            .nav-links { display: flex; gap: 2rem; }
+            .nav-links a { color: white; text-decoration: none; transition: opacity 0.3s; }
+            .nav-links a:hover { opacity: 0.8; }
+            .hero { text-align: center; padding: 4rem 2rem; color: white; }
+            .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+            .hero p { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
+            .cta-button { background: #ff6b6b; color: white; padding: 1rem 2rem; border: none; border-radius: 50px; font-size: 1.1rem; cursor: pointer; transition: transform 0.3s; }
+            .cta-button:hover { transform: translateY(-2px); }
+            .features { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+            .feature { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 2rem; border-radius: 15px; text-align: center; color: white; }
+            .feature-icon { font-size: 3rem; margin-bottom: 1rem; }
+            .rides-section { background: rgba(255,255,255,0.05); padding: 4rem 2rem; }
+            .rides-container { max-width: 800px; margin: 0 auto; }
+            .rides-title { text-align: center; color: white; font-size: 2rem; margin-bottom: 2rem; }
+            .ride-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 1.5rem; margin-bottom: 1rem; border-radius: 10px; color: white; }
+            .ride-route { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
+            .ride-details { opacity: 0.9; }
+            .footer { text-align: center; padding: 2rem; color: rgba(255,255,255,0.8); }
         </style>
     </head>
     <body>
-        <div class="container">
-            <h1>🚗 Spolujízda API</h1>
-            <p><strong>Status:</strong> ✅ Running</p>
-            <h3>Dostupné API endpointy:</h3>
-            <div class="endpoint">POST /api/users/register - Registrace uživatele</div>
-            <div class="endpoint">POST /api/users/login - Přihlášení uživatele</div>
-            <div class="endpoint">POST /api/rides/offer - Nabídka jízdy</div>
-            <div class="endpoint">GET /api/rides/search - Hledání jízd</div>
-            <p><em>Toto API slouží pro mobilní aplikaci Spolujízda.</em></p>
-        </div>
+        <header class="header">
+            <nav class="nav">
+                <div class="logo">🚗 Spolujízda</div>
+                <div class="nav-links">
+                    <a href="#home">Domů</a>
+                    <a href="#rides">Jízdy</a>
+                    <a href="#about">O nás</a>
+                    <a href="#contact">Kontakt</a>
+                </div>
+            </nav>
+        </header>
+        
+        <section class="hero" id="home">
+            <h1>Sdílejte jízdy, šetřete peníze</h1>
+            <p>Najděte spolucestující nebo nabídněte volná místa ve svém autě</p>
+            <button class="cta-button" onclick="showAppInfo()">Stáhnout aplikaci</button>
+        </section>
+        
+        <section class="features">
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <h3>Mobilní aplikace</h3>
+                <p>K dispozici pro Android a iOS</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🗺️</div>
+                <h3>GPS navigace</h3>
+                <p>Automatické určení polohy a tras</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <h3>Chat</h3>
+                <p>Komunikace mezi řidiči a spolucestujícími</p>
+            </div>
+        </section>
+        
+        <section class="rides-section" id="rides">
+            <div class="rides-container">
+                <h2 class="rides-title">Aktuální jízdy</h2>
+                <div id="rides-list">Načítám jízdy...</div>
+            </div>
+        </section>
+        
+        <footer class="footer">
+            <p>&copy; 2025 Spolujízda. Všechna práva vyhrazena.</p>
+        </footer>
+        
+        <script>
+            function showAppInfo() {
+                alert('Mobilní aplikace je k dispozici v Google Play Store a App Store!');
+            }
+            
+            // Load rides from API
+            fetch('/api/rides/search')
+                .then(response => response.json())
+                .then(rides => {
+                    const ridesList = document.getElementById('rides-list');
+                    if (rides.length === 0) {
+                        ridesList.innerHTML = '<p style="text-align: center; opacity: 0.7;">Momentálně nejsou k dispozici žádné jízdy.</p>';
+                        return;
+                    }
+                    
+                    ridesList.innerHTML = rides.map(ride => `
+                        <div class="ride-card">
+                            <div class="ride-route">${ride.from_location} → ${ride.to_location}</div>
+                            <div class="ride-details">
+                                Řidič: ${ride.driver_name} | 
+                                Čas: ${ride.departure_time} | 
+                                Cena: ${ride.price_per_person} Kč | 
+                                Volná místa: ${ride.available_seats}
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(() => {
+                    document.getElementById('rides-list').innerHTML = '<p style="text-align: center; opacity: 0.7;">Chyba při načítání jízd.</p>';
+                });
+        </script>
     </body>
     </html>
-    '''
+    ''')
 
 @app.route('/health')
 def health():
