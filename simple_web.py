@@ -378,6 +378,10 @@ def search_rides():
     
     return jsonify(result), 200
 
+@app.route('/test')
+def test_page():
+    return send_from_directory('.', 'test.html')
+
 @app.route('/download/android')
 def download_android():
     try:
