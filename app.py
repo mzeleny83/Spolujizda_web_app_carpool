@@ -173,22 +173,22 @@ def home():
                     .then(rides => {
                         const resultsDiv = document.getElementById('search-results');
                         if (rides.length === 0) {
-                            resultsDiv.innerHTML = '<p style="text-align: center; color: white; opacity: 0.7;">Nebyly nalezeny žádné jízdy.</p>';
+                            resultsDiv.innerHTML = '<p>Nebyly nalezeny žádné jízdy.</p>';
                             return;
                         }
                         
                         resultsDiv.innerHTML = '<h4>Výsledky hledání:</h4>' + 
-                            rides.map(ride => `
-                                <div class="ride">
-                                    <strong>${ride.from_location} → ${ride.to_location}</strong><br>
-                                    Řidič: ${ride.driver_name} | Čas: ${ride.departure_time}<br>
-                                    Cena: ${ride.price_per_person} Kč | Volná místa: ${ride.available_seats}<br>
-                                    <button onclick="contactDriver(${ride.id})" style="margin-top: 5px;">Kontaktovat řidiče</button>
-                                </div>
-                            `).join('');
+                            rides.map(ride => 
+                                '<div class="ride">' +
+                                '<strong>' + ride.from_location + ' → ' + ride.to_location + '</strong><br>' +
+                                'Řidič: ' + ride.driver_name + ' | Čas: ' + ride.departure_time + '<br>' +
+                                'Cena: ' + ride.price_per_person + ' Kč | Volná místa: ' + ride.available_seats + '<br>' +
+                                '<button onclick="contactDriver(' + ride.id + ')" style="margin-top: 5px;">Kontaktovat řidiče</button>' +
+                                '</div>'
+                            ).join('');
                     })
                     .catch(() => {
-                        document.getElementById('search-results').innerHTML = '<p style="text-align: center; color: white; opacity: 0.7;">Chyba při hledání.</p>';
+                        document.getElementById('search-results').innerHTML = '<p>Chyba při hledání.</p>';
                     });
             }
             
@@ -302,24 +302,20 @@ def home():
                 .then(rides => {
                     const ridesList = document.getElementById('rides-list');
                     if (rides.length === 0) {
-                        ridesList.innerHTML = '<p style="text-align: center; opacity: 0.7;">Momentálně nejsou k dispozici žádné jízdy.</p>';
+                        ridesList.innerHTML = '<p>Momentálně nejsou k dispozici žádné jízdy.</p>';
                         return;
                     }
                     
-                    ridesList.innerHTML = rides.map(ride => `
-                        <div class="ride-card">
-                            <div class="ride-route">${ride.from_location} → ${ride.to_location}</div>
-                            <div class="ride-details">
-                                Řidič: ${ride.driver_name} | 
-                                Čas: ${ride.departure_time} | 
-                                Cena: ${ride.price_per_person} Kč | 
-                                Volná místa: ${ride.available_seats}
-                            </div>
-                        </div>
-                    `).join('');
+                    ridesList.innerHTML = rides.map(ride => 
+                        '<div class="ride">' +
+                        '<strong>' + ride.from_location + ' → ' + ride.to_location + '</strong><br>' +
+                        'Řidič: ' + ride.driver_name + ' | Čas: ' + ride.departure_time + '<br>' +
+                        'Cena: ' + ride.price_per_person + ' Kč | Volná místa: ' + ride.available_seats +
+                        '</div>'
+                    ).join('');
                 })
                 .catch(() => {
-                    document.getElementById('rides-list').innerHTML = '<p style="text-align: center; opacity: 0.7;">Chyba při načítání jízd.</p>';
+                    document.getElementById('rides-list').innerHTML = '<p>Chyba při načítání jízd.</p>';
                 });
         </script>
     </body>
