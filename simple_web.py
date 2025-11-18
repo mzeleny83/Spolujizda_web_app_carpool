@@ -331,7 +331,7 @@ def offer_ride():
 mock_rides = [
     {
         'id': 1,
-        'driver_id': 1,
+        'driver_id': 10,
         'from_location': 'Praha',
         'to_location': 'Brno',
         'departure_time': '2025-11-18 15:00',
@@ -344,7 +344,7 @@ mock_rides = [
     },
     {
         'id': 2,
-        'driver_id': 2,
+        'driver_id': 11,
         'from_location': 'Brno',
         'to_location': 'Praha',
         'departure_time': '2025-11-18 17:30',
@@ -357,7 +357,7 @@ mock_rides = [
     },
     {
         'id': 3,
-        'driver_id': 3,
+        'driver_id': 12,
         'from_location': 'Brno',
         'to_location': 'Ostrava',
         'departure_time': '2025-11-18 16:00',
@@ -370,7 +370,7 @@ mock_rides = [
     },
     {
         'id': 4,
-        'driver_id': 4,
+        'driver_id': 13,
         'from_location': 'Ostrava',
         'to_location': 'Praha',
         'departure_time': '2025-11-18 14:00',
@@ -383,7 +383,7 @@ mock_rides = [
     },
     {
         'id': 5,
-        'driver_id': 5,
+        'driver_id': 14,
         'from_location': 'Praha',
         'to_location': 'Plzeň',
         'departure_time': '2025-11-18 18:00',
@@ -396,7 +396,7 @@ mock_rides = [
     },
     {
         'id': 6,
-        'driver_id': 6,
+        'driver_id': 15,
         'from_location': 'Plzeň',
         'to_location': 'Praha',
         'departure_time': '2025-11-19 08:00',
@@ -409,7 +409,7 @@ mock_rides = [
     },
     {
         'id': 7,
-        'driver_id': 7,
+        'driver_id': 16,
         'from_location': 'České Budějovice',
         'to_location': 'Praha',
         'departure_time': '2025-11-18 19:00',
@@ -422,7 +422,7 @@ mock_rides = [
     },
     {
         'id': 8,
-        'driver_id': 8,
+        'driver_id': 17,
         'from_location': 'Praha',
         'to_location': 'Liberec',
         'departure_time': '2025-11-18 16:30',
