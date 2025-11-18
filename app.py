@@ -14,7 +14,32 @@ CORS(app)
 
 @app.route('/')
 def home():
-    return jsonify({'message': 'Spolujizda API', 'status': 'running', 'endpoints': ['/api/users/register', '/api/users/login', '/api/rides/offer', '/api/rides/search']})
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Spolujízda API</title>
+        <style>
+            body { font-family: Arial; margin: 40px; background: #f5f5f5; }
+            .container { background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; }
+            h1 { color: #2196F3; }
+            .endpoint { background: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚗 Spolujízda API</h1>
+            <p><strong>Status:</strong> ✅ Running</p>
+            <h3>Dostupné API endpointy:</h3>
+            <div class="endpoint">POST /api/users/register - Registrace uživatele</div>
+            <div class="endpoint">POST /api/users/login - Přihlášení uživatele</div>
+            <div class="endpoint">POST /api/rides/offer - Nabídka jízdy</div>
+            <div class="endpoint">GET /api/rides/search - Hledání jízd</div>
+            <p><em>Toto API slouží pro mobilní aplikaci Spolujízda.</em></p>
+        </div>
+    </body>
+    </html>
+    '''
 
 @app.route('/health')
 def health():
