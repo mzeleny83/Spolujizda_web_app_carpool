@@ -88,30 +88,44 @@ def home():
                         
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                         
-                        <!-- Města na mapě -->
-                        <div style="position: absolute; top: 30%; left: 35%; width: 8px; height: 8px; background: #dc3545; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 28%; left: 33%; color: #dc3545; font-weight: bold; font-size: 12px;">Praha</div>
+                        <!-- Města na mapě (geograficky správně) -->
+                        <!-- Praha (střed ČR) -->
+                        <div style="position: absolute; top: 35%; left: 45%; width: 8px; height: 8px; background: #dc3545; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 33%; left: 43%; color: #dc3545; font-weight: bold; font-size: 12px;">Praha</div>
                         
-                        <div style="position: absolute; top: 55%; left: 55%; width: 8px; height: 8px; background: #28a745; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 53%; left: 53%; color: #28a745; font-weight: bold; font-size: 12px;">Brno</div>
+                        <!-- Brno (jih od Prahy) -->
+                        <div style="position: absolute; top: 65%; left: 55%; width: 8px; height: 8px; background: #28a745; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 63%; left: 53%; color: #28a745; font-weight: bold; font-size: 12px;">Brno</div>
                         
-                        <div style="position: absolute; top: 15%; left: 85%; width: 8px; height: 8px; background: #007bff; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 13%; left: 83%; color: #007bff; font-weight: bold; font-size: 12px;">Ostrava</div>
+                        <!-- Ostrava (severo-východ) -->
+                        <div style="position: absolute; top: 20%; left: 75%; width: 8px; height: 8px; background: #007bff; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 18%; left: 73%; color: #007bff; font-weight: bold; font-size: 12px;">Ostrava</div>
                         
-                        <div style="position: absolute; top: 40%; left: 20%; width: 8px; height: 8px; background: #ffc107; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 38%; left: 18%; color: #ffc107; font-weight: bold; font-size: 12px;">Plzeň</div>
+                        <!-- Plzeň (západ od Prahy) -->
+                        <div style="position: absolute; top: 40%; left: 25%; width: 8px; height: 8px; background: #ffc107; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 38%; left: 23%; color: #ffc107; font-weight: bold; font-size: 12px;">Plzeň</div>
+                        
+                        <!-- České Budějovice (jih) -->
+                        <div style="position: absolute; top: 75%; left: 40%; width: 8px; height: 8px; background: #6f42c1; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 73%; left: 30%; color: #6f42c1; font-weight: bold; font-size: 12px;">Č. Budějovice</div>
+                        
+                        <!-- Liberec (sever) -->
+                        <div style="position: absolute; top: 15%; left: 50%; width: 8px; height: 8px; background: #fd7e14; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 13%; left: 48%; color: #fd7e14; font-weight: bold; font-size: 12px;">Liberec</div>
                         
                         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                            <!-- Praha → Brno -->
-                            <line x1="35%" y1="30%" x2="55%" y2="55%" stroke="#1976d2" stroke-width="3" stroke-dasharray="8,4" opacity="0.8"/>
+                            <!-- Praha → Brno (jih) -->
+                            <line x1="45%" y1="35%" x2="55%" y2="65%" stroke="#1976d2" stroke-width="3" stroke-dasharray="8,4" opacity="0.8"/>
                             <!-- Brno → Praha -->
-                            <line x1="55%" y1="55%" x2="35%" y2="30%" stroke="#e91e63" stroke-width="3" stroke-dasharray="6,6" opacity="0.8"/>
-                            <!-- Brno → Ostrava -->
-                            <line x1="55%" y1="55%" x2="85%" y2="15%" stroke="#4caf50" stroke-width="3" stroke-dasharray="10,5" opacity="0.8"/>
-                            <!-- Ostrava → Praha -->
-                            <line x1="85%" y1="15%" x2="35%" y2="30%" stroke="#ff9800" stroke-width="3" stroke-dasharray="5,5" opacity="0.8"/>
-                            <!-- Praha → Plzeň -->
-                            <line x1="35%" y1="30%" x2="20%" y2="40%" stroke="#9c27b0" stroke-width="3" stroke-dasharray="7,3" opacity="0.8"/>
+                            <line x1="55%" y1="65%" x2="45%" y2="35%" stroke="#e91e63" stroke-width="3" stroke-dasharray="6,6" opacity="0.8"/>
+                            <!-- Brno → Ostrava (severo-východ) -->
+                            <line x1="55%" y1="65%" x2="75%" y2="20%" stroke="#4caf50" stroke-width="3" stroke-dasharray="10,5" opacity="0.8"/>
+                            <!-- Ostrava → Praha (západ) -->
+                            <line x1="75%" y1="20%" x2="45%" y2="35%" stroke="#ff9800" stroke-width="3" stroke-dasharray="5,5" opacity="0.8"/>
+                            <!-- Praha → Plzeň (západ) -->
+                            <line x1="45%" y1="35%" x2="25%" y2="40%" stroke="#9c27b0" stroke-width="3" stroke-dasharray="7,3" opacity="0.8"/>
+                            <!-- Praha → Liberec (sever) -->
+                            <line x1="45%" y1="35%" x2="50%" y2="15%" stroke="#fd7e14" stroke-width="3" stroke-dasharray="4,4" opacity="0.8"/>
                         </svg>
                         
                         <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
