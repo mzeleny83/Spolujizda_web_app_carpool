@@ -26,61 +26,86 @@ def home():
         <meta charset="utf-8">
         <style>
             body { font-family: Arial; margin: 20px; background: #f0f0f0; }
-            .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+            .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
             h1 { color: #333; text-align: center; }
-            .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-            input, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; }
+            .flex-container { display: flex; gap: 20px; flex-wrap: wrap; }
+            .section { flex: 1; min-width: 300px; margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+            .map-section { flex: 2; min-width: 400px; }
+            input, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 3px; box-sizing: border-box; }
             button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer; }
             .ride { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+            .map-placeholder { height: 400px; background: #e9ecef; border: 2px dashed #6c757d; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 18px; border-radius: 5px; }
         </style>
     </head>
     <body>
         <div class="container">
             <h1>🚗 Spolujízda - Sdílení jízd</h1>
             
-            <div class="section">
-                <h3>Aktuální jízdy</h3>
-                <div class="ride">
-                    <strong>Praha → Brno</strong><br>
-                    Řidič: Jan Novák | Čas: 2025-11-18 15:00<br>
-                    Cena: 200 Kč | Volná místa: 3
+            <div class="flex-container">
+                <div class="section map-section">
+                    <h3>🗺️ Mapa jízd</h3>
+                    <div class="map-placeholder">
+                        📍 Interaktivní mapa jízd<br>
+                        (Pro plnou funkcionalit použijte mobilní aplikaci)
+                    </div>
                 </div>
-                <div class="ride">
-                    <strong>Brno → Praha</strong><br>
-                    Řidič: Marie Svobodová | Čas: 2025-11-18 17:30<br>
-                    Cena: 250 Kč | Volná místa: 2
-                </div>
-                <div class="ride">
-                    <strong>Brno → Ostrava</strong><br>
-                    Řidič: Tomáš Novotný | Čas: 2025-11-18 16:00<br>
-                    Cena: 180 Kč | Volná místa: 4
+                
+                <div class="section">
+                    <h3>📋 Aktuální jízdy</h3>
+                    <div class="ride">
+                        <strong>Praha → Brno</strong><br>
+                        Řidič: Jan Novák | Čas: 2025-11-18 15:00<br>
+                        Cena: 200 Kč | Volná místa: 3
+                    </div>
+                    <div class="ride">
+                        <strong>Brno → Praha</strong><br>
+                        Řidič: Marie Svobodová | Čas: 2025-11-18 17:30<br>
+                        Cena: 250 Kč | Volná místa: 2
+                    </div>
+                    <div class="ride">
+                        <strong>Brno → Ostrava</strong><br>
+                        Řidič: Tomáš Novotný | Čas: 2025-11-18 16:00<br>
+                        Cena: 180 Kč | Volná místa: 4
+                    </div>
+                    <div class="ride">
+                        <strong>Ostrava → Praha</strong><br>
+                        Řidič: Petr Dvořák | Čas: 2025-11-18 14:00<br>
+                        Cena: 300 Kč | Volná místa: 1
+                    </div>
+                    <div class="ride">
+                        <strong>Praha → Plzeň</strong><br>
+                        Řidič: Anna Krásná | Čas: 2025-11-18 18:00<br>
+                        Cena: 150 Kč | Volná místa: 2
+                    </div>
                 </div>
             </div>
             
-            <div class="section">
-                <h3>Hledat jízdu</h3>
-                <input type="text" placeholder="Odkud (např. Praha)">
-                <input type="text" placeholder="Kam (např. Brno)">
-                <button>Hledat jízdy</button>
-            </div>
-            
-            <div class="section">
-                <h3>Nabídnout jízdu</h3>
-                <input type="text" placeholder="Odkud">
-                <input type="text" placeholder="Kam">
-                <input type="datetime-local">
-                <input type="number" placeholder="Počet volných míst" min="1" max="8">
-                <input type="number" placeholder="Cena za osobu (Kč)" min="0">
-                <textarea placeholder="Poznámka (volitelné)"></textarea>
-                <button>Nabídnout jízdu</button>
-            </div>
-            
-            <div class="section">
-                <h3>Přihlášení</h3>
-                <input type="tel" placeholder="Telefon (+420123456789)">
-                <input type="password" placeholder="Heslo">
-                <button>Přihlásit se</button>
-                <button style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
+            <div class="flex-container">
+                <div class="section">
+                    <h3>🔍 Hledat jízdu</h3>
+                    <input type="text" placeholder="Odkud (např. Praha)">
+                    <input type="text" placeholder="Kam (např. Brno)">
+                    <button>Hledat jízdy</button>
+                </div>
+                
+                <div class="section">
+                    <h3>🚗 Nabídnout jízdu</h3>
+                    <input type="text" placeholder="Odkud">
+                    <input type="text" placeholder="Kam">
+                    <input type="datetime-local">
+                    <input type="number" placeholder="Počet volných míst" min="1" max="8">
+                    <input type="number" placeholder="Cena za osobu (Kč)" min="0">
+                    <textarea placeholder="Poznámka (volitelné)"></textarea>
+                    <button>Nabídnout jízdu</button>
+                </div>
+                
+                <div class="section">
+                    <h3>👤 Přihlášení</h3>
+                    <input type="tel" placeholder="Telefon (+420123456789)">
+                    <input type="password" placeholder="Heslo">
+                    <button>Přihlásit se</button>
+                    <button style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
+                </div>
             </div>
             
             <p style="text-align: center; margin-top: 30px; color: #666;">
@@ -117,6 +142,78 @@ def search_rides():
             'description': 'Rychlá jízda',
             'driver_name': 'Marie Svobodová',
             'driver_rating': 4.9
+        },
+        {
+            'id': 3,
+            'driver_id': 3,
+            'from_location': 'Brno',
+            'to_location': 'Ostrava',
+            'departure_time': '2025-11-18 16:00',
+            'available_seats': 4,
+            'price_per_person': 180,
+            'description': 'Společná cesta',
+            'driver_name': 'Tomáš Novotný',
+            'driver_rating': 4.7
+        },
+        {
+            'id': 4,
+            'driver_id': 4,
+            'from_location': 'Ostrava',
+            'to_location': 'Praha',
+            'departure_time': '2025-11-18 14:00',
+            'available_seats': 1,
+            'price_per_person': 300,
+            'description': 'Komfortní auto',
+            'driver_name': 'Petr Dvořák',
+            'driver_rating': 5.0
+        },
+        {
+            'id': 5,
+            'driver_id': 5,
+            'from_location': 'Praha',
+            'to_location': 'Plzeň',
+            'departure_time': '2025-11-18 18:00',
+            'available_seats': 2,
+            'price_per_person': 150,
+            'description': 'Večerní jízda',
+            'driver_name': 'Anna Krásná',
+            'driver_rating': 4.6
+        },
+        {
+            'id': 6,
+            'driver_id': 6,
+            'from_location': 'Plzeň',
+            'to_location': 'Praha',
+            'departure_time': '2025-11-19 08:00',
+            'available_seats': 3,
+            'price_per_person': 140,
+            'description': 'Ranní pendlování',
+            'driver_name': 'Lukáš Černý',
+            'driver_rating': 4.8
+        },
+        {
+            'id': 7,
+            'driver_id': 7,
+            'from_location': 'České Budějovice',
+            'to_location': 'Praha',
+            'departure_time': '2025-11-18 19:00',
+            'available_seats': 2,
+            'price_per_person': 220,
+            'description': 'Přímá cesta',
+            'driver_name': 'Michaela Nová',
+            'driver_rating': 4.9
+        },
+        {
+            'id': 8,
+            'driver_id': 8,
+            'from_location': 'Praha',
+            'to_location': 'Liberec',
+            'departure_time': '2025-11-18 16:30',
+            'available_seats': 1,
+            'price_per_person': 180,
+            'description': 'Rychlá jízda',
+            'driver_name': 'David Svoboda',
+            'driver_rating': 4.7
         }
     ]
     
