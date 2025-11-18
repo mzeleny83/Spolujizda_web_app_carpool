@@ -206,7 +206,7 @@ def home():
                 fetch('/api/rides/search')
                 .then(response => response.json())
                 .then(rides => {
-                    let html = '<h3>📋 Všechny dostupné jízdy (' + rides.length + ')</h3>';
+                    let html = '';
                     rides.forEach(ride => {
                         html += '<div class="ride">';
                         html += '<strong>' + ride.from_location + ' → ' + ride.to_location + '</strong><br>';
@@ -214,7 +214,12 @@ def home():
                         html += 'Cena: ' + ride.price_per_person + ' Kč | Volná místa: ' + ride.available_seats;
                         html += '</div>';
                     });
-                    document.querySelector('.section h3').nextElementSibling.innerHTML = html;
+                    
+                    const ridesSection = document.querySelector('.flex-container .section');
+                    ridesSection.innerHTML = '<h3>📋 Všechny dostupné jízdy (' + rides.length + ')</h3>' + html;
+                })
+                .catch(error => {
+                    alert('Chyba načítání jízd');
                 });
             }
         </script>
