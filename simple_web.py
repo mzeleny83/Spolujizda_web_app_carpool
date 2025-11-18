@@ -42,6 +42,14 @@ def home():
             <h1>🚗 Spolujízda - Sdílení jízd</h1>
             
             <div class="flex-container">
+                <div class="section">
+                    <h3>👤 Přihlášení</h3>
+                    <input type="tel" placeholder="Telefon (+420123456789)">
+                    <input type="password" placeholder="Heslo">
+                    <button>Přihlásit se</button>
+                    <button style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
+                </div>
+                
                 <div class="section map-section">
                     <h3>🗺️ Mapa jízd</h3>
                     <div class="map-placeholder">
@@ -49,7 +57,9 @@ def home():
                         (Pro plnou funkcionalit použijte mobilní aplikaci)
                     </div>
                 </div>
-                
+            </div>
+            
+            <div class="flex-container">
                 <div class="section">
                     <h3>📋 Aktuální jízdy</h3>
                     <div class="ride">
@@ -98,14 +108,6 @@ def home():
                     <textarea placeholder="Poznámka (volitelné)"></textarea>
                     <button>Nabídnout jízdu</button>
                 </div>
-                
-                <div class="section">
-                    <h3>👤 Přihlášení</h3>
-                    <input type="tel" placeholder="Telefon (+420123456789)">
-                    <input type="password" placeholder="Heslo">
-                    <button>Přihlásit se</button>
-                    <button style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
-                </div>
             </div>
             
             <p style="text-align: center; margin-top: 30px; color: #666;">
@@ -115,6 +117,42 @@ def home():
     </body>
     </html>
     '''
+
+@app.route('/api/users/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        return jsonify({'message': 'Registrace úspěšná', 'user_id': 999}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/users/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        phone = data.get('phone')
+        password = data.get('password')
+        
+        # Test účet pro Miroslava Zeleného
+        if phone in ['+420123456789', '123456789', 'miroslav.zeleny@volny.cz'] and password == 'heslo123':
+            return jsonify({
+                'message': 'Přihlášení úspěšné',
+                'user_id': 1,
+                'name': 'Miroslav Zelený',
+                'rating': 5.0
+            }), 200
+        else:
+            return jsonify({'error': 'Neplatné přihlašovací údaje'}), 401
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/rides/offer', methods=['POST'])
+def offer_ride():
+    try:
+        data = request.get_json()
+        return jsonify({'message': 'Jízda nabídnuta', 'ride_id': 123}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/rides/search', methods=['GET'])
 def search_rides():
