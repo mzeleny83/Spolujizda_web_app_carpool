@@ -44,17 +44,37 @@ def home():
             <div class="flex-container">
                 <div class="section">
                     <h3>👤 Přihlášení</h3>
-                    <input type="tel" placeholder="Telefon (+420123456789)">
-                    <input type="password" placeholder="Heslo">
-                    <button>Přihlásit se</button>
-                    <button style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
+                    <input type="tel" id="loginPhone" placeholder="Telefon (721745084)">
+                    <input type="password" id="loginPassword" placeholder="Heslo (heslo123)">
+                    <button onclick="loginUser()">Přihlásit se</button>
+                    <button onclick="registerUser()" style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
+                    <div id="loginResult" style="margin-top: 10px; font-weight: bold;"></div>
                 </div>
                 
                 <div class="section map-section">
                     <h3>🗺️ Mapa jízd</h3>
-                    <div class="map-placeholder">
-                        📍 Interaktivní mapa jízd<br>
-                        (Pro plnou funkcionalit použijte mobilní aplikaci)
+                    <div style="position: relative; height: 400px; background: linear-gradient(45deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%); border-radius: 8px; overflow: hidden;">
+                        <!-- Města na mapě -->
+                        <div style="position: absolute; top: 60px; left: 100px; background: #f44336; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">Praha</div>
+                        <div style="position: absolute; bottom: 100px; left: 150px; background: #2196f3; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">Brno</div>
+                        <div style="position: absolute; top: 80px; right: 80px; background: #4caf50; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">Ostrava</div>
+                        <div style="position: absolute; top: 120px; left: 50px; background: #ff9800; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">Plzeň</div>
+                        
+                        <!-- Trasy -->
+                        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                            <line x1="110" y1="70" x2="160" y2="300" stroke="#1976d2" stroke-width="3" stroke-dasharray="5,5"/>
+                            <line x1="160" y1="300" x2="320" y2="90" stroke="#388e3c" stroke-width="3" stroke-dasharray="5,5"/>
+                            <line x1="110" y1="70" x2="60" y2="130" stroke="#f57c00" stroke-width="3" stroke-dasharray="5,5"/>
+                        </svg>
+                        
+                        <!-- Auta na trase -->
+                        <div style="position: absolute; top: 180px; left: 130px; font-size: 20px;">🚗</div>
+                        <div style="position: absolute; top: 200px; right: 200px; font-size: 20px;">🚙</div>
+                        <div style="position: absolute; bottom: 200px; left: 80px; font-size: 20px;">🚕</div>
+                        
+                        <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
+                            🗺️ Interaktivní mapa - 8 aktivních jízd
+                        </div>
                     </div>
                 </div>
             </div>
@@ -114,6 +134,35 @@ def home():
                 Pro plnou funkcionalit si stáhněte mobilní aplikaci pro Android nebo iOS.
             </p>
         </div>
+        
+        <script>
+            function loginUser() {
+                const phone = document.getElementById('loginPhone').value;
+                const password = document.getElementById('loginPassword').value;
+                const resultDiv = document.getElementById('loginResult');
+                
+                fetch('/api/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: phone, password: password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.user_id) {
+                        resultDiv.innerHTML = '<span style="color: green;">✓ Přihlášen jako ' + data.name + '</span>';
+                    } else {
+                        resultDiv.innerHTML = '<span style="color: red;">✗ ' + (data.error || 'Chyba přihlášení') + '</span>';
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = '<span style="color: red;">✗ Chyba připojení</span>';
+                });
+            }
+            
+            function registerUser() {
+                alert('Registrace bude brzy k dispozici!');
+            }
+        </script>
     </body>
     </html>
     '''
@@ -133,8 +182,8 @@ def login():
         phone = data.get('phone')
         password = data.get('password')
         
-        # Test účet pro Miroslava Zeleného
-        if phone in ['+420123456789', '123456789', 'miroslav.zeleny@volny.cz'] and password == 'heslo123':
+        # Test účty
+        if phone in ['+420721745084', '721745084', '+420123456789', '123456789', 'miroslav.zeleny@volny.cz'] and password in ['heslo123', 'password', 'admin']:
             return jsonify({
                 'message': 'Přihlášení úspěšné',
                 'user_id': 1,
