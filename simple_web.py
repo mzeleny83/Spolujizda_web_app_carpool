@@ -293,6 +293,18 @@ user_rides = [
         'description': 'Testovací jízda z aplikace',
         'driver_name': 'Miroslav Zelený',
         'driver_rating': 5.0
+    },
+    {
+        'id': 101,
+        'driver_id': 1,
+        'from_location': 'Praha',
+        'to_location': 'Ostrava',
+        'departure_time': '2025-11-20 08:00',
+        'available_seats': 2,
+        'price_per_person': 300,
+        'description': 'Rychlá jízda na východ',
+        'driver_name': 'Miroslav Zelený',
+        'driver_rating': 5.0
     }
 ]
 reservations = []
@@ -523,10 +535,18 @@ def get_all_reservations():
 def get_my_rides():
     try:
         user_id = request.args.get('user_id', 1)
+        print(f'DEBUG: Getting rides for user_id: {user_id}')
+        print(f'DEBUG: Total user_rides: {len(user_rides)}')
+        print(f'DEBUG: user_rides content: {user_rides}')
+        
         # Vrátí jízdy nabídnuté aktuálním uživatelem
         my_rides = [r for r in user_rides if r['driver_id'] == int(user_id)]
+        print(f'DEBUG: Found {len(my_rides)} rides for user {user_id}')
+        print(f'DEBUG: my_rides: {my_rides}')
+        
         return jsonify(my_rides), 200
     except Exception as e:
+        print(f'DEBUG: Error in get_my_rides: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
 @app.route('/test')
