@@ -250,22 +250,35 @@ def register():
 @app.route('/api/users/login', methods=['POST'])
 def login():
     try:
-        data = request.get_json()
+        # Vynucení JSON odpovědi pro API endpointy
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({'error': 'Neplatná data'}), 400
+            
         phone = data.get('phone')
         password = data.get('password')
         
+        if not phone or not password:
+            return jsonify({'error': 'Telefon a heslo jsou povinné'}), 400
+        
         # Test účty
         if phone in ['+420721745084', '721745084', '+420123456789', '123456789', 'miroslav.zeleny@volny.cz'] and password in ['123', 'password', 'admin', 'heslo']:
-            return jsonify({
+            response = jsonify({
                 'message': 'Přihlášení úspěšné',
                 'user_id': 1,
                 'name': 'Miroslav Zelený',
                 'rating': 5.0
-            }), 200
+            })
+            response.headers['Content-Type'] = 'application/json'
+            return response, 200
         else:
-            return jsonify({'error': 'Neplatné přihlašovací údaje'}), 401
+            response = jsonify({'error': 'Neplatné přihlašovací údaje'})
+            response.headers['Content-Type'] = 'application/json'
+            return response, 401
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        response = jsonify({'error': f'Chyba serveru: {str(e)}'})
+        response.headers['Content-Type'] = 'application/json'
+        return response, 500
 
 # Globální seznamy pro ukládání dat
 user_rides = []
@@ -293,9 +306,13 @@ def offer_ride():
         # Přidání do seznamu
         user_rides.append(new_ride)
         
-        return jsonify({'message': 'Jízda nabídnuta', 'ride_id': new_ride['id']}), 201
+        response = jsonify({'message': 'Jízda nabídnuta', 'ride_id': new_ride['id']})
+        response.headers['Content-Type'] = 'application/json'
+        return response, 201
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        response = jsonify({'error': str(e)})
+        response.headers['Content-Type'] = 'application/json'
+        return response, 500
 
 # Mock data pro jízdy
 mock_rides = [
@@ -399,104 +416,6 @@ mock_rides = [
 
 @app.route('/api/rides/search', methods=['GET'])
 def search_rides():
-    global mock_rides
-        {
-            'id': 1,
-            'driver_id': 1,
-            'from_location': 'Praha',
-            'to_location': 'Brno',
-            'departure_time': '2025-11-18 15:00',
-            'available_seats': 3,
-            'price_per_person': 200,
-            'description': 'Pohodová jízda',
-            'driver_name': 'Jan Novák',
-            'driver_rating': 4.8
-        },
-        {
-            'id': 2,
-            'driver_id': 2,
-            'from_location': 'Brno',
-            'to_location': 'Praha',
-            'departure_time': '2025-11-18 17:30',
-            'available_seats': 2,
-            'price_per_person': 250,
-            'description': 'Rychlá jízda',
-            'driver_name': 'Marie Svobodová',
-            'driver_rating': 4.9
-        },
-        {
-            'id': 3,
-            'driver_id': 3,
-            'from_location': 'Brno',
-            'to_location': 'Ostrava',
-            'departure_time': '2025-11-18 16:00',
-            'available_seats': 4,
-            'price_per_person': 180,
-            'description': 'Společná cesta',
-            'driver_name': 'Tomáš Novotný',
-            'driver_rating': 4.7
-        },
-        {
-            'id': 4,
-            'driver_id': 4,
-            'from_location': 'Ostrava',
-            'to_location': 'Praha',
-            'departure_time': '2025-11-18 14:00',
-            'available_seats': 1,
-            'price_per_person': 300,
-            'description': 'Komfortní auto',
-            'driver_name': 'Petr Dvořák',
-            'driver_rating': 5.0
-        },
-        {
-            'id': 5,
-            'driver_id': 5,
-            'from_location': 'Praha',
-            'to_location': 'Plzeň',
-            'departure_time': '2025-11-18 18:00',
-            'available_seats': 2,
-            'price_per_person': 150,
-            'description': 'Večerní jízda',
-            'driver_name': 'Anna Krásná',
-            'driver_rating': 4.6
-        },
-        {
-            'id': 6,
-            'driver_id': 6,
-            'from_location': 'Plzeň',
-            'to_location': 'Praha',
-            'departure_time': '2025-11-19 08:00',
-            'available_seats': 3,
-            'price_per_person': 140,
-            'description': 'Ranní pendlování',
-            'driver_name': 'Lukáš Černý',
-            'driver_rating': 4.8
-        },
-        {
-            'id': 7,
-            'driver_id': 7,
-            'from_location': 'České Budějovice',
-            'to_location': 'Praha',
-            'departure_time': '2025-11-18 19:00',
-            'available_seats': 2,
-            'price_per_person': 220,
-            'description': 'Přímá cesta',
-            'driver_name': 'Michaela Nová',
-            'driver_rating': 4.9
-        },
-        {
-            'id': 8,
-            'driver_id': 8,
-            'from_location': 'Praha',
-            'to_location': 'Liberec',
-            'departure_time': '2025-11-18 16:30',
-            'available_seats': 1,
-            'price_per_person': 180,
-            'description': 'Rychlá jízda',
-            'driver_name': 'David Svoboda',
-            'driver_rating': 4.7
-        }
-    ]
     
     # Kombinace mock dat a uživatelských jízd
     all_rides = mock_rides + user_rides
@@ -523,7 +442,7 @@ def search_rides():
 @app.route('/api/rides/reserve', methods=['POST'])
 def reserve_ride():
     try:
-        data = request.get_json()
+        data = request.get_json(force=True)
         ride_id = data.get('ride_id')
         
         # Najít informace o jízdě
@@ -551,12 +470,16 @@ def reserve_ride():
         # Přidání do seznamu
         reservations.append(new_reservation)
         
-        return jsonify({
+        response = jsonify({
             'message': 'Jízda byla úspěšně zarezervována!',
             'reservation_id': new_reservation['id']
-        }), 201
+        })
+        response.headers['Content-Type'] = 'application/json'
+        return response, 201
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        response = jsonify({'error': str(e)})
+        response.headers['Content-Type'] = 'application/json'
+        return response, 500
 
 @app.route('/api/reservations', methods=['GET'])
 def get_reservations():
