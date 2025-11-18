@@ -87,7 +87,13 @@ def home():
                         </iframe>
                         
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-
+                        
+                        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                            <line x1="35%" y1="45%" x2="55%" y2="70%" stroke="#1976d2" stroke-width="3" stroke-dasharray="6,3"/>
+                            <line x1="35%" y1="45%" x2="85%" y2="20%" stroke="#388e3c" stroke-width="3" stroke-dasharray="6,3"/>
+                            <line x1="35%" y1="45%" x2="20%" y2="55%" stroke="#f57c00" stroke-width="3" stroke-dasharray="6,3"/>
+                            <line x1="55%" y1="70%" x2="85%" y2="20%" stroke="#9c27b0" stroke-width="2" stroke-dasharray="4,4"/>
+                        </svg>
                         
                         <!-- Kompas -->
                         <div style="position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; border: 2px solid #666;">N</div>
