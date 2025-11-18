@@ -232,7 +232,7 @@ class _AllRidesScreenState extends State<AllRidesScreen> {
                           onPressed: () {
                             Navigator.pushNamed(context, '/chat', arguments: {
                               'contact_name': ride['driver_name'],
-                              'contact_phone': '+420721745084',
+                              'contact_phone': ride['driver_phone'] ?? '+420721745084',
                               'ride_info': '${ride['from_location']} → ${ride['to_location']}'
                             });
                           },

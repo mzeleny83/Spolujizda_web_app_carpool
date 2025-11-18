@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class OSMMapScreen extends StatefulWidget {
@@ -220,47 +221,99 @@ class _OSMMapScreenState extends State<OSMMapScreen> {
     return [];
   }
 
+  Future<void> _reserveRide(Map<String, dynamic> ride) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('user_id') ?? 1;
+      
+      final response = await http.post(
+        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/reserve'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'ride_id': ride['id'],
+          'passenger_id': userId,
+          'seats_reserved': 1,
+        }),
+      );
+      
+      Navigator.pop(context); // Zavře modal
+      
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Jízda byla úspěšně zarezervována!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        final data = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Chyba při rezervaci')),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Chyba připojení: $e')),
+      );
+    }
+  }
+
   void _showRideInfo(Map<String, dynamic> ride) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Jízda s ${ride['driver_name'] ?? 'Neznámý řidič'}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Text('Trasa: ${ride['from_location']} → ${ride['to_location']}'),
-            Text('Čas odjezdu: ${ride['departure_time']}'),
-            Text('Volná místa: ${ride['available_seats']}'),
-            Text('Cena: ${ride['price_per_person']} Kč'),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/chat');
-                  },
-                  child: const Text('Kontaktovat'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Žádost o jízdu odeslána!')),
-                    );
-                  },
-                  child: const Text('Rezervovat'),
-                ),
-              ],
-            ),
-          ],
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Jízda s ${ride['driver_name'] ?? 'Neznámý řidič'}',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Text('Trasa: ${ride['from_location']} → ${ride['to_location']}'),
+              Text('Čas odjezdu: ${ride['departure_time']}'),
+              Text('Volná místa: ${ride['available_seats']}'),
+              Text('Cena: ${ride['price_per_person']} Kč'),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/chat', arguments: {
+                        'contact_name': ride['driver_name'],
+                        'contact_phone': ride['driver_phone'] ?? '+420721745084',
+                        'ride_info': '${ride['from_location']} → ${ride['to_location']}'
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Chat'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _reserveRide(ride),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Rezervovat'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );

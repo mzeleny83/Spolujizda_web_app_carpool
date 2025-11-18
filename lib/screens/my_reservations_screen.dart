@@ -21,6 +21,26 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     _fetchReservations();
   }
 
+  Future<void> _cancelReservation(int reservationId) async {
+    try {
+      // Simulace zrušení rezervace
+      setState(() {
+        _reservations.removeWhere((r) => r['id'] == reservationId);
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✓ Rezervace byla zrušena'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Chyba při rušení: $e')),
+      );
+    }
+  }
+
   Future<void> _fetchReservations() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -125,21 +145,26 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                 ),
               ),
               title: Text(
-                'Rezervace #${reservation['id']}',
+                '${reservation['from_location'] ?? 'Neznámé'} → ${reservation['to_location'] ?? 'Neznámé'}',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
+                  Text('Řidič: ${reservation['driver_name'] ?? 'Neznámý'}'),
+                  Text('Čas: ${reservation['departure_time'] ?? 'Neznámý'}'),
                   Row(
                     children: [
                       const Icon(Icons.event_seat, size: 16, color: Colors.amber),
                       const SizedBox(width: 4),
                       Text('${reservation['seats_reserved']} místo'),
+                      const SizedBox(width: 16),
+                      const Icon(Icons.attach_money, size: 16, color: Colors.green),
+                      const SizedBox(width: 4),
+                      Text('${reservation['price_per_person'] ?? 0} Kč'),
                     ],
                   ),
-                  const SizedBox(height: 2),
                   Row(
                     children: [
                       const Icon(Icons.check_circle, size: 16, color: Colors.green),
@@ -147,29 +172,37 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                       Text('Status: ${reservation['status']}'),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 16, color: Colors.blue),
-                      const SizedBox(width: 4),
-                      Text('Vytvořeno: ${reservation['created_at']}'),
-                    ],
-                  ),
                 ],
               ),
-              trailing: ElevatedButton(
-                onPressed: () {
-                  // Zde by byla logika pro zrušení rezervace
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Funkce zrušení bude brzy k dispozici')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                child: const Text('Zrušit'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/chat', arguments: {
+                        'contact_name': reservation['driver_name'] ?? 'Neznámý řidič',
+                        'contact_phone': reservation['driver_phone'] ?? '+420721745084',
+                        'ride_info': '${reservation['from_location']} → ${reservation['to_location']}'
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    ),
+                    child: const Text('Chat'),
+                  ),
+                  const SizedBox(width: 4),
+                  ElevatedButton(
+                    onPressed: () => _cancelReservation(reservation['id']),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    ),
+                    child: const Text('Zrušit'),
+                  ),
+                ],
               ),
             ),
           );

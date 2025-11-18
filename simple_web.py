@@ -314,7 +314,7 @@ def offer_ride():
         response.headers['Content-Type'] = 'application/json'
         return response, 500
 
-# Mock data pro jízdy
+# Mock data pro jízdy s různými telefonními čísly
 mock_rides = [
     {
         'id': 1,
@@ -326,6 +326,7 @@ mock_rides = [
         'price_per_person': 200,
         'description': 'Pohodová jízda',
         'driver_name': 'Jan Novák',
+        'driver_phone': '+420602123456',
         'driver_rating': 4.8
     },
     {
@@ -338,6 +339,7 @@ mock_rides = [
         'price_per_person': 250,
         'description': 'Rychlá jízda',
         'driver_name': 'Marie Svobodová',
+        'driver_phone': '+420603234567',
         'driver_rating': 4.9
     },
     {
@@ -350,6 +352,7 @@ mock_rides = [
         'price_per_person': 180,
         'description': 'Společná cesta',
         'driver_name': 'Tomáš Novotný',
+        'driver_phone': '+420604345678',
         'driver_rating': 4.7
     },
     {
@@ -362,6 +365,7 @@ mock_rides = [
         'price_per_person': 300,
         'description': 'Komfortní auto',
         'driver_name': 'Petr Dvořák',
+        'driver_phone': '+420605456789',
         'driver_rating': 5.0
     },
     {
@@ -374,6 +378,7 @@ mock_rides = [
         'price_per_person': 150,
         'description': 'Večerní jízda',
         'driver_name': 'Anna Krásná',
+        'driver_phone': '+420606567890',
         'driver_rating': 4.6
     },
     {
@@ -386,6 +391,7 @@ mock_rides = [
         'price_per_person': 140,
         'description': 'Ranní pendlování',
         'driver_name': 'Lukáš Černý',
+        'driver_phone': '+420607678901',
         'driver_rating': 4.8
     },
     {
@@ -398,6 +404,7 @@ mock_rides = [
         'price_per_person': 220,
         'description': 'Přímá cesta',
         'driver_name': 'Michaela Nová',
+        'driver_phone': '+420608789012',
         'driver_rating': 4.9
     },
     {
@@ -410,6 +417,7 @@ mock_rides = [
         'price_per_person': 180,
         'description': 'Rychlá jízda',
         'driver_name': 'David Svoboda',
+        'driver_phone': '+420609890123',
         'driver_rating': 4.7
     }
 ]
@@ -463,7 +471,7 @@ def reserve_ride():
             'to_location': ride_info['to_location'] if ride_info else 'Neznámé',
             'departure_time': ride_info['departure_time'] if ride_info else 'Neznámý',
             'driver_name': ride_info['driver_name'] if ride_info else 'Neznámý řidič',
-            'driver_phone': '+420721745084',  # Simulace telefonu řidiče
+            'driver_phone': ride_info.get('driver_phone', '+420721745084') if ride_info else '+420721745084',  # Telefon řidiče
             'price_per_person': ride_info['price_per_person'] if ride_info else 0
         }
         

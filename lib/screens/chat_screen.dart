@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -17,11 +18,11 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final arguments = ModalRoute.of(context)?.settings.arguments as Map<String, String>?;
-    if (arguments != null) {
-      _contactName = arguments['contact_name'];
-      _contactPhone = arguments['contact_phone'];
-      _rideInfo = arguments['ride_info'];
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    if (arguments != null && arguments is Map<String, dynamic>) {
+      _contactName = arguments['contact_name']?.toString();
+      _contactPhone = arguments['contact_phone']?.toString();
+      _rideInfo = arguments['ride_info']?.toString();
       
       // Inicializace zpráv s kontextem jízdy
       if (_messages.isEmpty) {
@@ -30,6 +31,54 @@ class _ChatScreenState extends State<ChatScreen> {
           {'sender': 'Já', 'message': 'Ano, rád bych si zarezervoval místo', 'time': '14:32'},
           {'sender': _contactName ?? 'Kontakt', 'message': 'Výborně! Kde se sejdeme?', 'time': '14:35'},
         ];
+      }
+    } else {
+      // Fallback pro případ, kdy nejsou argumenty
+      _contactName = 'Kontakt';
+      _contactPhone = '+420721745084';
+      _rideInfo = 'Jízda';
+      if (_messages.isEmpty) {
+        _messages = [
+          {'sender': 'Kontakt', 'message': 'Ahoj! Jak se máte?', 'time': '14:30'},
+        ];
+      }
+    }
+  }
+
+  Future<void> _makePhoneCall() async {
+    if (_contactPhone != null) {
+      final Uri phoneUri = Uri(scheme: 'tel', path: _contactPhone);
+      try {
+        if (await canLaunchUrl(phoneUri)) {
+          await launchUrl(phoneUri);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Nelze volat na číslo $_contactPhone')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Chyba při volání: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendSMS() async {
+    if (_contactPhone != null) {
+      final Uri smsUri = Uri(scheme: 'sms', path: _contactPhone);
+      try {
+        if (await canLaunchUrl(smsUri)) {
+          await launchUrl(smsUri);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Nelze poslat SMS na číslo $_contactPhone')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Chyba při odesílání SMS: $e')),
+        );
       }
     }
   }
@@ -66,12 +115,35 @@ class _ChatScreenState extends State<ChatScreen> {
           if (_contactPhone != null)
             IconButton(
               icon: const Icon(Icons.phone),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Telefon: $_contactPhone')),
-                );
-              },
+              onPressed: _makePhoneCall,
+              tooltip: 'Zavolat $_contactPhone',
             ),
+          IconButton(
+            icon: const Icon(Icons.info),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Kontakt'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Jméno: ${_contactName ?? 'Neznámé'}'),
+                      Text('Telefon: ${_contactPhone ?? 'Neznámé'}'),
+                      Text('Jízda: ${_rideInfo ?? 'Neznámá'}'),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Zavřít'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
       body: Column(
@@ -120,26 +192,18 @@ class _ChatScreenState extends State<ChatScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         ElevatedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Volat: $_contactPhone')),
-                            );
-                          },
+                          onPressed: _makePhoneCall,
                           icon: const Icon(Icons.phone),
-                          label: const Text('Zavolat'),
+                          label: Text('Zavolat\n$_contactPhone'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
                           ),
                         ),
                         ElevatedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('SMS na: $_contactPhone')),
-                            );
-                          },
+                          onPressed: _sendSMS,
                           icon: const Icon(Icons.sms),
-                          label: const Text('SMS'),
+                          label: Text('SMS\n$_contactPhone'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
                             foregroundColor: Colors.white,
