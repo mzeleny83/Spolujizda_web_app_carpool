@@ -88,10 +88,10 @@ def home():
                         
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(255,255,255,0.1);">
                         <!-- Města na mapě - geograficky správně -->
-                        <div style="position: absolute; top: 120px; left: 120px; background: #d32f2f; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Praha</div>
-                        <div style="position: absolute; top: 220px; left: 220px; background: #1976d2; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Brno</div>
-                        <div style="position: absolute; top: 80px; right: 100px; background: #388e3c; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Ostrava</div>
-                        <div style="position: absolute; top: 200px; left: 40px; background: #f57c00; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Plzeň</div>
+                        <div style="position: absolute; top: 45%; left: 35%; background: #d32f2f; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">Praha</div>
+                        <div style="position: absolute; top: 70%; left: 55%; background: #1976d2; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">Brno</div>
+                        <div style="position: absolute; top: 20%; right: 15%; background: #388e3c; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">Ostrava</div>
+                        <div style="position: absolute; top: 55%; left: 20%; background: #f57c00; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">Plzeň</div>
                         
                         <!-- Trasy - geograficky správné směry -->
                         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
