@@ -86,14 +86,7 @@ def home():
                             title="Mapa České republiky">
                         </iframe>
                         
-                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(255,255,255,0.1);">
-                        <!-- Města na mapě - geograficky správně -->
-
-
-
-
-                        
-                        <!-- Trasy - geograficky správné směry -->
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                             <!-- Praha → Brno (JV směr) -->
                             <line x1="140" y1="140" x2="240" y2="240" stroke="#1976d2" stroke-width="4" stroke-dasharray="8,4"/>
