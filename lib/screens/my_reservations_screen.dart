@@ -74,7 +74,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Moje rezervace'),
+        title: const Text('Rezervované jízdy'),
         backgroundColor: Colors.amber,
         foregroundColor: Colors.white,
       ),
@@ -118,7 +118,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
           children: [
             Icon(Icons.event_seat_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('Nemáte žádné rezervace.'),
+            Text('Nemáte rezervované žádné jízdy.'),
             SizedBox(height: 8),
             Text('Vyhledejte jízdu a rezervujte si místo!', 
                  style: TextStyle(color: Colors.grey)),

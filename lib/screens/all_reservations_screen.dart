@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import '../services/ride_service.dart';
 
 class AllReservationsScreen extends StatefulWidget {
   const AllReservationsScreen({super.key});
@@ -10,270 +8,224 @@ class AllReservationsScreen extends StatefulWidget {
   State<AllReservationsScreen> createState() => _AllReservationsScreenState();
 }
 
-class _AllReservationsScreenState extends State<AllReservationsScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  List<dynamic> _myReservations = [];
-  List<dynamic> _othersReservations = [];
-  bool _isLoading = true;
-  String? _error;
+class _AllReservationsScreenState extends State<AllReservationsScreen> {
+  final RideService _rideService = RideService();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _fetchAllReservations();
-  }
-
-  Future<void> _fetchAllReservations() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getInt('user_id') ?? 1;
-      
-      // Načtení mých rezervací
-      final myReservationsResponse = await http.get(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/reservations?user_id=$userId'),
-      );
-
-      // Načtení všech rezervací (simulace - v reálné aplikaci by byl speciální endpoint)
-      final allReservationsResponse = await http.get(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/reservations/all'),
-      );
-
-      if (myReservationsResponse.statusCode == 200) {
-        final myData = json.decode(utf8.decode(myReservationsResponse.bodyBytes));
-        
-        // Simulace rezervací u mých jízd (v reálné aplikaci by to bylo z backendu)
-        final othersData = [
-          {
-            'id': 101,
-            'ride_id': 1,
-            'passenger_name': 'Jan Novák',
-            'seats_reserved': 2,
-            'status': 'confirmed',
-            'created_at': '2025-11-18 14:30:00',
-            'ride_info': 'Praha → Brno'
-          },
-          {
-            'id': 102,
-            'ride_id': 2,
-            'passenger_name': 'Marie Svobodová',
-            'seats_reserved': 1,
-            'status': 'confirmed',
-            'created_at': '2025-11-18 15:45:00',
-            'ride_info': 'Brno → Ostrava'
-          }
-        ];
-        
-        setState(() {
-          _myReservations = myData;
-          _othersReservations = othersData;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _error = 'Nepodařilo se načíst rezervace. Kód: ${myReservationsResponse.statusCode}';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Chyba připojení: $e';
-        _isLoading = false;
-      });
-    }
+    // Přidáme listener pro aktualizace
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {}); // Refresh při načtení
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Všechny rezervace'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(icon: Icon(Icons.person), text: 'Moje rezervace'),
-            Tab(icon: Icon(Icons.group), text: 'U mých jízd'),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Moje jízdy'),
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => setState(() {}),
+            ),
+          ],
+          bottom: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.white,
+            tabs: [
+              Tab(icon: Icon(Icons.event_seat), text: 'Moje rezervace'),
+              Tab(icon: Icon(Icons.directions_car), text: 'Mnou nabízené'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildReservations(),
+            _buildOfferedRides(),
           ],
         ),
       ),
-      body: _isLoading ? _buildLoading() : _buildTabView(),
     );
   }
 
-  Widget _buildLoading() {
-    return const Center(child: CircularProgressIndicator());
-  }
-
-  Widget _buildTabView() {
-    if (_error != null) {
-      return _buildError();
-    }
-
-    return TabBarView(
-      controller: _tabController,
-      children: [
-        _buildMyReservations(),
-        _buildOthersReservations(),
-      ],
-    );
-  }
-
-  Widget _buildError() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
-          Text(_error!, textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _isLoading = true;
-                _error = null;
-              });
-              _fetchAllReservations();
-            },
-            child: const Text('Zkusit znovu'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMyReservations() {
-    if (_myReservations.isEmpty) {
+  Widget _buildReservations() {
+    final myReservations = _rideService.getMyReservations();
+    
+    if (myReservations.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.event_seat_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('Nemáte žádné rezervace.'),
+            Text('Nemáte žádné rezervace jízd.'),
           ],
         ),
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _fetchAllReservations,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(8.0),
-        itemCount: _myReservations.length,
-        itemBuilder: (context, index) {
-          final reservation = _myReservations[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4.0),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.blue,
-                child: Text(
-                  '${reservation['seats_reserved']}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-              title: Text('${reservation['from_location']} → ${reservation['to_location']}'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  Text('Řidič: ${reservation['driver_name']}'),
-                  Text('Čas: ${reservation['departure_time']}'),
-                  Text('${reservation['seats_reserved']} místo • ${reservation['price_per_person']} Kč'),
-                  Text('Status: ${reservation['status']}'),
-                ],
-              ),
-              trailing: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/chat', arguments: {
-                    'contact_name': reservation['driver_name'],
-                    'contact_phone': reservation['driver_phone'],
-                    'ride_info': '${reservation['from_location']} → ${reservation['to_location']}'
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                child: const Text('Chat'),
-              ),
+    return ListView.builder(
+      itemCount: myReservations.length,
+      itemBuilder: (context, index) {
+        final reservation = myReservations[index];
+        return Card(
+          margin: const EdgeInsets.all(8.0),
+          child: ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Colors.blue,
+              child: Icon(Icons.event_seat, color: Colors.white),
             ),
-          );
-        },
-      ),
+            title: Text(reservation['title']),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Řidič: ${reservation['driver']}'),
+                Text('Čas: ${reservation['time']}'),
+                Text('Cena: ${reservation['price']} Kč'),
+              ],
+            ),
+            trailing: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/chat',
+                  arguments: {
+                    'contact_name': reservation['driver'],
+                    'contact_phone': '+420602123456',
+                    'ride_info': reservation['title'],
+                  },
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: const Text('Chat', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildOthersReservations() {
-    if (_othersReservations.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.group_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Nikdo si zatím nezarezervoval vaše jízdy.'),
-          ],
+  Widget _buildOfferedRides() {
+    final myRides = _rideService.getMyRides();
+    
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8.0),
+          color: Colors.blue.shade50,
+          child: Row(
+            children: [
+              const Icon(Icons.info, color: Colors.blue),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Celkem jízd: ${myRides.length}. Klikněte na refresh pro aktualizaci.',
+                  style: const TextStyle(color: Colors.blue),
+                ),
+              ),
+            ],
+          ),
         ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _fetchAllReservations,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(8.0),
-        itemCount: _othersReservations.length,
-        itemBuilder: (context, index) {
-          final reservation = _othersReservations[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4.0),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.green,
-                child: Text(
-                  (reservation['passenger_name'] ?? 'N')[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        Expanded(
+          child: myRides.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.directions_car_outlined, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text('Nemáte žádné jízdy, které nabízíte.'),
+                      SizedBox(height: 8),
+                      Text('Nabídněte jízdu přes "Nabídnout jízdu"', 
+                           style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: myRides.length,
+                  itemBuilder: (context, index) {
+                    final ride = myRides[index];
+                    return Card(
+                      margin: const EdgeInsets.all(8.0),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.green,
+                          child: Text('${ride['seats']}', 
+                                     style: const TextStyle(color: Colors.white)),
+                        ),
+                        title: Text(ride['title']),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Čas: ${ride['time']}'),
+                            Text('Volná místa: ${ride['seats']} • ${ride['price']} Kč'),
+                            Text('Poznámka: ${ride['note']}'),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Jízda ${ride['title']} je aktivní')),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                              child: const Text('Aktivní', style: TextStyle(color: Colors.white)),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () => _deleteRide(index),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                              child: const Text('Smazat', style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
-              title: Text(reservation['passenger_name'] ?? 'Neznámý cestující'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${reservation['ride_info']} • ${reservation['seats_reserved']} místo'),
-                  Text('Rezervováno: ${reservation['created_at']}'),
-                  Text('Status: ${reservation['status']}'),
-                ],
-              ),
-              trailing: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Kontakt bude brzy k dispozici')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                child: const Text('Kontakt'),
-              ),
-            ),
-          );
-        },
-      ),
+        ),
+      ],
     );
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  void _deleteRide(int index) {
+    final myRides = _rideService.getMyRides();
+    final rideId = myRides[index]['id'];
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Smazat jízdu'),
+        content: Text('Opravdu chcete smazat jízdu ${myRides[index]['title']}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Zrušit'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _rideService.deleteRide(rideId);
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Jízda byla smazána')),
+              );
+            },
+            child: const Text('Smazat', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 }

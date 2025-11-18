@@ -17,6 +17,7 @@ import 'screens/driver_reservations_screen.dart';
 import 'screens/all_rides_screen.dart';
 import 'screens/my_reservations_screen.dart';
 import 'screens/all_reservations_screen.dart';
+import 'screens/test_screen.dart';
 
 void main() {
   runApp(const MyApp());

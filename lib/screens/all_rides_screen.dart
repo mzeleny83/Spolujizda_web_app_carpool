@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import '../services/ride_service.dart';
 
 class AllRidesScreen extends StatefulWidget {
   const AllRidesScreen({super.key});
@@ -11,92 +9,59 @@ class AllRidesScreen extends StatefulWidget {
 }
 
 class _AllRidesScreenState extends State<AllRidesScreen> {
-  List<dynamic> _rides = [];
-  bool _isLoading = true;
-  String? _error;
+  final RideService _rideService = RideService();
   Set<int> _reservedRides = {};
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchAllRides();
+  Future<void> _reserveRide(Map<String, dynamic> ride) async {
+    await _rideService.addReservation(ride);
+    setState(() {
+      _reservedRides.add(ride['id']);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✓ Jízda byla úspěšně zarezervována!'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
-  Future<void> _fetchAllRides() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
-        setState(() {
-          _rides = data;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _error = 'Nepodařilo se načíst jízdy. Kód: ${response.statusCode}';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Chyba připojení: $e';
-        _isLoading = false;
-      });
-    }
+  void _openChat(Map<String, dynamic> ride) {
+    Navigator.pushNamed(
+      context,
+      '/chat',
+      arguments: {
+        'contact_name': ride['driver'],
+        'contact_phone': '+420602123456',
+        'ride_info': ride['title'],
+      },
+    );
   }
 
-  Future<void> _reserveRide(int rideId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getInt('user_id') ?? 1;
-      
-      final response = await http.post(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/reserve'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'ride_id': rideId,
-          'passenger_id': userId,
-          'seats_reserved': 1,
-        }),
-      );
-      
-      if (response.statusCode == 201) {
-        setState(() {
-          _reservedRides.add(rideId);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Jízda byla úspěšně zarezervována!'),
-            backgroundColor: Colors.green,
+  void _deleteRide(int rideId, String title) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Smazat jízdu'),
+        content: Text('Opravdu chcete smazat jízdu $title?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Zrušit'),
           ),
-        );
-      } else {
-        final data = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'] ?? 'Chyba při rezervaci')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Chyba připojení: $e')),
-      );
-    }
-  }
-
-  Widget _buildRatingStars(double rating) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(5, (index) {
-        return Icon(
-          index < rating.floor() ? Icons.star : 
-          index < rating ? Icons.star_half : Icons.star_border,
-          color: Colors.amber,
-          size: 16,
-        );
-      }),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _rideService.deleteRide(rideId);
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Jízda byla smazána')),
+              );
+            },
+            child: const Text('Smazat', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -113,35 +78,9 @@ class _AllRidesScreenState extends State<AllRidesScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    final allRides = _rideService.getAllRides();
 
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _isLoading = true;
-                  _error = null;
-                });
-                _fetchAllRides();
-              },
-              child: const Text('Zkusit znovu'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_rides.isEmpty) {
+    if (allRides.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -154,101 +93,86 @@ class _AllRidesScreenState extends State<AllRidesScreen> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _fetchAllRides,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(8.0),
-        itemCount: _rides.length,
-        itemBuilder: (context, index) {
-          final ride = _rides[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4.0),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.teal,
-                child: Text(
-                  (ride['driver_name'] ?? 'N')[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
+    return ListView.builder(
+      padding: const EdgeInsets.all(8.0),
+      itemCount: allRides.length,
+      itemBuilder: (context, index) {
+        final ride = allRides[index];
+        final isMyRide = ride['isMyRide'] == true;
+        final isReserved = _reservedRides.contains(ride['id']);
+        
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 4.0),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: isMyRide ? Colors.indigo : Colors.teal,
+              child: Text(
+                '${ride['seats']}',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
-              title: Text(
-                ride['driver_name'] ?? 'Neznámý řidič',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  _buildRatingStars(ride['driver_rating']?.toDouble() ?? 5.0),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, size: 16, color: Colors.green),
-                      const SizedBox(width: 4),
-                      Expanded(child: Text(ride['from_location'] ?? '')),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.flag, size: 16, color: Colors.red),
-                      const SizedBox(width: 4),
-                      Expanded(child: Text(ride['to_location'] ?? '')),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 16, color: Colors.blue),
-                      const SizedBox(width: 4),
-                      Text(ride['departure_time'] ?? ''),
-                      const Spacer(),
-                      const Icon(Icons.attach_money, size: 16, color: Colors.orange),
-                      Text('${ride['price_per_person']} Kč'),
-                    ],
-                  ),
-                ],
-              ),
-              trailing: _reservedRides.contains(ride['id'])
-                  ? const Chip(
-                      label: Text('Rezervováno'),
-                      backgroundColor: Colors.green,
-                      labelStyle: TextStyle(color: Colors.white),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () => _reserveRide(ride['id']),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          ),
-                          child: const Text('Rezervovat'),
-                        ),
-                        const SizedBox(width: 4),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/chat', arguments: {
-                              'contact_name': ride['driver_name'],
-                              'contact_phone': ride['driver_phone'] ?? '+420721745084',
-                              'ride_info': '${ride['from_location']} → ${ride['to_location']}'
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          ),
-                          child: const Text('Chat'),
-                        ),
-                      ],
-                    ),
             ),
-          );
-        },
-      ),
+            title: Text(
+              ride['title'],
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text('Řidič: ${ride['driver']}'),
+                Text('Čas: ${ride['time']}'),
+                Text('Volná místa: ${ride['seats']} • ${ride['price']} Kč'),
+                if (ride['note'] != null && ride['note'].toString().isNotEmpty)
+                  Text('Poznámka: ${ride['note']}'),
+                if (isMyRide)
+                  const Text('🚗 Vaše jízda', style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            trailing: isMyRide
+                ? ElevatedButton(
+                    onPressed: () => _deleteRide(ride['id'], ride['title']),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    child: const Text('Smazat', style: TextStyle(color: Colors.white)),
+                  )
+                : isReserved
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Chip(
+                            label: Text('Rezervováno'),
+                            backgroundColor: Colors.green,
+                            labelStyle: TextStyle(color: Colors.white),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _openChat(ride),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                            child: const Text('Chat', style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () => _reserveRide(ride),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Rezervovat'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _openChat(ride),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                            child: const Text('Chat', style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ),
+          ),
+        );
+      },
     );
   }
 }

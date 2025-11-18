@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../services/ride_service.dart';
 
 class OfferRideScreen extends StatefulWidget {
   const OfferRideScreen({super.key});
@@ -17,7 +15,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
   final _timeController = TextEditingController();
   final _seatsController = TextEditingController();
   final _priceController = TextEditingController();
-  bool _isLoading = false;
+
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
 
@@ -27,7 +25,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
-  Future<void> _offerRide() async {
+  void _offerRide() {
     if (_fromController.text.isEmpty || _toController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vyplňte všechna povinná pole')),
@@ -35,44 +33,21 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    final dateTime = _buildDateTime();
+    final newRide = {
+      'title': '${_fromController.text.trim()} → ${_toController.text.trim()}',
+      'time': '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}',
+      'seats': int.tryParse(_seatsController.text) ?? 1,
+      'price': int.tryParse(_priceController.text) ?? 0,
+      'note': 'Jízda nabídnuta přes mobilní aplikaci',
+    };
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getInt('user_id');
-
-      final response = await http.post(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/offer'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'driver_id': userId,
-          'from_location': _fromController.text.trim(),
-          'to_location': _toController.text.trim(),
-          'departure_time': _buildDateTime().toIso8601String(),
-          'available_seats': int.tryParse(_seatsController.text) ?? 1,
-          'price': double.tryParse(_priceController.text) ?? 0.0,
-          'description': 'Jízda nabídnuta přes mobilní aplikaci'
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Jízda byla úspěšně nabídnuta!')),
-        );
-        Navigator.pop(context);
-      } else {
-        final data = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'] ?? 'Chyba při nabídce jízdy')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Chyba připojení: $e')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
+    RideService().addRide(newRide);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Jízda byla úspěšně nabídnuta!')),
+    );
+    Navigator.pop(context);
   }
 
   @override
@@ -170,10 +145,8 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _offerRide,
-                  child: _isLoading 
-                    ? const CircularProgressIndicator()
-                    : const Text('Nabídnout jízdu'),
+                  onPressed: _offerRide,
+                  child: const Text('Nabídnout jízdu'),
                 ),
               ),
             ],

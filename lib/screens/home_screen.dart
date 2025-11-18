@@ -1,7 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _userInfo = 'Načítám...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
+    final userName = prefs.getString('user_name');
+    final userRating = prefs.getDouble('user_rating');
+    
+    setState(() {
+      _userInfo = 'ID: $userId | Jméno: $userName | Hodnocení: $userRating';
+    });
+    
+    print('DEBUG HomeScreen - User ID: $userId, Name: $userName, Rating: $userRating');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,33 +48,29 @@ class HomeScreen extends StatelessWidget {
           children: [
             const Text('Vítejte v aplikaci Spolujízda!', 
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 40),
+            const SizedBox(height: 16),
+            Text(_userInfo, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 24),
             Expanded(
               child: GridView.count(
-                crossAxisCount: 3,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                crossAxisCount: 2,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+                childAspectRatio: 1.1,
                 children: [
                   _buildMenuCard(
                     context,
-                    'Všechny dostupné jízdy',
-                    Icons.list_alt,
-                    Colors.teal,
-                    '/all-rides',
+                    'Moje jízdy',
+                    Icons.person,
+                    Colors.indigo,
+                    '/all-reservations',
                   ),
                   _buildMenuCard(
                     context,
                     'Nabídnout jízdu',
-                    Icons.directions_car,
+                    Icons.add_circle,
                     Colors.green,
                     '/offer',
-                  ),
-                  _buildMenuCard(
-                    context,
-                    'Hledat jízdu',
-                    Icons.search,
-                    Colors.blue,
-                    '/simple',
                   ),
                   _buildMenuCard(
                     context,
@@ -58,24 +81,24 @@ class HomeScreen extends StatelessWidget {
                   ),
                   _buildMenuCard(
                     context,
+                    'Hledat jízdu',
+                    Icons.search,
+                    Colors.blue,
+                    '/simple',
+                  ),
+                  _buildMenuCard(
+                    context,
+                    'Všechny dostupné jízdy',
+                    Icons.list_alt,
+                    Colors.teal,
+                    '/all-rides',
+                  ),
+                  _buildMenuCard(
+                    context,
                     'Zprávy',
                     Icons.chat,
                     Colors.purple,
                     '/chat',
-                  ),
-                  _buildMenuCard(
-                    context,
-                    'Moje rezervace',
-                    Icons.event_seat,
-                    Colors.amber,
-                    '/my-reservations',
-                  ),
-                  _buildMenuCard(
-                    context,
-                    'Přehled rezervací',
-                    Icons.assignment,
-                    Colors.indigo,
-                    '/all-reservations',
                   ),
                 ],
               ),
@@ -100,7 +123,9 @@ class HomeScreen extends StatelessWidget {
               Icon(icon, size: 48, color: color),
               const SizedBox(height: 8),
               Text(title, textAlign: TextAlign.center, 
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis),
             ],
           ),
         ),
