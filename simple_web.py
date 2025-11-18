@@ -341,6 +341,33 @@ def offer_ride():
 
 # Mock data pro jízdy s různými telefonními čísly
 mock_rides = [
+    # Jízdy uživatele Miroslav Zelený (ID=1)
+    {
+        'id': 90,
+        'driver_id': 1,
+        'from_location': 'Brno',
+        'to_location': 'Zlín',
+        'departure_time': '2025-11-19 14:00',
+        'available_seats': 3,
+        'price_per_person': 150,
+        'description': 'Pohodová jízda do Zlína',
+        'driver_name': 'Miroslav Zelený',
+        'driver_phone': '+420721745084',
+        'driver_rating': 5.0
+    },
+    {
+        'id': 91,
+        'driver_id': 1,
+        'from_location': 'Praha',
+        'to_location': 'Ostrava',
+        'departure_time': '2025-11-20 08:00',
+        'available_seats': 2,
+        'price_per_person': 300,
+        'description': 'Rychlá jízda na východ',
+        'driver_name': 'Miroslav Zelený',
+        'driver_phone': '+420721745084',
+        'driver_rating': 5.0
+    },
     {
         'id': 1,
         'driver_id': 10,
@@ -536,11 +563,11 @@ def get_my_rides():
     try:
         user_id = request.args.get('user_id', 1)
         print(f'DEBUG: Getting rides for user_id: {user_id}')
-        print(f'DEBUG: Total user_rides: {len(user_rides)}')
-        print(f'DEBUG: user_rides content: {user_rides}')
         
-        # Vrátí jízdy nabídnuté aktuálním uživatelem
-        my_rides = [r for r in user_rides if r['driver_id'] == int(user_id)]
+        # Kombinace mock dat a user_rides pro hledání jízd uživatele
+        all_rides = mock_rides + user_rides
+        my_rides = [r for r in all_rides if r['driver_id'] == int(user_id)]
+        
         print(f'DEBUG: Found {len(my_rides)} rides for user {user_id}')
         print(f'DEBUG: my_rides: {my_rides}')
         
