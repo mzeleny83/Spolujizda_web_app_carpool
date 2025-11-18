@@ -267,11 +267,32 @@ def login():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Globální seznam pro ukládání jízd
+user_rides = []
+
 @app.route('/api/rides/offer', methods=['POST'])
 def offer_ride():
     try:
         data = request.get_json()
-        return jsonify({'message': 'Jízda nabídnuta', 'ride_id': 123}), 201
+        
+        # Vytvoření nové jízdy
+        new_ride = {
+            'id': len(user_rides) + 100,  # Unikátní ID
+            'driver_id': data.get('driver_id', 1),
+            'from_location': data.get('from_location', ''),
+            'to_location': data.get('to_location', ''),
+            'departure_time': data.get('departure_time', ''),
+            'available_seats': data.get('available_seats', 1),
+            'price_per_person': data.get('price', 0),
+            'description': data.get('description', 'Jízda nabídnuta přes aplikaci'),
+            'driver_name': 'Miroslav Zelený',  # Aktuální uživatel
+            'driver_rating': 5.0
+        }
+        
+        # Přidání do seznamu
+        user_rides.append(new_ride)
+        
+        return jsonify({'message': 'Jízda nabídnuta', 'ride_id': new_ride['id']}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -376,11 +397,14 @@ def search_rides():
         }
     ]
     
+    # Kombinace mock dat a uživatelských jízd
+    all_rides = mock_rides + user_rides
+    
     from_location = request.args.get('from', '')
     if from_location:
-        result = [ride for ride in mock_rides if from_location.lower() in ride['from_location'].lower()]
+        result = [ride for ride in all_rides if from_location.lower() in ride['from_location'].lower()]
     else:
-        result = mock_rides
+        result = all_rides
     
     return jsonify(result), 200
 
