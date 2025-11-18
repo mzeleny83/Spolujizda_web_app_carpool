@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import hashlib
 import os
@@ -79,11 +79,18 @@ def home():
                 
                 <div class="section map-section">
                     <h3>🗺️ Mapa jízd</h3>
-                    <div style="position: relative; height: 400px; background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 50%, #fff8dc 100%); border-radius: 8px; overflow: hidden; border: 2px solid #ddd;">
+                    <div id="map" style="height: 400px; border-radius: 8px; overflow: hidden; border: 2px solid #ddd; position: relative;">
+                        <iframe 
+                            src="https://www.openstreetmap.org/export/embed.html?bbox=12.0%2C48.5%2C18.9%2C51.1&layer=mapnik" 
+                            style="width: 100%; height: 100%; border: none;"
+                            title="Mapa České republiky">
+                        </iframe>
+                        
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(255,255,255,0.1);">
                         <!-- Města na mapě - geograficky správně -->
                         <div style="position: absolute; top: 120px; left: 120px; background: #d32f2f; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Praha</div>
                         <div style="position: absolute; top: 220px; left: 220px; background: #1976d2; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Brno</div>
-                        <div style="position: absolute; top: 80px; right: 60px; background: #388e3c; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Ostrava</div>
+                        <div style="position: absolute; top: 80px; right: 100px; background: #388e3c; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Ostrava</div>
                         <div style="position: absolute; top: 200px; left: 40px; background: #f57c00; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Plzeň</div>
                         
                         <!-- Trasy - geograficky správné směry -->
@@ -106,8 +113,9 @@ def home():
                         <!-- Kompas -->
                         <div style="position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; border: 2px solid #666;">N</div>
                         
-                        <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
-                            🗺️ Interaktivní mapa - 8 aktivních jízd
+                        <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
+                            🗺️ OpenStreetMap - 8 aktivních jízd
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -164,9 +172,13 @@ def home():
                 </div>
             </div>
             
-            <p style="text-align: center; margin-top: 30px; color: #666;">
-                Pro plnou funkcionalit si stáhněte mobilní aplikaci pro Android nebo iOS.
-            </p>
+            <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <h3 style="color: #333; margin-bottom: 15px;">📱 Mobilní aplikace</h3>
+                <p style="color: #666; margin-bottom: 15px;">Pro plnou funkcionalitu si stáhněte mobilní aplikaci</p>
+                <a href="/download/android" style="display: inline-block; background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 25px; margin: 5px; font-weight: bold;">📱 Stáhnout pro Android</a>
+                <a href="#" onclick="alert('iOS verze bude brzy k dispozici!')" style="display: inline-block; background: #007AFF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 25px; margin: 5px; font-weight: bold;">🍎 Stáhnout pro iOS</a>
+                <p style="font-size: 12px; color: #999; margin-top: 10px;">Velikost: ~15 MB | Verze: 1.0.2</p>
+            </div>
         </div>
         
         <script>
@@ -358,6 +370,13 @@ def search_rides():
         result = mock_rides
     
     return jsonify(result), 200
+
+@app.route('/download/android')
+def download_android():
+    try:
+        return send_from_directory('static', 'spolujizda.apk', as_attachment=True, download_name='Spolujizda.apk')
+    except Exception as e:
+        return jsonify({'error': 'Soubor nenalezen'}), 404
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
