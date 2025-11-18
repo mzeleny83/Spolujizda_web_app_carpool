@@ -76,7 +76,11 @@ def home():
         <section class="hero" id="home">
             <h1>Sdílejte jízdy, šetřete peníze</h1>
             <p>Najděte spolucestující nebo nabídněte volná místa ve svém autě</p>
-            <button class="cta-button" onclick="showAppInfo()">Stáhnout aplikaci</button>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                <button class="cta-button" onclick="showSection('search')">Hledat jízdu</button>
+                <button class="cta-button" onclick="showSection('offer')">Nabídnout jízdu</button>
+                <button class="cta-button" onclick="showSection('login')">Přihlásit se</button>
+            </div>
         </section>
         
         <section class="features">
@@ -97,6 +101,70 @@ def home():
             </div>
         </section>
         
+        <!-- Search Section -->
+        <section class="rides-section" id="search" style="display: none;">
+            <div class="rides-container">
+                <h2 class="rides-title">Hledat jízdu</h2>
+                <div style="background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 15px; margin-bottom: 2rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <input type="text" id="searchFrom" placeholder="Odkud" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <input type="text" id="searchTo" placeholder="Kam" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <button onclick="searchRides()" style="width: 100%; padding: 1rem; background: #ff6b6b; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Hledat</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+        </section>
+        
+        <!-- Offer Section -->
+        <section class="rides-section" id="offer" style="display: none;">
+            <div class="rides-container">
+                <h2 class="rides-title">Nabídnout jízdu</h2>
+                <div style="background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 15px;">
+                    <div style="display: grid; gap: 1rem;">
+                        <input type="text" id="offerFrom" placeholder="Odkud" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <input type="text" id="offerTo" placeholder="Kam" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <input type="datetime-local" id="offerTime" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <input type="number" id="offerSeats" placeholder="Počet volných míst" min="1" max="8" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <input type="number" id="offerPrice" placeholder="Cena za osobu (Kč)" min="0" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <textarea id="offerDescription" placeholder="Poznámka (volitelné)" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem; min-height: 80px; resize: vertical;"></textarea>
+                        <button onclick="offerRide()" style="padding: 1rem; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Nabídnout jízdu</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Login Section -->
+        <section class="rides-section" id="login" style="display: none;">
+            <div class="rides-container">
+                <h2 class="rides-title">Přihlášení</h2>
+                <div style="background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 15px; max-width: 400px; margin: 0 auto;">
+                    <div style="display: grid; gap: 1rem;">
+                        <input type="tel" id="loginPhone" placeholder="Telefon (+420123456789)" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <input type="password" id="loginPassword" placeholder="Heslo" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <button onclick="loginUser()" style="padding: 1rem; background: #2196F3; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Přihlásit se</button>
+                        <button onclick="showSection('register')" style="padding: 1rem; background: transparent; color: white; border: 2px solid white; border-radius: 8px; font-size: 1rem; cursor: pointer;">Registrovat se</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Register Section -->
+        <section class="rides-section" id="register" style="display: none;">
+            <div class="rides-container">
+                <h2 class="rides-title">Registrace</h2>
+                <div style="background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 15px; max-width: 400px; margin: 0 auto;">
+                    <div style="display: grid; gap: 1rem;">
+                        <input type="text" id="registerName" placeholder="Jméno a příjmení" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <input type="tel" id="registerPhone" placeholder="Telefon (+420123456789)" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <input type="password" id="registerPassword" placeholder="Heslo" style="padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                        <button onclick="registerUser()" style="padding: 1rem; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Registrovat se</button>
+                        <button onclick="showSection('login')" style="padding: 1rem; background: transparent; color: white; border: 2px solid white; border-radius: 8px; font-size: 1rem; cursor: pointer;">Zpět na přihlášení</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
         <section class="rides-section" id="rides">
             <div class="rides-container">
                 <h2 class="rides-title">Aktuální jízdy</h2>
@@ -109,12 +177,165 @@ def home():
         </footer>
         
         <script>
-            function showAppInfo() {
-                alert('Mobilní aplikace je k dispozici v Google Play Store a App Store!');
+            let currentUser = null;
+            
+            function showSection(sectionId) {
+                // Hide all sections
+                const sections = ['search', 'offer', 'login', 'register'];
+                sections.forEach(id => {
+                    const section = document.getElementById(id);
+                    if (section) section.style.display = 'none';
+                });
+                
+                // Show selected section
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
             }
             
-            // Load rides from API
-            fetch('/api/rides/search')
+            function searchRides() {
+                const from = document.getElementById('searchFrom').value;
+                const to = document.getElementById('searchTo').value;
+                
+                let url = '/api/rides/search';
+                if (from) url += '?from=' + encodeURIComponent(from);
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(rides => {
+                        const resultsDiv = document.getElementById('search-results');
+                        if (rides.length === 0) {
+                            resultsDiv.innerHTML = '<p style="text-align: center; color: white; opacity: 0.7;">Nebyly nalezeny žádné jízdy.</p>';
+                            return;
+                        }
+                        
+                        resultsDiv.innerHTML = '<h3 style="color: white; margin-bottom: 1rem;">Výsledky hledání:</h3>' + 
+                            rides.map(ride => `
+                                <div class="ride-card">
+                                    <div class="ride-route">${ride.from_location} → ${ride.to_location}</div>
+                                    <div class="ride-details">
+                                        Řidič: ${ride.driver_name} | 
+                                        Čas: ${ride.departure_time} | 
+                                        Cena: ${ride.price_per_person} Kč | 
+                                        Volná místa: ${ride.available_seats}
+                                    </div>
+                                    <button onclick="contactDriver(${ride.id})" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #ff6b6b; color: white; border: none; border-radius: 5px; cursor: pointer;">Kontaktovat</button>
+                                </div>
+                            `).join('');
+                    })
+                    .catch(() => {
+                        document.getElementById('search-results').innerHTML = '<p style="text-align: center; color: white; opacity: 0.7;">Chyba při hledání.</p>';
+                    });
+            }
+            
+            function offerRide() {
+                if (!currentUser) {
+                    alert('Pro nabízení jízdy se musíte přihlásit.');
+                    showSection('login');
+                    return;
+                }
+                
+                const rideData = {
+                    driver_id: currentUser.id,
+                    from_location: document.getElementById('offerFrom').value,
+                    to_location: document.getElementById('offerTo').value,
+                    departure_time: document.getElementById('offerTime').value,
+                    available_seats: parseInt(document.getElementById('offerSeats').value),
+                    price: parseFloat(document.getElementById('offerPrice').value),
+                    description: document.getElementById('offerDescription').value
+                };
+                
+                fetch('/api/rides/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(rideData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert('Jízda byla úspěšně nabídnuta!');
+                        // Clear form
+                        document.getElementById('offerFrom').value = '';
+                        document.getElementById('offerTo').value = '';
+                        document.getElementById('offerTime').value = '';
+                        document.getElementById('offerSeats').value = '';
+                        document.getElementById('offerPrice').value = '';
+                        document.getElementById('offerDescription').value = '';
+                        loadRides(); // Refresh rides list
+                    } else {
+                        alert('Chyba: ' + (data.error || 'Neznámá chyba'));
+                    }
+                })
+                .catch(() => alert('Chyba při nabízení jízdy.'));
+            }
+            
+            function loginUser() {
+                const loginData = {
+                    phone: document.getElementById('loginPhone').value,
+                    password: document.getElementById('loginPassword').value
+                };
+                
+                fetch('/api/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loginData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.user_id) {
+                        currentUser = { id: data.user_id, name: data.name };
+                        alert('Přihlášení úspěšné! Vítejte, ' + data.name);
+                        updateUI();
+                    } else {
+                        alert('Chyba: ' + (data.error || 'Neplatné přihlašovací údaje'));
+                    }
+                })
+                .catch(() => alert('Chyba při přihlášení.'));
+            }
+            
+            function registerUser() {
+                const registerData = {
+                    name: document.getElementById('registerName').value,
+                    phone: document.getElementById('registerPhone').value,
+                    password: document.getElementById('registerPassword').value
+                };
+                
+                fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(registerData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.user_id) {
+                        alert('Registrace úspěšná! Můžete se přihlásit.');
+                        showSection('login');
+                    } else {
+                        alert('Chyba: ' + (data.error || 'Registrace se nezdařila'));
+                    }
+                })
+                .catch(() => alert('Chyba při registraci.'));
+            }
+            
+            function contactDriver(rideId) {
+                alert('Funkce chatu bude brzy k dispozici! ID jízdy: ' + rideId);
+            }
+            
+            function updateUI() {
+                // Update navigation or user info if needed
+            }
+            
+            function loadRides() {
+            
+            }
+            
+            // Load rides from API on page load
+            loadRides();
+            
+            function loadRides() {
+                fetch('/api/rides/search')
                 .then(response => response.json())
                 .then(rides => {
                     const ridesList = document.getElementById('rides-list');
