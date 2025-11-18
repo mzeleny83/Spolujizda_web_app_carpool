@@ -88,10 +88,10 @@ def home():
                         
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(255,255,255,0.1);">
                         <!-- Města na mapě - geograficky správně -->
-                        <div style="position: absolute; top: 45%; left: 35%; background: #d32f2f; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">Praha</div>
-                        <div style="position: absolute; top: 70%; left: 55%; background: #1976d2; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">Brno</div>
-                        <div style="position: absolute; top: 20%; right: 15%; background: #388e3c; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">Ostrava</div>
-                        <div style="position: absolute; top: 55%; left: 20%; background: #f57c00; color: white; padding: 4px 8px; border-radius: 15px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">Plzeň</div>
+
+
+
+
                         
                         <!-- Trasy - geograficky správné směry -->
                         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
@@ -158,6 +158,7 @@ def home():
                     <input type="text" placeholder="Odkud (např. Praha)">
                     <input type="text" placeholder="Kam (např. Brno)">
                     <button>Hledat jízdy</button>
+                    <button onclick="showAllRides()" style="background: #28a745; margin-top: 10px;">Zobrazit všechny jízdy</button>
                 </div>
                 
                 <div class="section">
@@ -220,6 +221,22 @@ def home():
             
             function registerUser() {
                 alert('Registrace bude brzy k dispozici!');
+            }
+            
+            function showAllRides() {
+                fetch('/api/rides/search')
+                .then(response => response.json())
+                .then(rides => {
+                    let html = '<h3>📋 Všechny dostupné jízdy (' + rides.length + ')</h3>';
+                    rides.forEach(ride => {
+                        html += '<div class="ride">';
+                        html += '<strong>' + ride.from_location + ' → ' + ride.to_location + '</strong><br>';
+                        html += 'Řidič: ' + ride.driver_name + ' | Čas: ' + ride.departure_time + '<br>';
+                        html += 'Cena: ' + ride.price_per_person + ' Kč | Volná místa: ' + ride.available_seats;
+                        html += '</div>';
+                    });
+                    document.querySelector('.section h3').nextElementSibling.innerHTML = html;
+                });
             }
         </script>
     </body>
