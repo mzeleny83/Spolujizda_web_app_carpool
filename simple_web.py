@@ -114,18 +114,20 @@ def home():
                         <div style="position: absolute; top: 13%; left: 48%; color: #fd7e14; font-weight: bold; font-size: 12px;">Liberec</div>
                         
                         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                            <!-- Praha → Brno (jih) -->
-                            <line x1="45%" y1="35%" x2="55%" y2="65%" stroke="#1976d2" stroke-width="3" stroke-dasharray="8,4" opacity="0.8"/>
+                            <!-- Praha → Brno (přesné spojení) -->
+                            <line x1="49%" y1="39%" x2="59%" y2="69%" stroke="#1976d2" stroke-width="3" stroke-dasharray="8,4" opacity="0.8"/>
                             <!-- Brno → Praha -->
-                            <line x1="55%" y1="65%" x2="45%" y2="35%" stroke="#e91e63" stroke-width="3" stroke-dasharray="6,6" opacity="0.8"/>
-                            <!-- Brno → Ostrava (severo-východ) -->
-                            <line x1="55%" y1="65%" x2="75%" y2="20%" stroke="#4caf50" stroke-width="3" stroke-dasharray="10,5" opacity="0.8"/>
-                            <!-- Ostrava → Praha (západ) -->
-                            <line x1="75%" y1="20%" x2="45%" y2="35%" stroke="#ff9800" stroke-width="3" stroke-dasharray="5,5" opacity="0.8"/>
-                            <!-- Praha → Plzeň (západ) -->
-                            <line x1="45%" y1="35%" x2="25%" y2="40%" stroke="#9c27b0" stroke-width="3" stroke-dasharray="7,3" opacity="0.8"/>
-                            <!-- Praha → Liberec (sever) -->
-                            <line x1="45%" y1="35%" x2="50%" y2="15%" stroke="#fd7e14" stroke-width="3" stroke-dasharray="4,4" opacity="0.8"/>
+                            <line x1="59%" y1="69%" x2="49%" y2="39%" stroke="#e91e63" stroke-width="3" stroke-dasharray="6,6" opacity="0.8"/>
+                            <!-- Brno → Ostrava (přesné spojení) -->
+                            <line x1="59%" y1="69%" x2="79%" y2="24%" stroke="#4caf50" stroke-width="3" stroke-dasharray="10,5" opacity="0.8"/>
+                            <!-- Ostrava → Praha (přesné spojení) -->
+                            <line x1="79%" y1="24%" x2="49%" y2="39%" stroke="#ff9800" stroke-width="3" stroke-dasharray="5,5" opacity="0.8"/>
+                            <!-- Praha → Plzeň (přesné spojení) -->
+                            <line x1="49%" y1="39%" x2="29%" y2="44%" stroke="#9c27b0" stroke-width="3" stroke-dasharray="7,3" opacity="0.8"/>
+                            <!-- Praha → Liberec (přesné spojení) -->
+                            <line x1="49%" y1="39%" x2="54%" y2="19%" stroke="#fd7e14" stroke-width="3" stroke-dasharray="4,4" opacity="0.8"/>
+                            <!-- Č. Budějovice → Praha -->
+                            <line x1="44%" y1="79%" x2="49%" y2="39%" stroke="#6f42c1" stroke-width="3" stroke-dasharray="5,8" opacity="0.8"/>
                         </svg>
                         
                         <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
