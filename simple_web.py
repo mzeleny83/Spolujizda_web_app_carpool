@@ -79,24 +79,32 @@ def home():
                 
                 <div class="section map-section">
                     <h3>🗺️ Mapa jízd</h3>
-                    <div style="position: relative; height: 400px; background: linear-gradient(45deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%); border-radius: 8px; overflow: hidden;">
-                        <!-- Města na mapě -->
-                        <div style="position: absolute; top: 60px; left: 100px; background: #f44336; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">Praha</div>
-                        <div style="position: absolute; bottom: 100px; left: 150px; background: #2196f3; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">Brno</div>
-                        <div style="position: absolute; top: 80px; right: 80px; background: #4caf50; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">Ostrava</div>
-                        <div style="position: absolute; top: 120px; left: 50px; background: #ff9800; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold;">Plzeň</div>
+                    <div style="position: relative; height: 400px; background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 50%, #fff8dc 100%); border-radius: 8px; overflow: hidden; border: 2px solid #ddd;">
+                        <!-- Města na mapě - geograficky správně -->
+                        <div style="position: absolute; top: 120px; left: 120px; background: #d32f2f; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Praha</div>
+                        <div style="position: absolute; top: 220px; left: 220px; background: #1976d2; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Brno</div>
+                        <div style="position: absolute; top: 80px; right: 60px; background: #388e3c; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Ostrava</div>
+                        <div style="position: absolute; top: 200px; left: 40px; background: #f57c00; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">Plzeň</div>
                         
-                        <!-- Trasy -->
+                        <!-- Trasy - geograficky správné směry -->
                         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                            <line x1="110" y1="70" x2="160" y2="300" stroke="#1976d2" stroke-width="3" stroke-dasharray="5,5"/>
-                            <line x1="160" y1="300" x2="320" y2="90" stroke="#388e3c" stroke-width="3" stroke-dasharray="5,5"/>
-                            <line x1="110" y1="70" x2="60" y2="130" stroke="#f57c00" stroke-width="3" stroke-dasharray="5,5"/>
+                            <!-- Praha → Brno (JV směr) -->
+                            <line x1="140" y1="140" x2="240" y2="240" stroke="#1976d2" stroke-width="4" stroke-dasharray="8,4"/>
+                            <!-- Brno → Ostrava (SV směr) -->
+                            <line x1="240" y1="240" x2="340" y2="100" stroke="#388e3c" stroke-width="4" stroke-dasharray="8,4"/>
+                            <!-- Praha → Plzeň (JZ směr) -->
+                            <line x1="140" y1="140" x2="60" y2="220" stroke="#f57c00" stroke-width="4" stroke-dasharray="8,4"/>
+                            <!-- Praha → Ostrava (SV směr) -->
+                            <line x1="140" y1="140" x2="340" y2="100" stroke="#9c27b0" stroke-width="3" stroke-dasharray="6,6"/>
                         </svg>
                         
-                        <!-- Auta na trase -->
-                        <div style="position: absolute; top: 180px; left: 130px; font-size: 20px;">🚗</div>
-                        <div style="position: absolute; top: 200px; right: 200px; font-size: 20px;">🚙</div>
-                        <div style="position: absolute; bottom: 200px; left: 80px; font-size: 20px;">🚕</div>
+                        <!-- Auta na trasách -->
+                        <div style="position: absolute; top: 190px; left: 190px; font-size: 24px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚗</div>
+                        <div style="position: absolute; top: 160px; right: 120px; font-size: 24px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚙</div>
+                        <div style="position: absolute; top: 180px; left: 90px; font-size: 24px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚕</div>
+                        
+                        <!-- Kompas -->
+                        <div style="position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; border: 2px solid #666;">N</div>
                         
                         <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
                             🗺️ Interaktivní mapa - 8 aktivních jízd
