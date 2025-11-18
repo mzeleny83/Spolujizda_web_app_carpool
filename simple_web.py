@@ -455,6 +455,14 @@ def get_reservations():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/reservations/all', methods=['GET'])
+def get_all_reservations():
+    try:
+        # Vrátí všechny rezervace (pro řidiče aby viděli kdo si rezervoval jejich jízdy)
+        return jsonify(reservations), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/test')
 def test_page():
     return send_from_directory('.', 'test.html')

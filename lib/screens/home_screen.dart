@@ -24,7 +24,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 40),
             Expanded(
               child: GridView.count(
-                crossAxisCount: 2,
+                crossAxisCount: 3,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 children: [
@@ -69,6 +69,13 @@ class HomeScreen extends StatelessWidget {
                     Icons.event_seat,
                     Colors.amber,
                     '/my-reservations',
+                  ),
+                  _buildMenuCard(
+                    context,
+                    'Přehled rezervací',
+                    Icons.assignment,
+                    Colors.indigo,
+                    '/all-reservations',
                   ),
                 ],
               ),
