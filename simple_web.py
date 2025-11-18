@@ -280,8 +280,21 @@ def login():
         response.headers['Content-Type'] = 'application/json'
         return response, 500
 
-# Globální seznamy pro ukládání dat
-user_rides = []
+# Globální seznamy pro ukládání dat s testovacími daty
+user_rides = [
+    {
+        'id': 100,
+        'driver_id': 1,
+        'from_location': 'Brno',
+        'to_location': 'Zlín',
+        'departure_time': '2025-11-19 14:00',
+        'available_seats': 3,
+        'price_per_person': 150,
+        'description': 'Testovací jízda z aplikace',
+        'driver_name': 'Miroslav Zelený',
+        'driver_rating': 5.0
+    }
+]
 reservations = []
 
 @app.route('/api/rides/offer', methods=['POST'])
