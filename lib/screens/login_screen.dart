@@ -12,9 +12,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController(text: '721745084'); // Pre-fill test phone
+  final _passwordController = TextEditingController(text: '123'); // Pre-fill test password
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
@@ -76,15 +77,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Telefon nebo Email', 
                   border: OutlineInputBorder(),
-                  hintText: '+420123456789 nebo email@example.com'
+                  hintText: '721745084 (testovací účet)'
                 ),
                 validator: (value) => value?.isEmpty == true ? 'Telefon nebo email je povinný' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Heslo', border: OutlineInputBorder()),
-                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Heslo',
+                  border: const OutlineInputBorder(),
+                  hintText: '123, password, admin, nebo heslo',
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+                obscureText: _obscurePassword,
                 validator: (value) => value?.isEmpty == true ? 'Heslo je povinné' : null,
               ),
               const SizedBox(height: 24),

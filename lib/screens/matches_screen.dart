@@ -24,14 +24,23 @@ class _MatchesScreenState extends State<MatchesScreen> {
     try {
       final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, String?>?;
       final from = arguments?['from'] ?? '';
+      final to = arguments?['to'] ?? '';
       
-      // Use the correct API endpoint - if no search term, get all rides
-      String url;
-      if (from.isEmpty) {
-        url = 'https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search';
-      } else {
-        url = 'https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search?from=$from';
+      // Sestavení URL s parametry
+      String url = 'https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search';
+      List<String> params = [];
+      
+      if (from.isNotEmpty) {
+        params.add('from=${Uri.encodeComponent(from)}');
       }
+      if (to.isNotEmpty) {
+        params.add('to=${Uri.encodeComponent(to)}');
+      }
+      
+      if (params.isNotEmpty) {
+        url += '?' + params.join('&');
+      }
+      
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {

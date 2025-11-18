@@ -13,10 +13,19 @@ class OfferRideScreen extends StatefulWidget {
 class _OfferRideScreenState extends State<OfferRideScreen> {
   final _fromController = TextEditingController();
   final _toController = TextEditingController();
+  final _dateController = TextEditingController();
   final _timeController = TextEditingController();
   final _seatsController = TextEditingController();
   final _priceController = TextEditingController();
   bool _isLoading = false;
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+
+  DateTime _buildDateTime() {
+    final date = _selectedDate ?? DateTime.now();
+    final time = _selectedTime ?? TimeOfDay.now();
+    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  }
 
   Future<void> _offerRide() async {
     if (_fromController.text.isEmpty || _toController.text.isEmpty) {
@@ -39,7 +48,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
           'driver_id': userId,
           'from_location': _fromController.text.trim(),
           'to_location': _toController.text.trim(),
-          'departure_time': DateTime.now().add(Duration(hours: 1)).toIso8601String(),
+          'departure_time': _buildDateTime().toIso8601String(),
           'available_seats': int.tryParse(_seatsController.text) ?? 1,
           'price': double.tryParse(_priceController.text) ?? 0.0,
           'description': 'Jízda nabídnuta přes mobilní aplikaci'
@@ -96,18 +105,42 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                controller: _dateController,
+                decoration: const InputDecoration(
+                  labelText: 'Datum jízdy',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.calendar_today),
+                ),
+                readOnly: true,
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (date != null) {
+                    _selectedDate = date;
+                    _dateController.text = '${date.day}.${date.month}.${date.year}';
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
                 controller: _timeController,
                 decoration: const InputDecoration(
                   labelText: 'Čas odjezdu',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.access_time),
                 ),
+                readOnly: true,
                 onTap: () async {
                   final time = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay.now(),
                   );
                   if (time != null) {
+                    _selectedTime = time;
                     _timeController.text = time.format(context);
                   }
                 },

@@ -401,8 +401,19 @@ def search_rides():
     all_rides = mock_rides + user_rides
     
     from_location = request.args.get('from', '')
-    if from_location:
-        result = [ride for ride in all_rides if from_location.lower() in ride['from_location'].lower()]
+    to_location = request.args.get('to', '')
+    
+    if from_location or to_location:
+        result = []
+        for ride in all_rides:
+            # Hledání podle výchozí destinace
+            from_match = not from_location or from_location.lower() in ride['from_location'].lower()
+            # Hledání podle cílové destinace
+            to_match = not to_location or to_location.lower() in ride['to_location'].lower()
+            
+            # Přidání jízdy, pokud odpovídá oběma kritériím
+            if from_match and to_match:
+                result.append(ride)
     else:
         result = all_rides
     

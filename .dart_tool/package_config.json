@@ -116,6 +116,18 @@
       "languageVersion": "2.17"
     },
     {
+      "name": "flutter_localizations",
+      "rootUri": "file:///C:/Users/m_zel/Downloads/flutter/packages/flutter_localizations",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "flutter_map",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_map-6.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "flutter_plugin_android_lifecycle",
       "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.22",
       "packageUri": "lib/",
@@ -224,6 +236,18 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "intl",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.19.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "latlong2",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/latlong2-0.9.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "leak_tracker",
       "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker-10.0.4",
       "packageUri": "lib/",
@@ -248,6 +272,18 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "lists",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/lists-1.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "logger",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/logger-2.6.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
       "name": "matcher",
       "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/matcher-0.12.16+1",
       "packageUri": "lib/",
@@ -262,6 +298,12 @@
     {
       "name": "meta",
       "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/meta-1.12.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "mgrs_dart",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/mgrs_dart-2.0.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -306,6 +348,18 @@
       "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/plugin_platform_interface-2.1.8",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "polylabel",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/polylabel-1.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.13"
+    },
+    {
+      "name": "proj4dart",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/proj4dart-2.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "sanitize_html",
@@ -422,6 +476,12 @@
       "languageVersion": "2.17"
     },
     {
+      "name": "unicode",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/unicode-0.3.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "uuid",
       "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/uuid-4.5.1",
       "packageUri": "lib/",
@@ -446,6 +506,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "wkt_parser",
+      "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/wkt_parser-2.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "xdg_directories",
       "rootUri": "file:///C:/Users/m_zel/AppData/Local/Pub/Cache/hosted/pub.dev/xdg_directories-1.1.0",
       "packageUri": "lib/",
@@ -464,7 +530,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-11-17T18:08:20.569994Z",
+  "generated": "2025-11-18T15:10:15.722270Z",
   "generator": "pub",
   "generatorVersion": "3.4.3",
   "flutterRoot": "file:///C:/Users/m_zel/Downloads/flutter",

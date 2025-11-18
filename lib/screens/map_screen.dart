@@ -17,6 +17,16 @@ class _MapScreenState extends State<MapScreen> {
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {}; // Added for drawing routes
   bool _isLoading = true;
+  
+  // Real GPS coordinates for Czech cities
+  final Map<String, LatLng> _cityCoordinates = {
+    'Praha': const LatLng(50.0755, 14.4378),
+    'Brno': const LatLng(49.1951, 16.6068),
+    'Ostrava': const LatLng(49.8209, 18.2625),
+    'Plzeň': const LatLng(49.7384, 13.3736),
+    'České Budějovice': const LatLng(48.9745, 14.4743),
+    'Liberec': const LatLng(50.7663, 15.0543),
+  };
 
   @override
   void initState() {
@@ -74,54 +84,48 @@ class _MapScreenState extends State<MapScreen> {
           final String fromLocation = ride['from_location'];
           final String toLocation = ride['to_location'];
           final String driverName = ride['driver_name'] ?? 'Neznámý řidič';
-          final List<dynamic> routeWaypoints = ride['route_waypoints'] ?? [];
-
-          // Create LatLng points from waypoints
-          List<LatLng> points = [];
-          if (routeWaypoints.isNotEmpty) {
-            for (var waypoint in routeWaypoints) {
-              if (waypoint is Map<String, dynamic> &&
-                  waypoint.containsKey('lat') &&
-                  waypoint.containsKey('lng')) {
-                points.add(LatLng(waypoint['lat'], waypoint['lng']));
-              }
-            }
-          }
-
-          // Add markers for start and end points of the ride
-          if (points.isNotEmpty) {
+          
+          // Get real coordinates for cities
+          final LatLng? startCoords = _cityCoordinates[fromLocation];
+          final LatLng? endCoords = _cityCoordinates[toLocation];
+          
+          if (startCoords != null && endCoords != null) {
+            // Add start marker
             newMarkers.add(
               Marker(
                 markerId: MarkerId('ride_start_${ride['id']}'),
-                position: points.first,
+                position: startCoords,
                 infoWindow: InfoWindow(
                   title: '$driverName: $fromLocation',
-                  snippet: 'Odjezd: ${ride['departure_time']}',
+                  snippet: 'Odjezd: ${ride['departure_time']}\nCena: ${ride['price_per_person']} Kč',
                   onTap: () => _showRideInfo(ride),
                 ),
                 icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
               ),
             );
+            
+            // Add end marker
             newMarkers.add(
               Marker(
                 markerId: MarkerId('ride_end_${ride['id']}'),
-                position: points.last,
+                position: endCoords,
                 infoWindow: InfoWindow(
                   title: '$driverName: $toLocation',
-                  snippet: 'Příjezd: ${ride['departure_time']}', // Assuming departure time is relevant for end too
+                  snippet: 'Volná místa: ${ride['available_seats']}',
                   onTap: () => _showRideInfo(ride),
                 ),
                 icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
               ),
             );
 
-            // Add polyline for the route
+            // Add simple route line
             newPolylines.add(
               Polyline(
                 polylineId: PolylineId('ride_route_${ride['id']}'),
-                points: points,
-                color: Colors.blue,
-                width: 5,
+                points: [startCoords, endCoords],
+                color: _getRouteColor(ride['id']),
+                width: 4,
+                patterns: [PatternItem.dash(20), PatternItem.gap(10)],
               ),
             );
           }
@@ -145,6 +149,11 @@ class _MapScreenState extends State<MapScreen> {
         SnackBar(content: Text('Chyba sítě při načítání jízd: $e')),
       );
     }
+  }
+
+  Color _getRouteColor(int rideId) {
+    final colors = [Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, Colors.teal];
+    return colors[rideId % colors.length];
   }
 
   void _showRideInfo(Map<String, dynamic> ride) {
@@ -218,8 +227,8 @@ class _MapScreenState extends State<MapScreen> {
                 mapController = controller;
               },
               initialCameraPosition: CameraPosition(
-                target: _currentPosition,
-                zoom: 13.0,
+                target: const LatLng(49.75, 15.5), // Center of Czech Republic
+                zoom: 7.0, // Zoom out to see whole country
               ),
               markers: _markers,
               polylines: _polylines, // Added polylines

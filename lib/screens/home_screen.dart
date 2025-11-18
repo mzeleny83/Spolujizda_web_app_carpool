@@ -24,10 +24,17 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 40),
             Expanded(
               child: GridView.count(
-                crossAxisCount: 3,
+                crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 children: [
+                  _buildMenuCard(
+                    context,
+                    'Všechny dostupné jízdy',
+                    Icons.list_alt,
+                    Colors.teal,
+                    '/all-rides',
+                  ),
                   _buildMenuCard(
                     context,
                     'Nabídnout jízdu',
@@ -44,10 +51,10 @@ class HomeScreen extends StatelessWidget {
                   ),
                   _buildMenuCard(
                     context,
-                    'Moje shody',
-                    Icons.people,
-                    Colors.orange,
-                    '/matches',
+                    'Mapa jízd',
+                    Icons.map,
+                    Colors.red,
+                    '/map',
                   ),
                   _buildMenuCard(
                     context,
@@ -58,14 +65,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   _buildMenuCard(
                     context,
-                    'Mapa řidičů',
-                    Icons.map,
-                    Colors.red,
-                    '/map',
-                  ),
-                  _buildMenuCard(
-                    context,
-                    'Moji pasažéři',
+                    'Moje rezervace',
                     Icons.star,
                     Colors.amber,
                     '/driver-reservations',
