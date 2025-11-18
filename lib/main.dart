@@ -15,6 +15,7 @@ import 'screens/simple_search.dart';
 import 'screens/rating_screen.dart';
 import 'screens/driver_reservations_screen.dart';
 import 'screens/all_rides_screen.dart';
+import 'screens/my_reservations_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
         '/rating': (context) => const RatingScreen(),
         '/driver-reservations': (context) => const DriverReservationsScreen(),
         '/all-rides': (context) => const AllRidesScreen(),
+        '/my-reservations': (context) => const MyReservationsScreen(),
       },
     );
   }

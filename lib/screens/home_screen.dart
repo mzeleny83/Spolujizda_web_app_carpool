@@ -66,9 +66,9 @@ class HomeScreen extends StatelessWidget {
                   _buildMenuCard(
                     context,
                     'Moje rezervace',
-                    Icons.star,
+                    Icons.event_seat,
                     Colors.amber,
-                    '/driver-reservations',
+                    '/my-reservations',
                   ),
                 ],
               ),

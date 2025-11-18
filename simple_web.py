@@ -267,8 +267,9 @@ def login():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Globální seznam pro ukládání jízd
+# Globální seznamy pro ukládání dat
 user_rides = []
+reservations = []
 
 @app.route('/api/rides/offer', methods=['POST'])
 def offer_ride():
@@ -418,6 +419,41 @@ def search_rides():
         result = all_rides
     
     return jsonify(result), 200
+
+@app.route('/api/rides/reserve', methods=['POST'])
+def reserve_ride():
+    try:
+        data = request.get_json()
+        
+        # Vytvoření nové rezervace
+        new_reservation = {
+            'id': len(reservations) + 1,
+            'ride_id': data.get('ride_id'),
+            'passenger_id': data.get('passenger_id', 1),
+            'passenger_name': 'Miroslav Zelený',
+            'seats_reserved': data.get('seats_reserved', 1),
+            'status': 'confirmed',
+            'created_at': '2025-11-18 12:00:00'
+        }
+        
+        # Přidání do seznamu
+        reservations.append(new_reservation)
+        
+        return jsonify({
+            'message': 'Jízda byla úspěšně zarezervována!',
+            'reservation_id': new_reservation['id']
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reservations', methods=['GET'])
+def get_reservations():
+    try:
+        user_id = request.args.get('user_id', 1)
+        user_reservations = [r for r in reservations if r['passenger_id'] == int(user_id)]
+        return jsonify(user_reservations), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/test')
 def test_page():

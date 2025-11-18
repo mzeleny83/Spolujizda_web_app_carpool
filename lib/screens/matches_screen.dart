@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class MatchesScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
   List<dynamic> _rides = [];
   bool _isLoading = true;
   String? _error;
+  Set<int> _reservedRides = {};
 
   @override
   void didChangeDependencies() {
@@ -71,6 +73,44 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
+  Future<void> _reserveRide(int rideId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('user_id') ?? 1;
+      
+      final response = await http.post(
+        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/reserve'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'ride_id': rideId,
+          'passenger_id': userId,
+          'seats_reserved': 1,
+        }),
+      );
+      
+      if (response.statusCode == 201) {
+        setState(() {
+          _reservedRides.add(rideId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Jízda byla úspěšně zarezervována!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        final data = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Chyba při rezervaci')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Chyba připojení: $e')),
+      );
+    }
+  }
+
   Widget _buildRatingStars(double rating) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -118,13 +158,20 @@ class _MatchesScreenState extends State<MatchesScreen> {
                 Text('Čas: ${ride['departure_time']} | Cena: ${ride['price_per_person']} Kč'),
               ],
             ),
-            trailing: ElevatedButton(
-              onPressed: () {
-                // Navigate to chat or ride details
-                Navigator.pushNamed(context, '/chat');
-              },
-              child: const Text('Kontakt'),
-            ),
+            trailing: _reservedRides.contains(ride['id'])
+                ? const Chip(
+                    label: Text('Rezervováno'),
+                    backgroundColor: Colors.green,
+                    labelStyle: TextStyle(color: Colors.white),
+                  )
+                : ElevatedButton(
+                    onPressed: () => _reserveRide(ride['id']),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Rezervovat'),
+                  ),
           ),
         );
       },
