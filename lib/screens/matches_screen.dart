@@ -164,13 +164,35 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     backgroundColor: Colors.green,
                     labelStyle: TextStyle(color: Colors.white),
                   )
-                : ElevatedButton(
-                    onPressed: () => _reserveRide(ride['id']),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Rezervovat'),
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _reserveRide(ride['id']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        ),
+                        child: const Text('Rezervovat'),
+                      ),
+                      const SizedBox(width: 4),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/chat', arguments: {
+                            'contact_name': ride['driver_name'],
+                            'contact_phone': '+420721745084',
+                            'ride_info': '${ride['from_location']} → ${ride['to_location']}'
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        ),
+                        child: const Text('Chat'),
+                      ),
+                    ],
                   ),
           ),
         );

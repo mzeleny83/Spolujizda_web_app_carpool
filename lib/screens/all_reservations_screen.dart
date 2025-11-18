@@ -178,15 +178,32 @@ class _AllReservationsScreenState extends State<AllReservationsScreen> with Sing
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
-              title: Text('Rezervace #${reservation['id']}'),
+              title: Text('${reservation['from_location']} → ${reservation['to_location']}'),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${reservation['seats_reserved']} místo • ${reservation['status']}'),
-                  Text('Vytvořeno: ${reservation['created_at']}'),
+                  const SizedBox(height: 4),
+                  Text('Řidič: ${reservation['driver_name']}'),
+                  Text('Čas: ${reservation['departure_time']}'),
+                  Text('${reservation['seats_reserved']} místo • ${reservation['price_per_person']} Kč'),
+                  Text('Status: ${reservation['status']}'),
                 ],
               ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              trailing: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/chat', arguments: {
+                    'contact_name': reservation['driver_name'],
+                    'contact_phone': reservation['driver_phone'],
+                    'ride_info': '${reservation['from_location']} → ${reservation['to_location']}'
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                child: const Text('Chat'),
+              ),
             ),
           );
         },

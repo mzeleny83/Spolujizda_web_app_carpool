@@ -9,11 +9,30 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
-  List<Map<String, String>> _messages = [
-    {'sender': 'Jan Novák', 'message': 'Ahoj, jedu zítra do Prahy v 8:00', 'time': '14:30'},
-    {'sender': 'Já', 'message': 'Skvělé! Můžu se přidat?', 'time': '14:32'},
-    {'sender': 'Jan Novák', 'message': 'Samozřejmě! Sejdeme se u nádraží?', 'time': '14:35'},
-  ];
+  String? _contactName;
+  String? _contactPhone;
+  String? _rideInfo;
+  List<Map<String, String>> _messages = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final arguments = ModalRoute.of(context)?.settings.arguments as Map<String, String>?;
+    if (arguments != null) {
+      _contactName = arguments['contact_name'];
+      _contactPhone = arguments['contact_phone'];
+      _rideInfo = arguments['ride_info'];
+      
+      // Inicializace zpráv s kontextem jízdy
+      if (_messages.isEmpty) {
+        _messages = [
+          {'sender': _contactName ?? 'Kontakt', 'message': 'Ahoj! Vidím, že máte zájem o jízdu $_rideInfo', 'time': '14:30'},
+          {'sender': 'Já', 'message': 'Ano, rád bych si zarezervoval místo', 'time': '14:32'},
+          {'sender': _contactName ?? 'Kontakt', 'message': 'Výborně! Kde se sejdeme?', 'time': '14:35'},
+        ];
+      }
+    }
+  }
 
   void _sendMessage() {
     if (_messageController.text.trim().isNotEmpty) {
@@ -31,7 +50,30 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(_contactName ?? 'Chat'),
+            if (_rideInfo != null)
+              Text(
+                _rideInfo!,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+              ),
+          ],
+        ),
+        actions: [
+          if (_contactPhone != null)
+            IconButton(
+              icon: const Icon(Icons.phone),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Telefon: $_contactPhone')),
+                );
+              },
+            ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
@@ -62,22 +104,66 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          Padding(
+          Container(
             padding: const EdgeInsets.all(8.0),
-            child: Row(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              border: Border(top: BorderSide(color: Colors.grey.shade300)),
+            ),
+            child: Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Napište zprávu...',
-                      border: OutlineInputBorder(),
+                if (_contactPhone != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Volat: $_contactPhone')),
+                            );
+                          },
+                          icon: const Icon(Icons.phone),
+                          label: const Text('Zavolat'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('SMS na: $_contactPhone')),
+                            );
+                          },
+                          icon: const Icon(Icons.sms),
+                          label: const Text('SMS'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                IconButton(
-                  onPressed: _sendMessage,
-                  icon: const Icon(Icons.send),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _messageController,
+                        decoration: const InputDecoration(
+                          hintText: 'Napište zprávu...',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _sendMessage,
+                      icon: const Icon(Icons.send),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -215,14 +215,35 @@ class _AllRidesScreenState extends State<AllRidesScreen> {
                       backgroundColor: Colors.green,
                       labelStyle: TextStyle(color: Colors.white),
                     )
-                  : ElevatedButton(
-                      onPressed: () => _reserveRide(ride['id']),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      child: const Text('Rezervovat'),
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => _reserveRide(ride['id']),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          ),
+                          child: const Text('Rezervovat'),
+                        ),
+                        const SizedBox(width: 4),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/chat', arguments: {
+                              'contact_name': ride['driver_name'],
+                              'contact_phone': '+420721745084',
+                              'ride_info': '${ride['from_location']} → ${ride['to_location']}'
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          ),
+                          child: const Text('Chat'),
+                        ),
+                      ],
                     ),
             ),
           );
