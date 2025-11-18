@@ -88,7 +88,18 @@ def home():
                         
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                         
-
+                        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                            <!-- Praha → Brno (Jan Novák) -->
+                            <line x1="35%" y1="45%" x2="55%" y2="70%" stroke="#1976d2" stroke-width="3" stroke-dasharray="8,4" opacity="0.8"/>
+                            <!-- Brno → Praha (Marie Svobodová) -->
+                            <line x1="55%" y1="70%" x2="35%" y2="45%" stroke="#e91e63" stroke-width="3" stroke-dasharray="6,6" opacity="0.8"/>
+                            <!-- Brno → Ostrava (Tomáš Novotný) -->
+                            <line x1="55%" y1="70%" x2="85%" y2="20%" stroke="#4caf50" stroke-width="3" stroke-dasharray="10,5" opacity="0.8"/>
+                            <!-- Ostrava → Praha (Petr Dvořák) -->
+                            <line x1="85%" y1="20%" x2="35%" y2="45%" stroke="#ff9800" stroke-width="3" stroke-dasharray="5,5" opacity="0.8"/>
+                            <!-- Praha → Plzeň (Anna Krásná) -->
+                            <line x1="35%" y1="45%" x2="20%" y2="55%" stroke="#9c27b0" stroke-width="3" stroke-dasharray="7,3" opacity="0.8"/>
+                        </svg>
                         
                         <!-- Kompas -->
                         <div style="position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; border: 2px solid #666;">N</div>
