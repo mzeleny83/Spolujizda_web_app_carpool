@@ -89,10 +89,10 @@ def home():
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                         
                         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                            <line x1="35%" y1="45%" x2="55%" y2="70%" stroke="#1976d2" stroke-width="3" stroke-dasharray="6,3"/>
-                            <line x1="35%" y1="45%" x2="85%" y2="20%" stroke="#388e3c" stroke-width="3" stroke-dasharray="6,3"/>
-                            <line x1="35%" y1="45%" x2="20%" y2="55%" stroke="#f57c00" stroke-width="3" stroke-dasharray="6,3"/>
-                            <line x1="55%" y1="70%" x2="85%" y2="20%" stroke="#9c27b0" stroke-width="2" stroke-dasharray="4,4"/>
+                            <line x1="140" y1="180" x2="220" y2="280" stroke="#1976d2" stroke-width="3" stroke-dasharray="6,3"/>
+                            <line x1="140" y1="180" x2="340" y2="80" stroke="#388e3c" stroke-width="3" stroke-dasharray="6,3"/>
+                            <line x1="140" y1="180" x2="80" y2="220" stroke="#f57c00" stroke-width="3" stroke-dasharray="6,3"/>
+                            <line x1="220" y1="280" x2="340" y2="80" stroke="#9c27b0" stroke-width="2" stroke-dasharray="4,4"/>
                         </svg>
                         
                         <!-- Kompas -->
