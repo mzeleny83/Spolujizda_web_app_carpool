@@ -61,7 +61,7 @@ class RideService {
   List<Map<String, dynamic>> getMyReservations() => List.from(_reservations);
   
   void addRide(Map<String, dynamic> ride) {
-    ride['id'] = _allRides.length + 1;
+    ride['id'] = _allRides.length + 100;
     ride['isMyRide'] = true;
     ride['driver'] = 'Miroslav Zelený';
     _allRides.add(ride);

@@ -612,33 +612,8 @@ def login():
     except Exception as e:
         return jsonify({'error': f'Chyba serveru: {str(e)}'}), 500
 
-# Globální seznamy pro ukládání dat s testovacími daty
-user_rides = [
-    {
-        'id': 100,
-        'driver_id': 1,
-        'from_location': 'Brno, Česká 15',
-        'to_location': 'Zlín, Náměstí Míru 10',
-        'departure_time': '2025-11-19 14:00',
-        'available_seats': 3,
-        'price_per_person': 150,
-        'description': 'Testovací jízda z aplikace',
-        'driver_name': 'Miroslav Zelený',
-        'driver_rating': 5.0
-    },
-    {
-        'id': 101,
-        'driver_id': 1,
-        'from_location': 'Praha, Wenceslas Square 1',
-        'to_location': 'Ostrava, Stodolní 5',
-        'departure_time': '2025-11-20 08:00',
-        'available_seats': 2,
-        'price_per_person': 300,
-        'description': 'Rychlá jízda na východ',
-        'driver_name': 'Miroslav Zelený',
-        'driver_rating': 5.0
-    }
-]
+# Uživatelské jízdy (přidané přes aplikaci)
+user_rides = []
 reservations = []
 
 @app.route('/api/rides/offer', methods=['POST'])
@@ -665,10 +640,10 @@ def offer_ride():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Mock data pro jízdy s různými telefonními čísly a adresami
+# Sjednocená databáze jízd pro mobilní i webovou aplikaci
 mock_rides = [
     {
-        'id': 90,
+        'id': 1,
         'driver_id': 1,
         'from_location': 'Brno, Česká 15',
         'to_location': 'Zlín, Náměstí Míru 10',
@@ -681,7 +656,20 @@ mock_rides = [
         'driver_rating': 5.0
     },
     {
-        'id': 1,
+        'id': 2,
+        'driver_id': 1,
+        'from_location': 'Praha, Václavské náměstí 1',
+        'to_location': 'Ostrava, Stodolní 15',
+        'departure_time': '2025-11-20 08:00',
+        'available_seats': 2,
+        'price_per_person': 300,
+        'description': 'Rychlá jízda na východ',
+        'driver_name': 'Miroslav Zelený',
+        'driver_phone': '+420721745084',
+        'driver_rating': 5.0
+    },
+    {
+        'id': 3,
         'driver_id': 10,
         'from_location': 'Praha, Václavské náměstí 1',
         'to_location': 'Brno, Hlavní nádraží',
@@ -694,7 +682,7 @@ mock_rides = [
         'driver_rating': 4.8
     },
     {
-        'id': 2,
+        'id': 4,
         'driver_id': 11,
         'from_location': 'Brno, Mendlovo náměstí 1',
         'to_location': 'Praha, Hlavní nádraží',
@@ -705,84 +693,6 @@ mock_rides = [
         'driver_name': 'Marie Svobodová',
         'driver_phone': '+420603234567',
         'driver_rating': 4.9
-    },
-    {
-        'id': 3,
-        'driver_id': 12,
-        'from_location': 'Brno, Kotlářská 2',
-        'to_location': 'Ostrava, Nová Karolina',
-        'departure_time': '2025-11-18 16:00',
-        'available_seats': 4,
-        'price_per_person': 180,
-        'description': 'Společná cesta',
-        'driver_name': 'Tomáš Novotný',
-        'driver_phone': '+420604345678',
-        'driver_rating': 4.7
-    },
-    {
-        'id': 4,
-        'driver_id': 13,
-        'from_location': 'Ostrava, Stodolní 15',
-        'to_location': 'Praha, Anděl',
-        'departure_time': '2025-11-18 14:00',
-        'available_seats': 1,
-        'price_per_person': 300,
-        'description': 'Komfortní auto',
-        'driver_name': 'Petr Dvořák',
-        'driver_phone': '+420605456789',
-        'driver_rating': 5.0
-    },
-    {
-        'id': 5,
-        'driver_id': 14,
-        'from_location': 'Praha, Náměstí Míru 5',
-        'to_location': 'Plzeň, Náměstí Republiky',
-        'departure_time': '2025-11-18 18:00',
-        'available_seats': 2,
-        'price_per_person': 150,
-        'description': 'Večerní jízda',
-        'driver_name': 'Anna Krásná',
-        'driver_phone': '+420606567890',
-        'driver_rating': 4.6
-    },
-    {
-        'id': 6,
-        'driver_id': 15,
-        'from_location': 'Plzeň, Americká 10',
-        'to_location': 'Praha, Florenc',
-        'departure_time': '2025-11-19 08:00',
-        'available_seats': 3,
-        'price_per_person': 140,
-        'description': 'Ranní pendlování',
-        'driver_name': 'Lukáš Černý',
-        'driver_phone': '+420607678901',
-        'driver_rating': 4.8
-    },
-    {
-        'id': 7,
-        'driver_id': 16,
-        'from_location': 'České Budějovice, Lannova třída 12',
-        'to_location': 'Praha, Smíchov',
-        'departure_time': '2025-11-18 19:00',
-        'available_seats': 2,
-        'price_per_person': 220,
-        'description': 'Přímá cesta',
-        'driver_name': 'Michaela Nová',
-        'driver_phone': '+420608789012',
-        'driver_rating': 4.9
-    },
-    {
-        'id': 8,
-        'driver_id': 17,
-        'from_location': 'Praha, Karlovo náměstí 8',
-        'to_location': 'Liberec, Soukenné náměstí',
-        'departure_time': '2025-11-18 16:30',
-        'available_seats': 1,
-        'price_per_person': 180,
-        'description': 'Rychlá jízda',
-        'driver_name': 'David Svoboda',
-        'driver_phone': '+420609890123',
-        'driver_rating': 4.7
     }
 ]
 
