@@ -44,8 +44,8 @@ def home():
             <div class="flex-container">
                 <div class="section" id="loginSection">
                     <h3>👤 Přihlášení</h3>
-                    <input type="tel" id="loginPhone" placeholder="Telefon (721745084)">
-                    <input type="password" id="loginPassword" placeholder="Heslo (123)">
+                    <input type="tel" id="loginPhone" placeholder="Telefon (721745084)" value="721745084">
+                    <input type="password" id="loginPassword" placeholder="Heslo (123)" value="123">
                     <button onclick="loginUser()">Přihlásit se</button>
                     <button onclick="registerUser()" style="background: #6c757d; margin-left: 10px;">Registrovat se</button>
                     <div id="loginResult" style="margin-top: 10px; font-weight: bold;"></div>
