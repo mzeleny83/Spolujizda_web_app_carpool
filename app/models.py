@@ -29,3 +29,34 @@ class DirectMessage(db.Model):
 
     def __repr__(self):
         return f'<DirectMessage {self.id} from {self.sender_id} to {self.receiver_id}>'
+
+class Ride(db.Model):
+    __tablename__ = 'rides'
+    id = db.Column(db.Integer, primary_key=True)
+    driver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    origin = db.Column(db.String(255), nullable=False)
+    destination = db.Column(db.String(255), nullable=False)
+    departure_time = db.Column(db.DateTime, nullable=False)
+    available_seats = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    note = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    driver = db.relationship('User', backref='rides')
+    reservations = db.relationship('Reservation', backref='ride', lazy=True, cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<Ride {self.id} from {self.origin} to {self.destination}>'
+
+class Reservation(db.Model):
+    __tablename__ = 'reservations'
+    id = db.Column(db.Integer, primary_key=True)
+    ride_id = db.Column(db.Integer, db.ForeignKey('rides.id'), nullable=False)
+    passenger_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(50), default='pending', nullable=False) # e.g., 'pending', 'confirmed', 'cancelled'
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    passenger = db.relationship('User', backref='reservations')
+
+    def __repr__(self):
+        return f'<Reservation {self.id} for Ride {self.ride_id} by User {self.passenger_id}>'

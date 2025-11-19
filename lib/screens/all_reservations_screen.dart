@@ -10,14 +10,40 @@ class AllReservationsScreen extends StatefulWidget {
 
 class _AllReservationsScreenState extends State<AllReservationsScreen> {
   final RideService _rideService = RideService();
+  late Future<void> _loadFuture;
 
   @override
   void initState() {
     super.initState();
-    // Přidáme listener pro aktualizace
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {}); // Refresh při načtení
-    });
+    _loadFuture = _reloadData();
+  }
+
+  Future<void> _reloadData({bool forceRefresh = false}) async {
+    await Future.wait([
+      _rideService.fetchReservations(forceRefresh: true),
+      _rideService.fetchAllRides(forceRefresh: forceRefresh),
+    ]);
+  }
+
+  Widget _addressRow(String label, String? value, IconData icon) {
+    final text = (value ?? '').trim().isEmpty ? 'Neznámá adresa' : value!.trim();
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '$label: $text',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -32,7 +58,11 @@ class _AllReservationsScreenState extends State<AllReservationsScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: () => setState(() {}),
+              onPressed: () {
+                setState(() {
+                  _loadFuture = _reloadData(forceRefresh: true);
+                });
+              },
             ),
           ],
           bottom: const TabBar(
@@ -45,11 +75,29 @@ class _AllReservationsScreenState extends State<AllReservationsScreen> {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildReservations(),
-            _buildOfferedRides(),
-          ],
+        body: FutureBuilder<void>(
+          future: _loadFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('Nepodařilo se načíst data: ${snapshot.error}'),
+                ),
+              );
+            }
+
+            return TabBarView(
+              children: [
+                _buildReservations(),
+                _buildOfferedRides(),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -82,29 +130,38 @@ class _AllReservationsScreenState extends State<AllReservationsScreen> {
               backgroundColor: Colors.blue,
               child: Icon(Icons.event_seat, color: Colors.white),
             ),
-            title: Text(reservation['title']),
+            title: Text(
+              '${reservation['from_location'] ?? 'Neznámá'} → ${reservation['to_location'] ?? 'Neznámá'}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Řidič: ${reservation['driver']}'),
                 Text('Čas: ${reservation['time']}'),
                 Text('Cena: ${reservation['price']} Kč'),
+                _addressRow('Odkud', reservation['from_location'], Icons.location_on_outlined),
+                _addressRow('Kam', reservation['to_location'], Icons.flag_outlined),
               ],
             ),
-            trailing: ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/chat',
-                  arguments: {
-                    'contact_name': reservation['driver'],
-                    'contact_phone': '+420602123456',
-                    'ride_info': reservation['title'],
-                  },
-                );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-              child: const Text('Chat', style: TextStyle(color: Colors.white)),
+            trailing: SizedBox(
+              width: 130,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/chat',
+                    arguments: {
+                      'contact_name': reservation['driver'],
+                      'contact_phone': '+420602123456',
+                      'ride_info': reservation['title'],
+                    },
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                child: const Text('Chat', style: TextStyle(color: Colors.white)),
+              ),
             ),
           ),
         );
@@ -160,34 +217,57 @@ class _AllReservationsScreenState extends State<AllReservationsScreen> {
                           child: Text('${ride['seats']}', 
                                      style: const TextStyle(color: Colors.white)),
                         ),
-                        title: Text(ride['title']),
+                        title: Text(
+                          '${ride['from_location'] ?? 'Neznámá'} → ${ride['to_location'] ?? 'Neznámá'}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            _addressRow('Odkud', ride['from_location'], Icons.location_on_outlined),
+                            _addressRow('Kam', ride['to_location'], Icons.flag_outlined),
                             Text('Čas: ${ride['time']}'),
                             Text('Volná místa: ${ride['seats']} • ${ride['price']} Kč'),
                             Text('Poznámka: ${ride['note']}'),
                           ],
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Jízda ${ride['title']} je aktivní')),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                              child: const Text('Aktivní', style: TextStyle(color: Colors.white)),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed: () => _deleteRide(index),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                              child: const Text('Smazat', style: TextStyle(color: Colors.white)),
-                            ),
-                          ],
+                        trailing: SizedBox(
+                          width: 140,
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              SizedBox(
+                                width: 130,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content:
+                                            Text('Jízda ${ride['title']} je aktivní'),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green),
+                                  child: const Text('Aktivní',
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 130,
+                                child: ElevatedButton(
+                                  onPressed: () => _deleteRide(index),
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red),
+                                  child: const Text('Smazat',
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );

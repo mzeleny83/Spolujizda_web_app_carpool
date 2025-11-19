@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+import '../config/api_config.dart';
+
 class OSMMapScreen extends StatefulWidget {
   const OSMMapScreen({super.key});
 
@@ -43,7 +45,7 @@ class _OSMMapScreenState extends State<OSMMapScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search')
+        ApiConfig.uri('/api/rides/search'),
       );
 
       if (response.statusCode == 200) {
@@ -54,7 +56,6 @@ class _OSMMapScreenState extends State<OSMMapScreen> {
         for (var ride in ridesData) {
           final String fromLocation = ride['from_location'];
           final String toLocation = ride['to_location'];
-          final String driverName = ride['driver_name'] ?? 'Neznámý řidič';
           
           final LatLng? startCoords = _cityCoordinates[fromLocation];
           final LatLng? endCoords = _cityCoordinates[toLocation];
@@ -210,7 +211,7 @@ class _OSMMapScreenState extends State<OSMMapScreen> {
   Future<List<dynamic>> _fetchAllRides() async {
     try {
       final response = await http.get(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search')
+        ApiConfig.uri('/api/rides/search'),
       );
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -227,7 +228,7 @@ class _OSMMapScreenState extends State<OSMMapScreen> {
       final userId = prefs.getInt('user_id') ?? 1;
       
       final response = await http.post(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/reserve'),
+        ApiConfig.uri('/api/rides/reserve'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'ride_id': ride['id'],

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../config/api_config.dart';
+
 class SimpleSearchScreen extends StatefulWidget {
   const SimpleSearchScreen({super.key});
   
@@ -14,12 +16,33 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
   List<dynamic> _rides = [];
   bool _loading = false;
 
+  Widget _addressRow(String label, String? value, IconData icon) {
+    final text = (value ?? '').trim().isEmpty ? 'Neznámá adresa' : value!.trim();
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '$label: $text',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _search() async {
     setState(() { _loading = true; });
     
     try {
       final response = await http.get(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search?from=${_controller.text}'),
+        ApiConfig.uri('/api/rides/search', query: {'from': _controller.text}),
         headers: {'Content-Type': 'application/json'},
       );
       
@@ -71,8 +94,20 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
                 return Card(
                   margin: EdgeInsets.all(8),
                   child: ListTile(
-                    title: Text('${ride['from_location']} → ${ride['to_location']}'),
-                    subtitle: Text('${ride['departure_time']} • ${ride['price_per_person']} Kč'),
+                    title: Text(
+                      '${ride['from_location']} → ${ride['to_location']}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _addressRow('Odkud', ride['from_location'], Icons.location_on_outlined),
+                        _addressRow('Kam', ride['to_location'], Icons.flag_outlined),
+                        Text('Čas: ${ride['departure_time']}'),
+                        Text('Cena: ${ride['price_per_person']} Kč | Volná místa: ${ride['available_seats']}'),
+                      ],
+                    ),
                     trailing: Text('${ride['available_seats']} míst'),
                   ),
                 );

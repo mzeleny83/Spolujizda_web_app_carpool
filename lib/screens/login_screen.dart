@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/api_config.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -24,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     
     try {
       final response = await http.post(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/users/login'),
+        ApiConfig.uri('/api/users/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'phone': _phoneController.text.trim(),

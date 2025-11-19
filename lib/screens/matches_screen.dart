@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+import '../config/api_config.dart';
+
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({super.key});
 
@@ -16,6 +18,28 @@ class _MatchesScreenState extends State<MatchesScreen> {
   String? _error;
   Set<int> _reservedRides = {};
 
+  Widget _addressRow(String label, String? value, IconData icon) {
+    final display =
+        (value ?? '').trim().isEmpty ? 'Neznámá adresa' : value!.trim();
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '$label: $display',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -28,22 +52,17 @@ class _MatchesScreenState extends State<MatchesScreen> {
       final from = arguments?['from'] ?? '';
       final to = arguments?['to'] ?? '';
       
-      // Sestavení URL s parametry
-      String url = 'https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search';
-      List<String> params = [];
-      
+      final query = <String, String>{};
       if (from.isNotEmpty) {
-        params.add('from=${Uri.encodeComponent(from)}');
+        query['from'] = from;
       }
       if (to.isNotEmpty) {
-        params.add('to=${Uri.encodeComponent(to)}');
+        query['to'] = to;
       }
       
-      if (params.isNotEmpty) {
-        url += '?' + params.join('&');
-      }
-      
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        ApiConfig.uri('/api/rides/search', query: query.isEmpty ? null : query),
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
@@ -79,7 +98,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       final userId = prefs.getInt('user_id') ?? 1;
       
       final response = await http.post(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/reserve'),
+        ApiConfig.uri('/api/rides/reserve'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'ride_id': rideId,
@@ -154,46 +173,60 @@ class _MatchesScreenState extends State<MatchesScreen> {
               children: [
                 _buildRatingStars(ride['driver_rating']?.toDouble() ?? 5.0),
                 const SizedBox(height: 4),
-                Text('${ride['from_location']} → ${ride['to_location']}'),
-                Text('Čas: ${ride['departure_time']} | Cena: ${ride['price_per_person']} Kč'),
+                _addressRow('Odkud', ride['from_location'],
+                    Icons.location_on_outlined),
+                _addressRow('Kam', ride['to_location'], Icons.flag_outlined),
+                const SizedBox(height: 2),
+                Text('Čas: ${ride['departure_time']}'),
+                Text('Cena: ${ride['price_per_person']} Kč '
+                    '| Volná místa: ${ride['available_seats']}'),
               ],
             ),
-            trailing: _reservedRides.contains(ride['id'])
-                ? const Chip(
-                    label: Text('Rezervováno'),
-                    backgroundColor: Colors.green,
-                    labelStyle: TextStyle(color: Colors.white),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => _reserveRide(ride['id']),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            trailing: SizedBox(
+              width: 150,
+              child: _reservedRides.contains(ride['id'])
+                  ? const Chip(
+                      label: Text('Rezervováno'),
+                      backgroundColor: Colors.green,
+                      labelStyle: TextStyle(color: Colors.white),
+                    )
+                  : Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        SizedBox(
+                          width: 140,
+                          child: ElevatedButton(
+                            onPressed: () => _reserveRide(ride['id']),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Rezervovat'),
+                          ),
                         ),
-                        child: const Text('Rezervovat'),
-                      ),
-                      const SizedBox(width: 4),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/chat', arguments: {
-                            'contact_name': ride['driver_name'],
-                            'contact_phone': ride['driver_phone'] ?? '+420721745084',
-                            'ride_info': '${ride['from_location']} → ${ride['to_location']}'
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        SizedBox(
+                          width: 140,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/chat', arguments: {
+                                'contact_name': ride['driver_name'],
+                                'contact_phone':
+                                    ride['driver_phone'] ?? '+420721745084',
+                                'ride_info':
+                                    '${ride['from_location']} → ${ride['to_location']}'
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Chat'),
+                          ),
                         ),
-                        child: const Text('Chat'),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+            ),
           ),
         );
       },

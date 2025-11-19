@@ -25,7 +25,7 @@ app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 db_url = os.environ.get('DATABASE_URL')
 if db_url and db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql+psycopg2://', 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'sqlite:///spolujizda_enhanced.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'sqlite:///spolujizda.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Security configuration

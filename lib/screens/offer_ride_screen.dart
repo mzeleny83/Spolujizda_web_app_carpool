@@ -18,6 +18,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  bool _isSubmitting = false;
 
   DateTime _buildDateTime() {
     final date = _selectedDate ?? DateTime.now();
@@ -25,7 +26,7 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
-  void _offerRide() {
+  Future<void> _offerRide() async {
     if (_fromController.text.isEmpty || _toController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vyplňte všechna povinná pole')),
@@ -34,20 +35,37 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
     }
 
     final dateTime = _buildDateTime();
-    final newRide = {
-      'title': '${_fromController.text.trim()} → ${_toController.text.trim()}',
-      'time': '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}',
-      'seats': int.tryParse(_seatsController.text) ?? 1,
-      'price': int.tryParse(_priceController.text) ?? 0,
-      'note': 'Jízda nabídnuta přes mobilní aplikaci',
+    final seats = int.tryParse(_seatsController.text) ?? 1;
+    final price = int.tryParse(_priceController.text) ?? 0;
+
+    final payload = {
+      'from_location': _fromController.text.trim(),
+      'to_location': _toController.text.trim(),
+      'departure_time': dateTime.toIso8601String(),
+      'available_seats': seats,
+      'price': price,
+      'description': 'Jízda nabídnuta přes mobilní aplikaci',
     };
 
-    RideService().addRide(newRide);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Jízda byla úspěšně nabídnuta!')),
-    );
-    Navigator.pop(context);
+    setState(() => _isSubmitting = true);
+
+    try {
+      await RideService().addRide(payload);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jízda byla úspěšně nabídnuta!')),
+      );
+      Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Nabídku se nepodařilo odeslat: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -145,8 +163,14 @@ class _OfferRideScreenState extends State<OfferRideScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _offerRide,
-                  child: const Text('Nabídnout jízdu'),
+                  onPressed: _isSubmitting ? null : _offerRide,
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Nabídnout jízdu'),
                 ),
               ),
             ],

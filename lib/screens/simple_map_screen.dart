@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../config/api_config.dart';
+
 class SimpleMapScreen extends StatefulWidget {
   const SimpleMapScreen({super.key});
 
@@ -21,7 +23,7 @@ class _SimpleMapScreenState extends State<SimpleMapScreen> {
 
   Future<void> _loadRides() async {
     try {
-      final response = await http.get(Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/rides/search'));
+      final response = await http.get(ApiConfig.uri('/api/rides/search'));
 
       if (response.statusCode == 200) {
         final List<dynamic> ridesData = json.decode(response.body);

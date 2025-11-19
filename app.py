@@ -454,73 +454,75 @@ def offer_ride():
 @app.route('/api/rides/search', methods=['GET'])
 def search_rides():
     try:
-        from_location = request.args.get('from', '')
+        from_location_query = request.args.get('from', '')
+        to_location_query = request.args.get('to', '')
         
-        # Mock ride data
-        mock_rides = [
-            {
-                'id': 1,
-                'driver_id': 1,
-                'from_location': 'Praha',
-                'to_location': 'Brno',
-                'departure_time': '2025-11-18 15:00',
-                'available_seats': 3,
-                'price_per_person': 200,
-                'description': 'Pohodová jízda',
-                'driver_name': 'Jan Novák',
-                'driver_rating': 4.8,
-                'route_waypoints': [{'lat': 50.0755, 'lng': 14.4378}, {'lat': 49.1951, 'lng': 16.6068}]
-            },
-            {
-                'id': 2,
-                'driver_id': 2,
-                'from_location': 'Brno',
-                'to_location': 'Praha',
-                'departure_time': '2025-11-18 17:30',
-                'available_seats': 2,
-                'price_per_person': 250,
-                'description': 'Rychlá jízda',
-                'driver_name': 'Marie Svobodová',
-                'driver_rating': 4.9,
-                'route_waypoints': [{'lat': 49.1951, 'lng': 16.6068}, {'lat': 50.0755, 'lng': 14.4378}]
-            },
-            {
-                'id': 3,
-                'driver_id': 3,
-                'from_location': 'Brno',
-                'to_location': 'Ostrava',
-                'departure_time': '2025-11-18 16:00',
-                'available_seats': 4,
-                'price_per_person': 180,
-                'description': 'Společná cesta',
-                'driver_name': 'Tomáš Novotný',
-                'driver_rating': 4.7,
-                'route_waypoints': [{'lat': 49.1951, 'lng': 16.6068}, {'lat': 49.8209, 'lng': 18.2625}]
-            },
-            {
-                'id': 4,
-                'driver_id': 4,
-                'from_location': 'Ostrava',
-                'to_location': 'Praha',
-                'departure_time': '2025-11-18 14:00',
-                'available_seats': 1,
-                'price_per_person': 300,
-                'description': 'Komfortní auto',
-                'driver_name': 'Petr Dvořák',
-                'driver_rating': 5.0,
-                'route_waypoints': [{'lat': 49.8209, 'lng': 18.2625}, {'lat': 50.0755, 'lng': 14.4378}]
-            }
-        ]
+        conn = get_db_connection()
+        c = conn.cursor()
         
-        # Filter by from_location if provided
-        if from_location:
-            result = [ride for ride in mock_rides if from_location.lower() in ride['from_location'].lower()]
+        if os.environ.get('DATABASE_URL'):
+            c.execute("""
+                SELECT 
+                    r.id, r.driver_id, r.from_location, r.to_location, 
+                    r.departure_time, r.available_seats, r.price, r.description,
+                    u.name as driver_name, u.rating as driver_rating
+                FROM rides r
+                JOIN users u ON r.driver_id = u.id
+                WHERE (r.from_location ILIKE %s OR %s = '')
+                  AND (r.to_location ILIKE %s OR %s = '')
+                ORDER BY r.departure_time ASC
+            """, (f'%{from_location_query}%', from_location_query, f'%{to_location_query}%', to_location_query))
+            rides = c.fetchall()
+            
+            # Convert psycopg2.Row objects to dictionaries
+            rides_list = []
+            for ride in rides:
+                rides_list.append({
+                    'id': ride[0],
+                    'driver_id': ride[1],
+                    'from_location': ride[2],
+                    'to_location': ride[3],
+                    'departure_time': ride[4].isoformat() if isinstance(ride[4], datetime.datetime) else ride[4],
+                    'available_seats': ride[5],
+                    'price_per_person': ride[6],
+                    'description': ride[7],
+                    'driver_name': ride[8],
+                    'driver_rating': float(ride[9]) if ride[9] is not None else 5.0
+                })
         else:
-            result = mock_rides
+            c.execute("""
+                SELECT 
+                    r.id, r.driver_id, r.from_location, r.to_location, 
+                    r.departure_time, r.available_seats, r.price, r.description,
+                    u.name as driver_name, u.rating as driver_rating
+                FROM rides r
+                JOIN users u ON r.driver_id = u.id
+                WHERE (r.from_location LIKE ? OR ? = '')
+                  AND (r.to_location LIKE ? OR ? = '')
+                ORDER BY r.departure_time ASC
+            """, (f'%{from_location_query}%', from_location_query, f'%{to_location_query}%', to_location_query))
+            rides = c.fetchall()
+            
+            rides_list = []
+            for ride in rides:
+                rides_list.append({
+                    'id': ride[0],
+                    'driver_id': ride[1],
+                    'from_location': ride[2],
+                    'to_location': ride[3],
+                    'departure_time': ride[4],
+                    'available_seats': ride[5],
+                    'price_per_person': ride[6],
+                    'description': ride[7],
+                    'driver_name': ride[8],
+                    'driver_rating': float(ride[9]) if ride[9] is not None else 5.0
+                })
         
-        return jsonify(result), 200
+        conn.close()
+        return jsonify(rides_list), 200
         
     except Exception as e:
+        print(f"Error in search_rides: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

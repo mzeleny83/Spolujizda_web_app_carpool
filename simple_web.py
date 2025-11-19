@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, redirect, send_from_directory
 from flask_cors import CORS
 import hashlib
 import os
@@ -772,7 +772,13 @@ def get_my_rides():
 @app.route('/download/android')
 def download_android():
     try:
-        return send_from_directory('static', 'spolujizda.apk', as_attachment=True, download_name='Spolujizda.apk')
+        apk_url = os.environ.get('ANDROID_APK_URL')
+        if apk_url:
+            return redirect(apk_url)
+        static_path = os.path.join(app.root_path, 'static', 'spolujizda.apk')
+        if os.path.exists(static_path):
+            return send_from_directory('static', 'spolujizda.apk', as_attachment=True, download_name='Spolujizda.apk')
+        return jsonify({'error': 'Soubor nenalezen'}), 404
     except Exception as e:
         return jsonify({'error': 'Soubor nenalezen'}), 404
 

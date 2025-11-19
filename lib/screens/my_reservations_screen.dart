@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+import '../config/api_config.dart';
+
 class MyReservationsScreen extends StatefulWidget {
   const MyReservationsScreen({super.key});
 
@@ -14,6 +16,27 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
   List<dynamic> _reservations = [];
   bool _isLoading = true;
   String? _error;
+  Widget _addressRow(String label, String? value, IconData icon) {
+    final display =
+        (value ?? '').trim().isEmpty ? 'Neznámá adresa' : value!.trim();
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '$label: $display',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -47,7 +70,7 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
       final userId = prefs.getInt('user_id') ?? 1;
       
       final response = await http.get(
-        Uri.parse('https://spolujizda-645ec54e47aa.herokuapp.com/api/reservations?user_id=$userId'),
+        ApiConfig.uri('/api/reservations', query: {'user_id': userId}),
       );
 
       if (response.statusCode == 200) {
@@ -146,12 +169,19 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
               ),
               title: Text(
                 '${reservation['from_location'] ?? 'Neznámé'} → ${reservation['to_location'] ?? 'Neznámé'}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
+                  _addressRow('Odkud', reservation['from_location'],
+                      Icons.location_on_outlined),
+                  _addressRow('Kam', reservation['to_location'],
+                      Icons.flag_outlined),
+                  const SizedBox(height: 2),
                   Text('Řidič: ${reservation['driver_name'] ?? 'Neznámý'}'),
                   Text('Čas: ${reservation['departure_time'] ?? 'Neznámý'}'),
                   Row(
@@ -174,35 +204,45 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                   ),
                 ],
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/chat', arguments: {
-                        'contact_name': reservation['driver_name'] ?? 'Neznámý řidič',
-                        'contact_phone': reservation['driver_phone'] ?? '+420721745084',
-                        'ride_info': '${reservation['from_location']} → ${reservation['to_location']}'
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              trailing: SizedBox(
+                width: 150,
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    SizedBox(
+                      width: 140,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/chat', arguments: {
+                            'contact_name':
+                                reservation['driver_name'] ?? 'Neznámý řidič',
+                            'contact_phone':
+                                reservation['driver_phone'] ?? '+420721745084',
+                            'ride_info':
+                                '${reservation['from_location']} → ${reservation['to_location']}'
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Chat'),
+                      ),
                     ),
-                    child: const Text('Chat'),
-                  ),
-                  const SizedBox(width: 4),
-                  ElevatedButton(
-                    onPressed: () => _cancelReservation(reservation['id']),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    SizedBox(
+                      width: 140,
+                      child: ElevatedButton(
+                        onPressed: () => _cancelReservation(reservation['id']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Zrušit'),
+                      ),
                     ),
-                    child: const Text('Zrušit'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
