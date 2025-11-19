@@ -164,13 +164,20 @@ def home():
                 const password = document.getElementById('loginPassword').value;
                 const resultDiv = document.getElementById('loginResult');
                 
+                console.log('Přihlašuji s:', phone, password);
+                resultDiv.innerHTML = '<span style="color: blue;">Přihlašuji...</span>';
+                
                 fetch('/api/users/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone: phone, password: password })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Response data:', data);
                     if (data.user_id) {
                         currentUserId = data.user_id;
                         document.getElementById('loginSection').style.display = 'none';
@@ -189,7 +196,8 @@ def home():
                     }
                 })
                 .catch(error => {
-                    resultDiv.innerHTML = '<span style="color: red;">✗ Chyba připojení</span>';
+                    console.log('Fetch error:', error);
+                    resultDiv.innerHTML = '<span style="color: red;">✗ Chyba připojení: ' + error.message + '</span>';
                 });
             }
             
