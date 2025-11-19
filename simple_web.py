@@ -25,6 +25,8 @@ def home():
         <title>Spolujízda</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
             body { font-family: Arial; margin: 0; padding: 20px; background: #f0f0f0; }
             .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
@@ -40,10 +42,20 @@ def home():
             .success { color: #28a745; font-weight: bold; }
             .error { color: #dc3545; font-weight: bold; }
             .info { color: #17a2b8; font-weight: bold; }
+            .emoji-marker {
+                background: none !important;
+                border: none !important;
+                text-align: center;
+                font-size: 16px;
+            }
+            #map {
+                z-index: 1;
+            }
             @media (max-width: 600px) {
                 .container { margin: 10px; padding: 15px; }
                 .nav-buttons { flex-direction: column; }
                 .nav-buttons button { width: 100%; }
+                #map { height: 300px !important; }
             }
         </style>
     </head>
@@ -72,6 +84,7 @@ def home():
                     <button onclick="showMyReservations()" style="background: #ffc107; color: #000;">🎫 Moje rezervace</button>
                     <button onclick="showAllRides()" style="background: #6f42c1;">🗺️ Všechny jízdy</button>
                     <button onclick="showSection('messagesSection')" style="background: #fd7e14;">💬 Zprávy</button>
+                    <button onclick="showSection('mapSection')" style="background: #20c997;">🗺️ Mapa jízd</button>
                     <button onclick="logoutUser()" style="background: #dc3545;">🚪 Odhlásit se</button>
                 </div>
             </div>
@@ -141,6 +154,21 @@ def home():
                 </div>
             </div>
             
+            <!-- Mapa jízd -->
+            <div class="section hidden" id="mapSection">
+                <h3>🗺️ Mapa jízd</h3>
+                <button onclick="showSection('userSection')" style="background: #6c757d;">Zpět</button>
+                <div style="margin: 15px 0;">
+                    <button onclick="loadMapRides()" style="background: #28a745;">🔄 Načíst jízdy</button>
+                    <button onclick="showMyLocation()" style="background: #17a2b8;">📍 Moje poloha</button>
+                </div>
+                <div id="map" style="height: 500px; width: 100%; border: 2px solid #ddd; border-radius: 8px; background: #f8f9fa;"></div>
+                <div id="mapInfo" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <p><strong>Legenda:</strong></p>
+                    <p>🟢 Výchozí místa | 🔴 Cílová místa | 📍 Vaše poloha</p>
+                </div>
+            </div>
+            
             <!-- Mobilní aplikace -->
             <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
                 <h3 style="color: #333; margin-bottom: 15px;">📱 Mobilní aplikace</h3>
@@ -155,13 +183,21 @@ def home():
             
             function showSection(sectionId) {
                 // Skrýt všechny sekce
-                const sections = ['userSection', 'offerRideSection', 'searchRideSection', 'myRidesSection', 'myReservationsSection', 'allRidesSection', 'messagesSection'];
+                const sections = ['userSection', 'offerRideSection', 'searchRideSection', 'myRidesSection', 'myReservationsSection', 'allRidesSection', 'messagesSection', 'mapSection'];
                 sections.forEach(id => {
                     document.getElementById(id).classList.add('hidden');
                 });
                 
                 // Zobrazit požadovanou sekci
                 document.getElementById(sectionId).classList.remove('hidden');
+                
+                // Inicializace mapy při prvním zobrazení
+                if (sectionId === 'mapSection' && !map) {
+                    setTimeout(() => {
+                        initMap();
+                        loadMapRides();
+                    }, 100);
+                }
             }
             
             function loginUser() {
@@ -396,6 +432,155 @@ def home():
             
             function openChat(driverName, driverPhone) {
                 alert('💬 Chat s ' + driverName + '\\n📞 Telefon: ' + driverPhone + '\\n\\nV mobilní aplikaci můžete chatovat přímo!');
+            }
+            
+            // Mapa proměnné
+            let map = null;
+            let markers = [];
+            
+            // Inicializace mapy
+            function initMap() {
+                if (map) return;
+                
+                // Vytvoření mapy zaměřené na Českou republiku
+                map = L.map('map').setView([49.75, 15.5], 7);
+                
+                // Přidání OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+            }
+            
+            // Načtení jízd na mapu
+            function loadMapRides() {
+                if (!map) initMap();
+                
+                // Vymazání existujících markerů
+                markers.forEach(marker => map.removeLayer(marker));
+                markers = [];
+                
+                fetch('/api/rides/search')
+                .then(response => response.json())
+                .then(rides => {
+                    rides.forEach(ride => {
+                        const fromCoords = getCityCoordinates(ride.from_location);
+                        const toCoords = getCityCoordinates(ride.to_location);
+                        
+                        if (fromCoords) {
+                            const fromMarker = L.marker(fromCoords, {
+                                icon: L.divIcon({
+                                    html: '🟢',
+                                    iconSize: [20, 20],
+                                    className: 'emoji-marker'
+                                })
+                            }).addTo(map);
+                            
+                            fromMarker.bindPopup(`
+                                <strong>Výchozí místo</strong><br>
+                                ${ride.from_location}<br>
+                                Řidič: ${ride.driver_name}<br>
+                                Čas: ${ride.departure_time}<br>
+                                Cena: ${ride.price_per_person} Kč
+                            `);
+                            
+                            markers.push(fromMarker);
+                        }
+                        
+                        if (toCoords) {
+                            const toMarker = L.marker(toCoords, {
+                                icon: L.divIcon({
+                                    html: '🔴',
+                                    iconSize: [20, 20],
+                                    className: 'emoji-marker'
+                                })
+                            }).addTo(map);
+                            
+                            toMarker.bindPopup(`
+                                <strong>Cílové místo</strong><br>
+                                ${ride.to_location}<br>
+                                Řidič: ${ride.driver_name}<br>
+                                Čas: ${ride.departure_time}<br>
+                                Cena: ${ride.price_per_person} Kč
+                            `);
+                            
+                            markers.push(toMarker);
+                        }
+                        
+                        // Přidání čáry mezi výchozím a cílovým místem
+                        if (fromCoords && toCoords) {
+                            const line = L.polyline([fromCoords, toCoords], {
+                                color: '#007bff',
+                                weight: 3,
+                                opacity: 0.7
+                            }).addTo(map);
+                            
+                            markers.push(line);
+                        }
+                    });
+                    
+                    document.getElementById('mapInfo').innerHTML = `
+                        <p><strong>Legenda:</strong></p>
+                        <p>🟢 Výchozí místa (${rides.length}) | 🔴 Cílová místa (${rides.length}) | 📍 Vaše poloha</p>
+                        <p>Načteno ${rides.length} jízd na mapě</p>
+                    `;
+                })
+                .catch(error => {
+                    document.getElementById('mapInfo').innerHTML = '<p class="error">Chyba při načítání jízd na mapu</p>';
+                });
+            }
+            
+            // Zobrazení mé polohy
+            function showMyLocation() {
+                if (!map) initMap();
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            
+                            const myLocationMarker = L.marker([lat, lng], {
+                                icon: L.divIcon({
+                                    html: '📍',
+                                    iconSize: [25, 25],
+                                    className: 'emoji-marker'
+                                })
+                            }).addTo(map);
+                            
+                            myLocationMarker.bindPopup('📍 Vaše aktuální poloha');
+                            map.setView([lat, lng], 12);
+                            
+                            markers.push(myLocationMarker);
+                        },
+                        (error) => {
+                            alert('Nepodařilo se získat vaši polohu: ' + error.message);
+                        }
+                    );
+                } else {
+                    alert('Geolokace není podporována ve vašem prohlížeči');
+                }
+            }
+            
+            // Získání souřadnic měst
+            function getCityCoordinates(location) {
+                const cityCoords = {
+                    'Praha': [50.0755, 14.4378],
+                    'Brno': [49.1951, 16.6068],
+                    'Ostrava': [49.8209, 18.2625],
+                    'Plzeň': [49.7384, 13.3736],
+                    'Liberec': [50.7663, 15.0543],
+                    'České Budějovice': [48.9745, 14.4742],
+                    'Zlín': [49.2265, 17.6679]
+                };
+                
+                // Hledání města v názvu lokace
+                for (const [city, coords] of Object.entries(cityCoords)) {
+                    if (location.toLowerCase().includes(city.toLowerCase())) {
+                        return coords;
+                    }
+                }
+                
+                return null;
             }
         </script>
     </body>
