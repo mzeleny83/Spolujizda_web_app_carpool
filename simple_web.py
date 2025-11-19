@@ -88,46 +88,46 @@ def home():
                         
                         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                         
-                        <!-- Města podle skutečných GPS souřadnic -->
-                        <!-- Praha: 50.0755°N, 14.4378°E -->
-                        <div style="position: absolute; top: 42%; left: 30%; width: 8px; height: 8px; background: #dc3545; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 40%; left: 28%; color: #dc3545; font-weight: bold; font-size: 12px;">Praha</div>
+                        <!-- Města podle GPS bbox 12.0-18.9E, 48.5-51.1N -->
+                        <!-- Praha: 50.0755N, 14.4378E = x:35%, y:35% -->
+                        <div style="position: absolute; top: 35%; left: 35%; width: 8px; height: 8px; background: #dc3545; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 33%; left: 33%; color: #dc3545; font-weight: bold; font-size: 12px;">Praha</div>
                         
-                        <!-- Brno: 49.1951°N, 16.6068°E -->
-                        <div style="position: absolute; top: 58%; left: 55%; width: 8px; height: 8px; background: #28a745; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 56%; left: 53%; color: #28a745; font-weight: bold; font-size: 12px;">Brno</div>
+                        <!-- Brno: 49.1951N, 16.6068E = x:67%, y:65% -->
+                        <div style="position: absolute; top: 65%; left: 67%; width: 8px; height: 8px; background: #28a745; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 63%; left: 65%; color: #28a745; font-weight: bold; font-size: 12px;">Brno</div>
                         
-                        <!-- Ostrava: 49.8209°N, 18.2625°E -->
-                        <div style="position: absolute; top: 45%; left: 80%; width: 8px; height: 8px; background: #007bff; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 43%; left: 78%; color: #007bff; font-weight: bold; font-size: 12px;">Ostrava</div>
+                        <!-- Ostrava: 49.8209N, 18.2625E = x:90%, y:50% -->
+                        <div style="position: absolute; top: 50%; left: 90%; width: 8px; height: 8px; background: #007bff; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 48%; left: 88%; color: #007bff; font-weight: bold; font-size: 12px;">Ostrava</div>
                         
-                        <!-- Plzeň: 49.7384°N, 13.3736°E -->
-                        <div style="position: absolute; top: 47%; left: 15%; width: 8px; height: 8px; background: #ffc107; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 45%; left: 13%; color: #ffc107; font-weight: bold; font-size: 12px;">Plzeň</div>
+                        <!-- Plzeň: 49.7384N, 13.3736E = x:20%, y:52% -->
+                        <div style="position: absolute; top: 52%; left: 20%; width: 8px; height: 8px; background: #ffc107; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 50%; left: 18%; color: #ffc107; font-weight: bold; font-size: 12px;">Plzeň</div>
                         
-                        <!-- České Budějovice: 48.9745°N, 14.4743°E -->
-                        <div style="position: absolute; top: 70%; left: 31%; width: 8px; height: 8px; background: #6f42c1; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 68%; left: 21%; color: #6f42c1; font-weight: bold; font-size: 12px;">Č. Budějovice</div>
+                        <!-- České Budějovice: 48.9745N, 14.4743E = x:36%, y:85% -->
+                        <div style="position: absolute; top: 85%; left: 36%; width: 8px; height: 8px; background: #6f42c1; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 83%; left: 26%; color: #6f42c1; font-weight: bold; font-size: 12px;">Č. Budějovice</div>
                         
-                        <!-- Liberec: 50.7663°N, 15.0543°E -->
-                        <div style="position: absolute; top: 25%; left: 40%; width: 8px; height: 8px; background: #fd7e14; border-radius: 50%; border: 2px solid white;"></div>
-                        <div style="position: absolute; top: 23%; left: 38%; color: #fd7e14; font-weight: bold; font-size: 12px;">Liberec</div>
+                        <!-- Liberec: 50.7663N, 15.0543E = x:44%, y:13% -->
+                        <div style="position: absolute; top: 13%; left: 44%; width: 8px; height: 8px; background: #fd7e14; border-radius: 50%; border: 2px solid white;"></div>
+                        <div style="position: absolute; top: 11%; left: 42%; color: #fd7e14; font-weight: bold; font-size: 12px;">Liberec</div>
                         
                         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                            <!-- Praha (30%, 42%) → Brno (55%, 58%) -->
-                            <line x1="30%" y1="42%" x2="55%" y2="58%" stroke="#1976d2" stroke-width="3" stroke-dasharray="8,4" opacity="0.8"/>
-                            <!-- Brno (55%, 58%) → Praha (30%, 42%) -->
-                            <line x1="55%" y1="58%" x2="30%" y2="42%" stroke="#e91e63" stroke-width="3" stroke-dasharray="6,6" opacity="0.8"/>
-                            <!-- Brno (55%, 58%) → Ostrava (80%, 45%) -->
-                            <line x1="55%" y1="58%" x2="80%" y2="45%" stroke="#4caf50" stroke-width="3" stroke-dasharray="10,5" opacity="0.8"/>
-                            <!-- Ostrava (80%, 45%) → Praha (30%, 42%) -->
-                            <line x1="80%" y1="45%" x2="30%" y2="42%" stroke="#ff9800" stroke-width="3" stroke-dasharray="5,5" opacity="0.8"/>
-                            <!-- Praha (30%, 42%) → Plzeň (15%, 47%) -->
-                            <line x1="30%" y1="42%" x2="15%" y2="47%" stroke="#9c27b0" stroke-width="3" stroke-dasharray="7,3" opacity="0.8"/>
-                            <!-- Praha (30%, 42%) → Liberec (40%, 25%) -->
-                            <line x1="30%" y1="42%" x2="40%" y2="25%" stroke="#fd7e14" stroke-width="3" stroke-dasharray="4,4" opacity="0.8"/>
-                            <!-- Č. Budějovice (31%, 70%) → Praha (30%, 42%) -->
-                            <line x1="31%" y1="70%" x2="30%" y2="42%" stroke="#6f42c1" stroke-width="3" stroke-dasharray="5,8" opacity="0.8"/>
+                            <!-- Praha (35%, 35%) → Brno (67%, 65%) -->
+                            <line x1="35%" y1="35%" x2="67%" y2="65%" stroke="#1976d2" stroke-width="3" stroke-dasharray="8,4" opacity="0.8"/>
+                            <!-- Brno (67%, 65%) → Praha (35%, 35%) -->
+                            <line x1="67%" y1="65%" x2="35%" y2="35%" stroke="#e91e63" stroke-width="3" stroke-dasharray="6,6" opacity="0.8"/>
+                            <!-- Brno (67%, 65%) → Ostrava (90%, 50%) -->
+                            <line x1="67%" y1="65%" x2="90%" y2="50%" stroke="#4caf50" stroke-width="3" stroke-dasharray="10,5" opacity="0.8"/>
+                            <!-- Ostrava (90%, 50%) → Praha (35%, 35%) -->
+                            <line x1="90%" y1="50%" x2="35%" y2="35%" stroke="#ff9800" stroke-width="3" stroke-dasharray="5,5" opacity="0.8"/>
+                            <!-- Praha (35%, 35%) → Plzeň (20%, 52%) -->
+                            <line x1="35%" y1="35%" x2="20%" y2="52%" stroke="#9c27b0" stroke-width="3" stroke-dasharray="7,3" opacity="0.8"/>
+                            <!-- Praha (35%, 35%) → Liberec (44%, 13%) -->
+                            <line x1="35%" y1="35%" x2="44%" y2="13%" stroke="#fd7e14" stroke-width="3" stroke-dasharray="4,4" opacity="0.8"/>
+                            <!-- Č. Budějovice (36%, 85%) → Praha (35%, 35%) -->
+                            <line x1="36%" y1="85%" x2="35%" y2="35%" stroke="#6f42c1" stroke-width="3" stroke-dasharray="5,8" opacity="0.8"/>
                         </svg>
                         
                         <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
