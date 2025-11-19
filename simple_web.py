@@ -434,8 +434,7 @@ def home():
                             '<div class="message their-message">' +
                                 '<strong>' + driverName + ':</strong> Ahoj! Vidím, že máte zájem o jízdu ' + rideInfo +
                             '</div>' +
-                        '</div>
- +
+                        '</div>' +
                         '<div style="margin-top: 20px;">' +
                             '<input type="text" id="messageInput" placeholder="Napište zprávu..." onkeypress="if(event.key===\'Enter\') sendMessage()">' +
                             '<button onclick="sendMessage()">Odeslat</button>' +
