@@ -307,7 +307,7 @@ def home():
                     
                     if (showReserveButton && !isMyRide && currentUserId) {
                         html += '<button onclick="reserveRide(' + ride.id + ')" style="background: #28a745; color: white; font-size: 12px; padding: 5px 10px; margin: 5px 5px 0 0;">Rezervovat</button>';
-                        html += '<button onclick="openChat(\'' + ride.driver_name + '\', \'' + (ride.driver_phone || '+420721745084') + '\')" style="background: #007bff; color: white; font-size: 12px; padding: 5px 10px; margin: 5px 0 0 0;">Chat</button>';
+                        html += '<button onclick="openChat(' + "'" + ride.driver_name + "'" + ', ' + "'" + (ride.driver_phone || '+420721745084') + "'" + ')" style="background: #007bff; color: white; font-size: 12px; padding: 5px 10px; margin: 5px 0 0 0;">Chat</button>';
                     } else if (isMyRide) {
                         html += '<span style="color: #28a745; font-weight: bold;">🚗 Vaše jízda</span>';
                     }
@@ -329,7 +329,7 @@ def home():
                     html += '<strong>' + reservation.from_location + ' → ' + reservation.to_location + '</strong><br>';
                     html += 'Řidič: ' + reservation.driver_name + ' | Čas: ' + reservation.departure_time + '<br>';
                     html += 'Cena: ' + reservation.price_per_person + ' Kč | Rezervovaná místa: ' + reservation.seats_reserved + '<br>';
-                    html += '<button onclick="openChat(\'' + reservation.driver_name + '\', \'' + (reservation.driver_phone || '+420721745084') + '\')" style="background: #007bff; color: white; font-size: 12px; padding: 5px 10px; margin: 5px 0 0 0;">Kontaktovat řidiče</button>';
+                    html += '<button onclick="openChat(' + "'" + reservation.driver_name + "'" + ', ' + "'" + (reservation.driver_phone || '+420721745084') + "'" + ')" style="background: #007bff; color: white; font-size: 12px; padding: 5px 10px; margin: 5px 0 0 0;">Kontaktovat řidiče</button>';
                     html += '</div>';
                 });
                 container.innerHTML = html;
