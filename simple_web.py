@@ -410,20 +410,20 @@ def home():
             
             function openChat(driverName, driverPhone, rideInfo) {
                 const chatWindow = window.open('', 'chat', 'width=400,height=600');
-                chatWindow.document.write('<html><head><title>Chat s ' + driverName + '</title>
-                    <style>
-                        body { font-family: Arial; margin: 20px; }
-                        .message { margin: 10px 0; padding: 10px; border-radius: 10px; }
-                        .my-message { background: #007bff; color: white; text-align: right; }
-                        .their-message { background: #f1f1f1; }
-                        input { width: 70%; padding: 10px; }
-                        button { padding: 10px 15px; }
-                        .contact-buttons { margin: 20px 0; }
-                        .contact-buttons button { margin: 5px; padding: 10px 15px; }
-                    </style>
-                    </head>
-                    <body>
-                        <h3>💬 Chat s ' + driverName + '</h3>' +
+                const chatHtml = '<html><head><title>Chat s ' + driverName + '</title>' +
+                    '<style>' +
+                        'body { font-family: Arial; margin: 20px; }' +
+                        '.message { margin: 10px 0; padding: 10px; border-radius: 10px; }' +
+                        '.my-message { background: #007bff; color: white; text-align: right; }' +
+                        '.their-message { background: #f1f1f1; }' +
+                        'input { width: 70%; padding: 10px; }' +
+                        'button { padding: 10px 15px; }' +
+                        '.contact-buttons { margin: 20px 0; }' +
+                        '.contact-buttons button { margin: 5px; padding: 10px 15px; }' +
+                    '</style>' +
+                    '</head>' +
+                    '<body>' +
+                        '<h3>💬 Chat s ' + driverName + '</h3>' +
                         '<p><strong>Jízda:</strong> ' + rideInfo + '</p>' +
                         '<p><strong>Telefon:</strong> ' + driverPhone + '</p>' +
                         '<div class="contact-buttons">' +
@@ -452,7 +452,8 @@ def home():
                             '}' +
                         '</script>' +
                     '</body>' +
-                    '</html>');
+                    '</html>';
+                chatWindow.document.write(chatHtml);
             }
         </script>
     </body>
