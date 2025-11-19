@@ -42,6 +42,9 @@ build/
 # Lokální nastavení Androidu (cesta k SDK atd.)
 local.properties
 .gradle/
+
+# APK artifacts (not stored in repo)
+google_play_materials/*.apk
 Celkový doporučený .gitignore
 Když to vše spojíme, váš kompletní .gitignore by mohl vypadat takto (můžete ho celý zkopírovat a nahradit jím ten stávající):
 
