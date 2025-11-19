@@ -35,8 +35,6 @@ def home():
             button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer; }
             .ride { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
         </style>
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     </head>
     <body>
         <div class="container">
@@ -79,8 +77,18 @@ def home():
                 </div>
                 
                 <div class="section map-section">
-                    <h3>🗺️ Mapa jízd</h3>
-                    <div id="map" style="height: 400px; border-radius: 8px; overflow: hidden; border: 2px solid #ddd;"></div>
+                    <h3>🗺️ Mapa České republiky</h3>
+                    <div id="map" style="height: 400px; border-radius: 8px; overflow: hidden; border: 2px solid #ddd; position: relative;">
+                        <iframe 
+                            src="https://www.openstreetmap.org/export/embed.html?bbox=12.0%2C48.5%2C18.9%2C51.1&layer=mapnik&marker=50.0755%2C14.4378" 
+                            style="width: 100%; height: 100%; border: none;"
+                            title="Mapa České republiky s jízdami">
+                        </iframe>
+                        
+                        <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
+                            🗺️ Česká republika - Mapa jízd
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -116,60 +124,6 @@ def home():
         
         <script>
             let currentUserId = null;
-            let map = null;
-            let markers = [];
-            
-            // Inicializace mapy
-            function initMap() {
-                map = L.map('map').setView([49.75, 15.5], 7);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(map);
-                
-                // Načtení tras při inicializaci
-                loadRidesOnMap();
-            }
-            
-            // Načtení tras na mapu
-            function loadRidesOnMap() {
-                fetch('/api/rides/search')
-                .then(response => response.json())
-                .then(rides => {
-                    // Vymazání starých markerů
-                    markers.forEach(marker => map.removeLayer(marker));
-                    markers = [];
-                    
-                    rides.forEach(ride => {
-                        const coords = getCityCoordinates(ride.from_location);
-                        const coordsTo = getCityCoordinates(ride.to_location);
-                        
-                        if (coords && coordsTo) {
-                            // Marker pro výchozí bod
-                            const marker = L.marker(coords).addTo(map);
-                            marker.bindPopup(`<b>${ride.from_location} → ${ride.to_location}</b><br>Řidič: ${ride.driver_name}<br>Cena: ${ride.price_per_person} Kč`);
-                            markers.push(marker);
-                            
-                            // Čára trasy
-                            const polyline = L.polyline([coords, coordsTo], {color: 'blue', weight: 3}).addTo(map);
-                            markers.push(polyline);
-                        }
-                    });
-                });
-            }
-            
-            // Souřadnice měst
-            function getCityCoordinates(city) {
-                const cities = {
-                    'Praha': [50.0755, 14.4378],
-                    'Brno': [49.1951, 16.6068],
-                    'Ostrava': [49.8209, 18.2625],
-                    'Plzeň': [49.7384, 13.3736],
-                    'Liberec': [50.7663, 15.0543],
-                    'České Budějovice': [48.9745, 14.4743],
-                    'Zlín': [49.2265, 17.6679]
-                };
-                return cities[city] || null;
-            }
             
             function loginUser() {
                 const phone = document.getElementById('loginPhone').value;
@@ -262,7 +216,6 @@ def home():
                         document.getElementById('offerFrom').value = '';
                         document.getElementById('offerTo').value = '';
                         document.getElementById('offerNote').value = '';
-                        loadRidesOnMap(); // Aktualizace mapy
                     } else {
                         resultDiv.innerHTML = '<span style="color: red;">✗ ' + (data.error || 'Chyba při nabídce jízdy') + '</span>';
                     }
@@ -414,11 +367,6 @@ def home():
             function openChat(driverName, driverPhone) {
                 alert('Chat s ' + driverName + ' - Telefon: ' + driverPhone);
             }
-            
-            // Inicializace při načtení stránky
-            window.onload = function() {
-                initMap();
-            };
         </script>
     </body>
     </html>
