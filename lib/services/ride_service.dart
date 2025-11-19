@@ -13,7 +13,7 @@ class RideService {
   List<Map<String, dynamic>> _allRides = [
     {
       'id': 1,
-      'title': 'Brno → Zlín',
+      'title': 'Brno, Česká 15 → Zlín, Náměstí Míru 10',
       'time': '2025-11-19 14:00',
       'seats': 3,
       'price': 150,
@@ -23,7 +23,7 @@ class RideService {
     },
     {
       'id': 2,
-      'title': 'Praha → Ostrava',
+      'title': 'Praha, Václavské náměstí 1 → Ostrava, Stodolní 15',
       'time': '2025-11-20 08:00',
       'seats': 2,
       'price': 300,
@@ -33,7 +33,7 @@ class RideService {
     },
     {
       'id': 3,
-      'title': 'Praha → Brno',
+      'title': 'Praha, Václavské náměstí 1 → Brno, Hlavní nádraží',
       'time': '2025-11-18 15:00',
       'seats': 3,
       'price': 200,
@@ -43,7 +43,7 @@ class RideService {
     },
     {
       'id': 4,
-      'title': 'Brno → Praha',
+      'title': 'Brno, Mendlovo náměstí 1 → Praha, Hlavní nádraží',
       'time': '2025-11-18 17:30',
       'seats': 2,
       'price': 250,
@@ -64,6 +64,10 @@ class RideService {
     ride['id'] = _allRides.length + 100;
     ride['isMyRide'] = true;
     ride['driver'] = 'Miroslav Zelený';
+    // Přidání detailních adres pokud nejsou
+    if (!ride['title'].contains(',')) {
+      ride['title'] = ride['title'].replaceAll(' → ', ', Centrum → ').replaceAll('→', '→') + ', Centrum';
+    }
     _allRides.add(ride);
   }
   
