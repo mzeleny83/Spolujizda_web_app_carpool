@@ -2,9 +2,59 @@ from flask import Flask, request, jsonify, redirect, send_from_directory
 from flask_cors import CORS
 import hashlib
 import os
+try:
+    import psycopg2
+    import psycopg2.extras
+except ImportError:
+    psycopg2 = None
+import sqlite3
 
 app = Flask(__name__)
 CORS(app)
+
+
+def get_db_connection():
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url and psycopg2:
+        return psycopg2.connect(database_url)
+    return sqlite3.connect('spolujizda.db')
+
+
+def init_db():
+    conn = get_db_connection()
+    c = conn.cursor()
+    database_url = os.environ.get('DATABASE_URL')
+    use_pg = bool(database_url and psycopg2)
+    if use_pg:
+        c.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone TEXT UNIQUE NOT NULL,
+                email TEXT,
+                password_hash TEXT NOT NULL,
+                rating REAL DEFAULT 5.0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            '''
+        )
+    else:
+        c.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone TEXT UNIQUE NOT NULL,
+                email TEXT,
+                password_hash TEXT NOT NULL,
+                rating REAL DEFAULT 5.0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            '''
+        )
+    conn.commit()
+    conn.close()
 
 @app.route('/')
 def home():
@@ -244,7 +294,34 @@ def home():
             }
             
             function registerUser() {
-                alert('Registrace bude brzy k dispozici!');
+                const name = prompt('Zadejte jméno a příjmení:');
+                const phone = document.getElementById('loginPhone').value;
+                const password = document.getElementById('loginPassword').value;
+                const resultDiv = document.getElementById('loginResult');
+
+                if (!name || !phone || !password) {
+                    resultDiv.innerHTML = '<span class="error">Vyplňte jméno, telefon a heslo.</span>';
+                    return;
+                }
+
+                resultDiv.innerHTML = '<span class="info">Registruji...</span>';
+
+                fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, phone: phone, password: password })
+                })
+                .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                .then(({ status, body }) => {
+                    if (status === 201 && body.user_id) {
+                        resultDiv.innerHTML = '<span class="success">Účet vytvořen. Přihlaste se stejnými údaji.</span>';
+                    } else {
+                        resultDiv.innerHTML = '<span class="error">' + (body.error || 'Chyba registrace') + '</span>';
+                    }
+                })
+                .catch(() => {
+                    resultDiv.innerHTML = '<span class="error">Chyba připojení</span>';
+                });
             }
             
             function offerRide() {
@@ -588,28 +665,104 @@ def home():
     </html>
     '''
 
-@app.route('/api/users/login', methods=['POST'])
-def login():
+@app.route('/api/users/register', methods=['POST'])
+def register():
     try:
+        init_db()
         data = request.get_json(force=True)
         if not data:
             return jsonify({'error': 'Neplatná data'}), 400
+
+        name = (data.get('name') or '').strip()
+        phone = (data.get('phone') or '').strip()
+        email = (data.get('email') or '').strip()
+        password = data.get('password') or ''
+
+        if not name or not phone or not password:
+            return jsonify({'error': 'Jméno, telefon a heslo jsou povinné'}), 400
+
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+        conn = get_db_connection()
+        c = conn.cursor()
+        database_url = os.environ.get('DATABASE_URL')
+        use_pg = bool(database_url and psycopg2)
+
+        c.execute(
+            "SELECT id FROM users WHERE phone = %s" if use_pg else "SELECT id FROM users WHERE phone = ?",
+            (phone,),
+        )
+        if c.fetchone():
+            conn.close()
+            return jsonify({'error': 'Telefon je už registrovaný'}), 409
+
+        if use_pg:
+            c.execute(
+                "INSERT INTO users (name, phone, email, password_hash) VALUES (%s, %s, %s, %s) RETURNING id",
+                (name, phone, email or None, password_hash),
+            )
+            user_id = c.fetchone()[0]
+        else:
+            c.execute(
+                "INSERT INTO users (name, phone, email, password_hash) VALUES (?, ?, ?, ?)",
+                (name, phone, email or None, password_hash),
+            )
+            user_id = c.lastrowid
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'message': 'Registrace uspesna', 'user_id': user_id, 'name': name}), 201
+    except Exception as e:
+        return jsonify({'error': f'Chyba serveru: {str(e)}'}), 500
+
+
+
+@app.route('/api/users/login', methods=['POST'])
+def login():
+    try:
+        init_db()
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({'error': 'Neplatna data'}), 400
             
-        phone = data.get('phone')
-        password = data.get('password')
+        phone = (data.get('phone') or '').strip()
+        password = data.get('password') or ''
         
         if not phone or not password:
-            return jsonify({'error': 'Telefon a heslo jsou povinné'}), 400
+            return jsonify({'error': 'Telefon a heslo jsou povinne'}), 400
+        
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        conn = get_db_connection()
+        c = conn.cursor()
+        database_url = os.environ.get('DATABASE_URL')
+        use_pg = bool(database_url and psycopg2)
+        c.execute(
+            "SELECT id, name, rating FROM users WHERE phone = %s AND password_hash = %s"
+            if use_pg
+            else "SELECT id, name, rating FROM users WHERE phone = ? AND password_hash = ?",
+            (phone, password_hash),
+        )
+        user = c.fetchone()
+        conn.close()
+
+        if user:
+            return jsonify({
+                'message': 'Prihlaseni uspesne',
+                'user_id': user[0],
+                'name': user[1],
+                'rating': float(user[2]) if user[2] is not None else 5.0
+            }), 200
         
         if phone in ['+420721745084', '721745084', '+420123456789', '123456789', 'miroslav.zeleny@volny.cz'] and password in ['123', 'password', 'admin', 'heslo']:
             return jsonify({
-                'message': 'Přihlášení úspěšné',
+                'message': 'Prihlaseni uspesne',
                 'user_id': 1,
-                'name': 'Miroslav Zelený',
+                'name': 'Miroslav Zeleny',
                 'rating': 5.0
             }), 200
         else:
-            return jsonify({'error': 'Neplatné přihlašovací údaje'}), 401
+            return jsonify({'error': 'Neplatne prihlasovaci udaje'}), 401
     except Exception as e:
         return jsonify({'error': f'Chyba serveru: {str(e)}'}), 500
 
