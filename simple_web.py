@@ -124,6 +124,19 @@ def home():
                 <div id="loginResult" style="margin-top: 10px;"></div>
             </div>
             
+            <!-- Registrace -->
+            <div class="section hidden" id="registerSection">
+                <h3>Registrace</h3>
+                <input type="text" id="regName" placeholder="Jmeno a prijmeni">
+                <input type="tel" id="regPhone" placeholder="Telefon (+420...)">
+                <input type="email" id="regEmail" placeholder="Email (volitelne)">
+                <input type="password" id="regPassword" placeholder="Heslo (min. 4 znaky)">
+                <input type="password" id="regPasswordConfirm" placeholder="Potvrzeni hesla">
+                <button onclick="submitRegistration()">Vytvorit ucet</button>
+                <button onclick="showSection('loginSection')" style="background: #6c757d;">Zpet na prihlaseni</button>
+                <div id="registerResult" style="margin-top: 10px;"></div>
+            </div>
+
             <!-- Hlavní menu po přihlášení -->
             <div class="section hidden" id="userSection">
                 <h3>👤 Můj profil</h3>
@@ -234,7 +247,7 @@ def home():
             
             function showSection(sectionId) {
                 // Skrýt všechny sekce
-                const sections = ['userSection', 'offerRideSection', 'searchRideSection', 'myRidesSection', 'myReservationsSection', 'allRidesSection', 'messagesSection', 'mapSection'];
+                const sections = ['loginSection', 'registerSection', 'userSection', 'offerRideSection', 'searchRideSection', 'myRidesSection', 'myReservationsSection', 'allRidesSection', 'messagesSection', 'mapSection'];
                 sections.forEach(id => {
                     document.getElementById(id).classList.add('hidden');
                 });
@@ -294,13 +307,40 @@ def home():
             }
             
             function registerUser() {
-                const name = prompt('Zadejte jméno a příjmení:');
-                const phone = document.getElementById('loginPhone').value;
-                const password = document.getElementById('loginPassword').value;
-                const resultDiv = document.getElementById('loginResult');
+                showSection('registerSection');
+                document.getElementById('regName').value = '';
+                document.getElementById('regPhone').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regPasswordConfirm').value = '';
+                document.getElementById('registerResult').innerHTML = '';
+            }
+
+            function submitRegistration() {
+                const name = document.getElementById('regName').value.trim();
+                const phone = document.getElementById('regPhone').value.trim();
+                const email = document.getElementById('regEmail').value.trim();
+                const password = document.getElementById('regPassword').value;
+                const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+                const resultDiv = document.getElementById('registerResult');
+
+                const normalizedPhone = phone.replace(/\\s+/g, '');
+                const phoneOk = /^\\+?\\d{9,15}$/.test(normalizedPhone);
 
                 if (!name || !phone || !password) {
-                    resultDiv.innerHTML = '<span class="error">Vyplňte jméno, telefon a heslo.</span>';
+                    resultDiv.innerHTML = '<span class="error">Vyplnte jmeno, telefon a heslo.</span>';
+                    return;
+                }
+                if (!phoneOk) {
+                    resultDiv.innerHTML = '<span class="error">Telefon musi byt ve tvaru +420123456789 nebo 9-15 cislic.</span>';
+                    return;
+                }
+                if (password.length < 4) {
+                    resultDiv.innerHTML = '<span class="error">Heslo musi mit alespon 4 znaky.</span>';
+                    return;
+                }
+                if (password !== passwordConfirm) {
+                    resultDiv.innerHTML = '<span class="error">Hesla se neshoduji.</span>';
                     return;
                 }
 
@@ -309,7 +349,31 @@ def home():
                 fetch('/api/users/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name, phone: phone, password: password })
+                    body: JSON.stringify({ name: name, phone: normalizedPhone, email: email, password: password })
+                })
+                .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                .then(({ status, body }) => {
+                    if (status === 201 && body.user_id) {
+                        document.getElementById('loginPhone').value = normalizedPhone;
+                        document.getElementById('loginPassword').value = password;
+                        document.getElementById('loginResult').innerHTML = '<span class="success">Ucet vytvoren, prihlas se.</span>';
+                        resultDiv.innerHTML = '';
+                        showSection('loginSection');
+                    } else {
+                        resultDiv.innerHTML = '<span class="error">' + (body.error || 'Chyba registrace') + '</span>';
+                    }
+                })
+                .catch(() => {
+                    resultDiv.innerHTML = '<span class="error">Chyba pripojeni</span>';
+                });
+            }
+
+                resultDiv.innerHTML = '<span class="info">Registruji...</span>';
+
+                fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name.trim(), phone: phone.trim(), password: password })
                 })
                 .then(response => response.json().then(data => ({ status: response.status, body: data })))
                 .then(({ status, body }) => {
