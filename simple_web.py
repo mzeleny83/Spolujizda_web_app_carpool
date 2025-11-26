@@ -265,16 +265,17 @@ def home():
             }
             
             function loginUser() {
-                const phone = document.getElementById('loginPhone').value;
+                const phoneInput = document.getElementById('loginPhone').value.trim();
                 const password = document.getElementById('loginPassword').value;
                 const resultDiv = document.getElementById('loginResult');
+                const normalizedPhone = phoneInput.replace(/\s+/g, '');
                 
-                resultDiv.innerHTML = '<span class="info">Přihlašuji...</span>';
+                resultDiv.innerHTML = '<span class="info">Prihlasuji...</span>';
                 
                 fetch('/api/users/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: phone, password: password })
+                    body: JSON.stringify({ phone: normalizedPhone, password: password })
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -284,22 +285,23 @@ def home():
                         document.getElementById('userSection').classList.remove('hidden');
                         document.getElementById('userInfo').innerHTML = 
                             '<strong>' + data.name + '</strong><br>' +
-                            'Hodnocení: ' + data.rating + '/5 ⭐<br>' +
-                            'Telefon: ' + phone;
+                            'Hodnoceni: ' + data.rating + '/5 <br>' +
+                            'Telefon: ' + normalizedPhone;
+                        resultDiv.innerHTML = '<span class="success">Prihlaseni uspesne.</span>';
                         
                         const tomorrow = new Date();
                         tomorrow.setDate(tomorrow.getDate() + 1);
                         document.getElementById('offerDateTime').value = tomorrow.toISOString().slice(0, 16);
                     } else {
-                        resultDiv.innerHTML = '<span class="error">✗ ' + (data.error || 'Chyba přihlášení') + '</span>';
+                        resultDiv.innerHTML = '<span class="error">- ' + (data.error || 'Chyba prihlaseni') + '</span>';
                     }
                 })
                 .catch(error => {
-                    resultDiv.innerHTML = '<span class="error">✗ Chyba připojení</span>';
+                    resultDiv.innerHTML = '<span class="error">- Chyba pripojeni</span>';
                 });
             }
-            
-            function logoutUser() {
+
+function logoutUser() {
                 currentUserId = null;
                 document.getElementById('loginSection').classList.remove('hidden');
                 showSection('loginSection');
@@ -324,8 +326,8 @@ def home():
                 const passwordConfirm = document.getElementById('regPasswordConfirm').value;
                 const resultDiv = document.getElementById('registerResult');
 
-                const normalizedPhone = phone.replace(/\\s+/g, '');
-                const phoneOk = /^\\+?\\d{9,15}$/.test(normalizedPhone);
+                const normalizedPhone = phone.replace(/\s+/g, '');
+                const phoneOk = /^\+?\d{9,15}$/.test(normalizedPhone);
 
                 if (!name || !phone || !password) {
                     resultDiv.innerHTML = '<span class="error">Vyplnte jmeno, telefon a heslo.</span>';
@@ -368,26 +370,6 @@ def home():
                 });
             }
 
-                resultDiv.innerHTML = '<span class="info">Registruji...</span>';
-
-                fetch('/api/users/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name.trim(), phone: phone.trim(), password: password })
-                })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(({ status, body }) => {
-                    if (status === 201 && body.user_id) {
-                        resultDiv.innerHTML = '<span class="success">Účet vytvořen. Přihlaste se stejnými údaji.</span>';
-                    } else {
-                        resultDiv.innerHTML = '<span class="error">' + (body.error || 'Chyba registrace') + '</span>';
-                    }
-                })
-                .catch(() => {
-                    resultDiv.innerHTML = '<span class="error">Chyba připojení</span>';
-                });
-            }
-            
             function offerRide() {
                 if (!currentUserId) {
                     alert('Nejdříve se přihlaste!');
