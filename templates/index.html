@@ -1,13 +1,146 @@
 <!DOCTYPE html>
-<html>
+<html lang="cs">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spolujízda</title>
+  <title>Spoluj?zda | Sveztese.cz ? chci se sv?zt nebo svezu v?s</title>
+  <meta name="description" content="Spoluj?zda po ?R: chci se sv?zt nebo svezu v?s ? rychl? hled?n? a nab?dka j?zd Praha, Brno, Ostrava.">
+  <meta name="keywords" content="spoluj?zda, chci se sv?zt, svezu v?s, spoluj?zda Praha Brno, sd?len? auta">
+  <meta property="og:title" content="Spoluj?zda | Sveztese.cz">
+  <meta property="og:description" content="Najd?te j?zdu nebo nab?dn?te voln? m?sta.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.sveztese.cz/">
+  <meta property="og:image" content="https://www.sveztese.cz/static/icons/Icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Spoluj?zda | Sveztese.cz">
+  <meta name="twitter:description" content="Chci se sv?zt nebo svezu v?s.">
   <link rel="icon" href="/static/favicon.ico">
-  <link rel="manifest" href="manifest.json">
+  <link rel="canonical" href="https://www.sveztese.cz/">
+  <link rel="alternate" href="https://www.sveztese.cz/" hreflang="cs-cz">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "Sveztese.cz", "url": "https://www.sveztese.cz", "inLanguage": "cs-CZ", "potentialAction": {"@type": "SearchAction", "target": "https://www.sveztese.cz/search?from={search_term_string}", "query-input": "required name=search_term_string"}}</script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --primary: #0066ff;
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --muted: #6c757d;
+      --success: #28a745;
+      --error: #dc3545;
+    }
+    body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 24px; background: var(--bg); color: #1f2933; }
+    .container { max-width: 900px; margin: 0 auto; background: var(--card); padding: 24px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    h1 { text-align: center; margin: 0 0 18px; }
+    h3 { margin-top: 0; }
+    .section { margin: 18px 0; padding: 18px; border: 1px solid #e5e7eb; border-radius: 10px; }
+    .hidden { display: none; }
+    input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #d0d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+    button { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 12px 16px; margin: 4px 4px 0 0; cursor: pointer; font-size: 15px; }
+    button.secondary { background: var(--muted); }
+    .ride { background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 4px solid var(--primary); margin: 8px 0; }
+    .success { color: var(--success); font-weight: 600; }
+    .error { color: var(--error); font-weight: 600; }
+    .info { color: #0ca4d3; font-weight: 600; }
+    #map { height: 420px; border-radius: 10px; border: 1px solid #e5e7eb; }
+    .nav-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .nav-buttons button { flex: 1; min-width: 140px; }
+    @media (max-width: 640px) { body { padding: 12px; } .container { padding: 16px; } }
+  </style>
 </head>
 <body>
-  <script src="main.dart.js" type="application/javascript"></script>
+  <div class="container">
+    <h1>Spoluj?zda: chci se sv?zt nebo svezu v?s</h1>
+    <p style="text-align:center;margin:6px 0 14px;">Rychl? hled?n? i nab?dka j?zd po ?R ? Praha, Brno, Ostrava, Plze?.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px;">
+      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">chci se sv?zt</span>
+      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">svezu v?s</span>
+      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">spoluj?zda Praha ? Brno</span>
+    </div>
+
+    <div class="section" id="loginSection">
+      <h3>P?ihl??en?</h3>
+      <input type="tel" id="loginPhone" placeholder="Telefon (+420...)" value="">
+      <input type="password" id="loginPassword" placeholder="Heslo">
+      <button onclick="loginUser()">P?ihl?sit se</button>
+      <button class="secondary" onclick="showSection('registerSection')">Registrovat se</button>
+      <div id="loginResult" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="section hidden" id="registerSection">
+      <h3>Registrace</h3>
+      <input type="text" id="regName" placeholder="Jm?no a p??jmen?">
+      <input type="tel" id="regPhone" placeholder="Telefon (+420...)">
+      <input type="email" id="regEmail" placeholder="Email (voliteln?)">
+      <input type="password" id="regPassword" placeholder="Heslo (min. 6 znak?)">
+      <input type="password" id="regPasswordConfirm" placeholder="Potvrzen? hesla">
+      <button onclick="submitRegistration()">Vytvo?it ??et</button>
+      <button class="secondary" onclick="showSection('loginSection')">Zp?t na p?ihl??en?</button>
+      <div id="registerResult" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="section hidden" id="userSection">
+      <h3>M?j profil</h3>
+      <div id="userInfo"></div>
+      <div class="nav-buttons">
+        <button onclick="showSection('offerRideSection')">Nab?dnout j?zdu</button>
+        <button onclick="showSection('searchRideSection')">Hledat j?zdu</button>
+        <button onclick="showMyRides()">Moje j?zdy</button>
+        <button onclick="showMyReservations()">Moje rezervace</button>
+        <button onclick="showAllRides()">V?echny j?zdy</button>
+        <button class="secondary" onclick="logoutUser()">Odhl?sit se</button>
+      </div>
+    </div>
+
+    <div class="section hidden" id="offerRideSection">
+      <h3>Nab?dnout j?zdu</h3>
+      <input type="text" id="offerFrom" placeholder="Odkud (m?sto, ulice)">
+      <input type="text" id="offerTo" placeholder="Kam (m?sto, ulice)">
+      <input type="datetime-local" id="offerDateTime">
+      <input type="number" id="offerSeats" placeholder="Po?et voln?ch m?st" min="1" max="8" value="3">
+      <input type="number" id="offerPrice" placeholder="Cena za osobu (K?)" min="0" value="200">
+      <textarea id="offerNote" placeholder="Pozn?mka (voliteln?)" rows="3"></textarea>
+      <button onclick="offerRide()">Nab?dnout j?zdu</button>
+      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <div id="offerResult" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="section hidden" id="searchRideSection">
+      <h3>Hledat j?zdu</h3>
+      <input type="text" id="searchFrom" placeholder="Odkud">
+      <input type="text" id="searchTo" placeholder="Kam">
+      <button onclick="searchRides()">Hledat</button>
+      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <div id="searchResults" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="section hidden" id="myRidesSection">
+      <h3>Moje j?zdy</h3>
+      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <div id="myOffers"></div>
+    </div>
+
+    <div class="section hidden" id="myReservationsSection">
+      <h3>Moje rezervace</h3>
+      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <div id="myBookings"></div>
+    </div>
+
+    <div class="section hidden" id="allRidesSection">
+      <h3>V?echny j?zdy</h3>
+      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <div id="allRidesList"></div>
+    </div>
+
+    <div class="section hidden" id="mapSection">
+      <h3>Mapa j?zd</h3>
+      <button onclick="loadMapRides()">Na??st j?zdy</button>
+      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <div id="map"></div>
+      <div id="mapInfo" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <script src="/static/main.js"></script>
 </body>
 </html>

@@ -1,18 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="cs">
 <head>
-    <title>Spolujízda - Sdílení jízd po celé České republice</title>
+    <title>Spoluj?zda | Sveztese.cz ? chci se sv?zt nebo svezu v?s po ?esku</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="description" content="Najděte spolujízdu nebo nabídněte volná místa ve svém autě. Levné cestování po České republice - Praha, Brno, Ostrava.">
-    <meta name="keywords" content="spolujízda, sdílení jízd, levné cestování, Praha, Brno, Ostrava">
-    <meta property="og:title" content="Spolujízda - Sdílení jízd">
-    <meta property="og:description" content="Najděte spolujízdu nebo nabídněte volná místa ve svém autě">
+    <meta name="description" content="Spoluj?zda po cel? ?R. Chci se sv?zt, nebo svezu v?s ? Praha, Brno, Ostrava, Plze? a dal?? trasy. Rychl? vyhled?n? j?zd, rezervace i nab?dka voln?ch m?st.">
+    <meta name="keywords" content="spoluj?zda, chci se sv?zt, svezu v?s, sd?len? auta, spoluj?zda Praha Brno, spoluj?zda Ostrava, nab?dka j?zd, rezervace j?zdy">
+    <meta property="og:title" content="Spoluj?zda | Sveztese.cz ? chci se sv?zt nebo svezu v?s">
+    <meta property="og:description" content="Najd?te j?zdu nebo nab?dn?te voln? m?sta. Spoluj?zda po cel? ?R ? Praha, Brno, Ostrava a dal??.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.sveztese.cz/">
+    <meta property="og:image" content="https://www.sveztese.cz/static/icons/Icon-512.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Spoluj?zda | Sveztese.cz">
+    <meta name="twitter:description" content="Chci se sv?zt nebo svezu v?s. Rychl? hled?n? i nab?dka spoluj?zd po ?R.">
     <link rel="canonical" href="https://www.sveztese.cz/">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="alternate" href="https://www.sveztese.cz/" hreflang="cs-cz">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Organization", "name": "Sveztese.cz", "url": "https://www.sveztese.cz", "logo": "https://www.sveztese.cz/static/icons/Icon-512.png"}, {"@type": "WebSite", "name": "Sveztese.cz", "url": "https://www.sveztese.cz", "inLanguage": "cs-CZ", "potentialAction": {"@type": "SearchAction", "target": "https://www.sveztese.cz/search?from={search_term_string}", "query-input": "required name=search_term_string"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Jak rychle najdu spoluj?zdu Praha ? Brno?", "acceptedAnswer": {"@type": "Answer", "text": "Zadejte Praha a Brno do vyhled?v?n?, vyberte ?as odjezdu a ihned vid?te ?idi?e i cenu."}}, {"@type": "Question", "name": "M??u zadat chci se sv?zt a po??dat ?idi?e?", "acceptedAnswer": {"@type": "Answer", "text": "Ano, vyhledejte trasu, klikn?te na rezervovat a ode?lete po?adavek ?idi?i."}}, {"@type": "Question", "name": "Jak p?id?m nab?dku j?zdy svezu v?s?", "acceptedAnswer": {"@type": "Answer", "text": "Po p?ihl??en? otev?ete sekci Nab?dnout j?zdu, vypl?te odkud?kam, ?as a po?et m?st a publikujte."}}]}]}</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Google Ads Conversion Tracking -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16780728781"></script>
@@ -61,6 +69,14 @@
         .nav { display: flex; gap: 15px; flex-wrap: wrap; }
         .nav button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
         .nav button.active { background: #0056b3; }
+        .seo-hero { background: linear-gradient(135deg, #e8f0ff, #f6fbff); border: 1px solid #dbe7ff; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .seo-hero h1 { margin: 0 0 10px; font-size: 26px; }
+        .seo-hero p { margin: 0 0 12px; color: #1f2933; }
+        .seo-keywords { display: flex; flex-wrap: wrap; gap: 8px; }
+        .seo-keywords span { background: #fff; border: 1px solid #dbe7ff; color: #0f3b8c; padding: 6px 10px; border-radius: 8px; font-size: 14px; }
+        .seo-faq { margin-top: 25px; border: 1px solid #e5e7eb; border-radius: 10px; padding: 15px; background: #f9fafb; }
+        .seo-faq h2 { margin-top: 0; }
+        .seo-faq details { margin: 8px 0; padding: 8px 10px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
         .section { display: none; }
         .section.active { display: block !important; }
         .form-group { margin: 15px 0; }
@@ -2183,6 +2199,18 @@
 </head>
 <body>
     <div class="container">
+        <section class="seo-hero">
+            <h1>Spolujízda: chci se svézt nebo svezu vás</h1>
+            <p>Sveztese.cz pomáhá rychle najít spolujízdu po celé ČR – Praha, Brno, Ostrava, Plzeň i menší města. Stačí zadat odkud-kam, rezervovat a jedete.</p>
+            <div class="seo-keywords">
+                <span>chci se svézt</span>
+                <span>svezu vás</span>
+                <span>spolujízda Praha → Brno</span>
+                <span>spolujízda Brno → Ostrava</span>
+                <span>levné sdílení auta</span>
+                <span>nabídka jízd</span>
+            </div>
+        </section>
         <div class="header">
             <h1>🚗 Spolujízda</h1>
             <div class="nav">
@@ -2492,6 +2520,23 @@
             </div>
             <button class="btn btn-success" onclick="offerRide()">🚗 Nabídnout jízdu</button>
         </div>
+
+        <section class="seo-faq">
+            <h2>?ast? dotazy ke spoluj?zd?</h2>
+            <details>
+                <summary>Jak najdu nejbli??? j?zdu?</summary>
+                <p>Zadejte odkud a kam jedete (nap?. ?Praha? ? ?Brno?) a klikn?te na Hledat j?zdy. Filtrovat m??ete i podle ?asu odjezdu.</p>
+            </details>
+            <details>
+                <summary>Jak zad?m ?svezu v?s? nab?dku?</summary>
+                <p>Po p?ihl??en? otev?ete sekci Nab?dnout j?zdu, dopl?te odkud-kam, ?as a po?et voln?ch m?st a ode?lete.</p>
+            </details>
+            <details>
+                <summary>Funguje ?chci se sv?zt? i na men??ch tras?ch?</summary>
+                <p>Ano, m??ete hledat i krat?? lok?ln? j?zdy ? Ostrava, Plze?, Liberec nebo okol? men??ch m?st.</p>
+            </details>
+        </section>
+
         <!-- FOOTER S PRÁVNÍMI INFORMACEMI -->
         <footer style="margin-top: 50px; padding: 20px 0; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
             <div style="margin-bottom: 10px;">

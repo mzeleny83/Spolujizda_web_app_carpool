@@ -1,11 +1,11 @@
 {
-    "name": "Spolujízda",
-    "short_name": "Spolujízda",
+    "name": "Spoluj?zda Sveztese.cz",
+    "short_name": "Spoluj?zda",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Aplikace pro sdílení jízd",
+    "description": "Aplikace pro spoluj?zdu ? chci se sv?zt nebo svezu v?s po cel? ?R.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
