@@ -18,7 +18,7 @@ function loginUser() {
   const phone = normalizePhone(document.getElementById('loginPhone').value);
   const password = document.getElementById('loginPassword').value;
   const resultDiv = document.getElementById('loginResult');
-  resultDiv.innerHTML = '<span class="info">P?ihla?uji...</span>';
+  resultDiv.innerHTML = '<span class="info">Přihlašuji...</span>';
 
   fetch('/api/users/login', {
     method: 'POST',
@@ -29,11 +29,11 @@ function loginUser() {
     .then(data => {
       if (data.user_id) {
         currentUserId = data.user_id;
-        document.getElementById('userInfo').innerHTML = `<strong>${data.name}</strong><br>Hodnocen?: ${data.rating}/5<br>Telefon: ${phone}`;
+        document.getElementById('userInfo').innerHTML = `<strong>${data.name}</strong><br>Hodnocení: ${data.rating}/5<br>Telefon: ${phone}`;
         document.getElementById('loginResult').innerHTML = '';
         showSection('userSection');
       } else {
-        resultDiv.innerHTML = `<span class="error">${data.error || 'Chyba p?ihl??en?'}</span>`;
+        resultDiv.innerHTML = `<span class="error">${data.error || 'Chyba přihlášení'}</span>`;
       }
     })
     .catch(() => { resultDiv.innerHTML = '<span class="error">Chyba p?ipojen?</span>'; });
@@ -52,10 +52,10 @@ function submitRegistration() {
   const passwordConfirm = document.getElementById('regPasswordConfirm').value;
   const resultDiv = document.getElementById('registerResult');
 
-  if (!name || !phone || !password) return resultDiv.innerHTML = '<span class="error">Vypl?te jm?no, telefon a heslo.</span>';
-  if (password.length < 6) return resultDiv.innerHTML = '<span class="error">Heslo mus? m?t alespo? 6 znak?.</span>';
-  if (password !== passwordConfirm) return resultDiv.innerHTML = '<span class="error">Hesla se neshoduj?.</span>';
-  if (!/^\+?\d{9,15}$/.test(phone)) return resultDiv.innerHTML = '<span class="error">Telefon ve tvaru +420... (9-15 ??slic).</span>';
+  if (!name || !phone || !password) return resultDiv.innerHTML = '<span class="error">Vyplňte jméno, telefon a heslo.</span>';
+  if (password.length < 6) return resultDiv.innerHTML = '<span class="error">Heslo musí mít alespoň 6 znaků.</span>';
+  if (password !== passwordConfirm) return resultDiv.innerHTML = '<span class="error">Hesla se neshodují.</span>';
+  if (!/^\+?\d{9,15}$/.test(phone)) return resultDiv.innerHTML = '<span class="error">Telefon ve tvaru +420... (9-15 číslic).</span>';
 
   resultDiv.innerHTML = '<span class="info">Registruji...</span>';
 
