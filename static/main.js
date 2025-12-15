@@ -110,7 +110,8 @@ function renderRideCard(ride) {
     Řidič: ${ride.driver_name || ''} | Čas: ${ride.departure_time || ''}<br>
     Cena: ${ride.price_per_person || ride.price || 0} Kč | Volná místa: ${ride.available_seats || ''}
     ${ride.description ? `<br>${ride.description}` : ''}
-    ${currentUserId && ride.id ? `<div style="margin-top:6px;"><button onclick="reserveRide(${ride.id})">Rezervovat</button></div>` : ''}
+    ${currentUserId && ride.id ? `<div style="margin-top:6px;"><button onclick="reserveRide(${ride.id})">Rezervovat</button></div>` : 
+      ride.id ? `<div style="margin-top:6px;"><button onclick="alert('Pro rezervaci se musíte přihlásit')">Rezervovat (přihlášení)</button></div>` : ''}
   </div>`;
 }
 
