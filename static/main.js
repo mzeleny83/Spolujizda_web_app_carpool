@@ -175,7 +175,12 @@ function initMap() {
 function cityCoords(name) {
   const lookup = {
     'Praha': [50.0755, 14.4378], 'Brno': [49.1951, 16.6068], 'Ostrava': [49.8209, 18.2625],
-    'Plze?': [49.7384, 13.3736], 'Liberec': [50.7663, 15.0543], '?esk? Bud?jovice': [48.9745, 14.4742], 'Zl?n': [49.2265, 17.6679]
+    'Plzen': [49.7384, 13.3736], 'Plzeň': [49.7384, 13.3736], 'Liberec': [50.7663, 15.0543], 
+    'Ceske Budejovice': [48.9745, 14.4742], 'České Budějovice': [48.9745, 14.4742],
+    'Zlin': [49.2265, 17.6679], 'Zlín': [49.2265, 17.6679], 'Olomouc': [49.5938, 17.2509],
+    'Hradec Kralove': [50.2103, 15.8327], 'Hradec Králové': [50.2103, 15.8327],
+    'Pardubice': [50.0343, 15.7812], 'Jihlava': [49.3961, 15.5910], 'Karlovy Vary': [50.2329, 12.8713],
+    'Usti nad Labem': [50.6607, 14.0323], 'Ústí nad Labem': [50.6607, 14.0323]
   };
   const entry = Object.entries(lookup).find(([city]) => (name || '').toLowerCase().includes(city.toLowerCase()));
   return entry ? entry[1] : null;
