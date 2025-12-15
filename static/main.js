@@ -106,9 +106,9 @@ function offerRide() {
 
 function renderRideCard(ride) {
   return `<div class="ride">
-    <strong>${ride.from_location} ? ${ride.to_location}</strong><br>
-    ?idi?: ${ride.driver_name || ''} | ?as: ${ride.departure_time || ''}<br>
-    Cena: ${ride.price_per_person || ride.price || 0} K? | Voln? m?sta: ${ride.available_seats || ''}
+    <strong>${ride.from_location} → ${ride.to_location}</strong><br>
+    Řidič: ${ride.driver_name || ''} | Čas: ${ride.departure_time || ''}<br>
+    Cena: ${ride.price_per_person || ride.price || 0} Kč | Volná místa: ${ride.available_seats || ''}
     ${ride.description ? `<br>${ride.description}` : ''}
     ${currentUserId && ride.id ? `<div style="margin-top:6px;"><button onclick="reserveRide(${ride.id})">Rezervovat</button></div>` : ''}
   </div>`;
@@ -123,31 +123,31 @@ function searchRides() {
   const url = params.toString() ? `/api/rides/search?${params}` : '/api/rides/search';
   const container = document.getElementById('searchResults');
   fetch(url).then(r => r.json()).then(rides => {
-    container.innerHTML = rides.length ? rides.map(renderRideCard).join('') : '<p>??dn? j?zdy.</p>';
-  }).catch(() => container.innerHTML = '<p class="error">Chyba na?ten?.</p>');
+    container.innerHTML = rides.length ? rides.map(renderRideCard).join('') : '<p>Žádné jízdy.</p>';
+  }).catch(() => container.innerHTML = '<p class="error">Chyba načtení.</p>');
 }
 
 function showAllRides() {
   fetch('/api/rides/search').then(r => r.json()).then(rides => {
-    document.getElementById('allRidesList').innerHTML = rides.length ? rides.map(renderRideCard).join('') : '<p>??dn? j?zdy.</p>';
+    document.getElementById('allRidesList').innerHTML = rides.length ? rides.map(renderRideCard).join('') : '<p>Žádné jízdy.</p>';
     showSection('allRidesSection');
-  }).catch(() => document.getElementById('allRidesList').innerHTML = '<p class="error">Chyba na?ten?.</p>');
+  }).catch(() => document.getElementById('allRidesList').innerHTML = '<p class="error">Chyba načtení.</p>');
 }
 
 function showMyRides() {
   if (!currentUserId) return;
   fetch(`/api/rides/my?user_id=${currentUserId}`).then(r => r.json()).then(rides => {
-    document.getElementById('myOffers').innerHTML = rides.length ? rides.map(renderRideCard).join('') : '<p>Nem?te ??dn? j?zdy.</p>';
+    document.getElementById('myOffers').innerHTML = rides.length ? rides.map(renderRideCard).join('') : '<p>Nemáte žádné jízdy.</p>';
     showSection('myRidesSection');
-  }).catch(() => document.getElementById('myOffers').innerHTML = '<p class="error">Chyba na?ten?.</p>');
+  }).catch(() => document.getElementById('myOffers').innerHTML = '<p class="error">Chyba načtení.</p>');
 }
 
 function showMyReservations() {
   if (!currentUserId) return;
   fetch(`/api/reservations?user_id=${currentUserId}`).then(r => r.json()).then(res => {
-    document.getElementById('myBookings').innerHTML = res.length ? res.map(renderRideCard).join('') : '<p>Nem?te rezervace.</p>';
+    document.getElementById('myBookings').innerHTML = res.length ? res.map(renderRideCard).join('') : '<p>Nemáte rezervace.</p>';
     showSection('myReservationsSection');
-  }).catch(() => document.getElementById('myBookings').innerHTML = '<p class="error">Chyba na?ten?.</p>');
+  }).catch(() => document.getElementById('myBookings').innerHTML = '<p class="error">Chyba načtení.</p>');
 }
 
 function reserveRide(id) {
