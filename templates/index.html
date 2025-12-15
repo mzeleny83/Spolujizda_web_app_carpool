@@ -58,12 +58,24 @@
       <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">spolujízda Praha – Brno</span>
     </div>
 
-    <div class="section" id="loginSection">
+    <div class="section" id="guestSection">
+      <h3>Prohlédnout aplikaci</h3>
+      <p>Prozkoumejte funkce aplikace bez přihlášení:</p>
+      <div class="nav-buttons">
+        <button onclick="showAllRides()">Všechny jízdy</button>
+        <button onclick="showSection('mapSection')">Mapa jízd</button>
+        <button onclick="showSection('loginSection')">Přihlásit se</button>
+        <button class="secondary" onclick="showSection('registerSection')">Registrovat se</button>
+      </div>
+    </div>
+
+    <div class="section hidden" id="loginSection">
       <h3>Přihlášení</h3>
       <input type="tel" id="loginPhone" placeholder="Telefon (+420...)" value="">
       <input type="password" id="loginPassword" placeholder="Heslo">
       <button onclick="loginUser()">Přihlásit se</button>
       <button class="secondary" onclick="showSection('registerSection')">Registrovat se</button>
+      <button class="secondary" onclick="showSection('guestSection')">Zpět na prohlížení</button>
       <div id="loginResult" style="margin-top:8px;"></div>
     </div>
 
@@ -76,6 +88,7 @@
       <input type="password" id="regPasswordConfirm" placeholder="Potvrzení hesla">
       <button onclick="submitRegistration()">Vytvořit účet</button>
       <button class="secondary" onclick="showSection('loginSection')">Zpět na přihlášení</button>
+      <button class="secondary" onclick="showSection('guestSection')">Zpět na prohlížení</button>
       <div id="registerResult" style="margin-top:8px;"></div>
     </div>
 
@@ -128,14 +141,14 @@
 
     <div class="section hidden" id="allRidesSection">
       <h3>Všechny jízdy</h3>
-      <button class="secondary" onclick="showSection('userSection')">Zpět</button>
+      <button class="secondary" onclick="currentUserId ? showSection('userSection') : showSection('guestSection')">Zpět</button>
       <div id="allRidesList"></div>
     </div>
 
     <div class="section hidden" id="mapSection">
       <h3>Mapa jízd</h3>
       <button onclick="loadMapRides()">Načíst jízdy</button>
-      <button class="secondary" onclick="showSection('userSection')">Zpět</button>
+      <button class="secondary" onclick="currentUserId ? showSection('userSection') : showSection('guestSection')">Zpět</button>
       <div id="map"></div>
       <div id="mapInfo" style="margin-top:10px;"></div>
     </div>

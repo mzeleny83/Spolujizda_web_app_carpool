@@ -1,7 +1,7 @@
 let currentUserId = null;
 
 function showSection(sectionId) {
-  const sections = ['loginSection','registerSection','userSection','offerRideSection','searchRideSection','myRidesSection','myReservationsSection','allRidesSection','mapSection'];
+  const sections = ['guestSection','loginSection','registerSection','userSection','offerRideSection','searchRideSection','myRidesSection','myReservationsSection','allRidesSection','mapSection'];
   sections.forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById(sectionId).classList.remove('hidden');
   if (sectionId === 'mapSection' && typeof initMap === 'function') {
@@ -41,7 +41,7 @@ function loginUser() {
 
 function logoutUser() {
   currentUserId = null;
-  showSection('loginSection');
+  showSection('guestSection');
 }
 
 function submitRegistration() {
@@ -71,7 +71,7 @@ function submitRegistration() {
         document.getElementById('loginPassword').value = password;
         document.getElementById('loginResult').innerHTML = '<span class="success">??et vytvo?en, p?ihlaste se.</span>';
         resultDiv.innerHTML = '';
-        showSection('loginSection');
+        showSection('guestSection');
       } else {
         resultDiv.innerHTML = `<span class="error">${body.error || 'Chyba registrace'}</span>`;
       }
