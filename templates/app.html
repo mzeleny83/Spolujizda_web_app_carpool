@@ -185,13 +185,14 @@
                 document.getElementById('usersBtn').style.display = 'inline-block';
                 document.getElementById('logoutBtn').style.display = 'inline-block';
             } else {
-                document.getElementById('userInfo').style.display = 'none';
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('userInfo').innerHTML = '<div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; border: 1px solid #ffeaa7;">📱 <strong>Demo režim</strong> - Prohlížejte aplikaci! Pro plnou funkcionalitu se <a href="#" onclick="showSection(\'login\')" style="color: #007bff;">přihlaste</a> nebo <a href="#" onclick="showSection(\'register\')" style="color: #007bff;">zaregistrujte</a>.</div>';
                 document.getElementById('loginBtn').style.display = 'inline-block';
                 document.getElementById('registerBtn').style.display = 'inline-block';
-                document.getElementById('offerBtn').style.display = 'none';
-                document.getElementById('reservationsBtn').style.display = 'none';
-                document.getElementById('myRidesBtn').style.display = 'none';
-                document.getElementById('usersBtn').style.display = 'none';
+                document.getElementById('offerBtn').style.display = 'inline-block';
+                document.getElementById('reservationsBtn').style.display = 'inline-block';
+                document.getElementById('myRidesBtn').style.display = 'inline-block';
+                document.getElementById('usersBtn').style.display = 'inline-block';
                 document.getElementById('logoutBtn').style.display = 'none';
             }
         }

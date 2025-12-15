@@ -112,6 +112,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () => Navigator.pushNamed(context, '/register'),
                 child: const Text('Registrovat se'),
               ),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: () => Navigator.pushReplacementNamed(context, '/guest-home'),
+                child: const Text('Prozkoumat bez přihlášení'),
+              ),
             ],
           ),
         ),

@@ -24,13 +24,15 @@ class _MatchesScreenState extends State<MatchesScreen> {
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 16, color: Colors.grey.shade600),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               '$label: $display',
-              maxLines: 1,
+              maxLines: 3,
+              softWrap: true,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
             ),
@@ -48,10 +50,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
   Future<void> _fetchRides() async {
     try {
-      final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, String?>?;
+      final arguments =
+          ModalRoute.of(context)!.settings.arguments as Map<String, String?>?;
       final from = arguments?['from'] ?? '';
       final to = arguments?['to'] ?? '';
-      
+
       final query = <String, String>{};
       if (from.isNotEmpty) {
         query['from'] = from;
@@ -59,7 +62,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       if (to.isNotEmpty) {
         query['to'] = to;
       }
-      
+
       final response = await http.get(
         ApiConfig.uri('/api/rides/search', query: query.isEmpty ? null : query),
       );
@@ -67,7 +70,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
-            _rides = data;
+          _rides = data;
           _isLoading = false;
         });
       } else {
@@ -96,7 +99,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getInt('user_id') ?? 1;
-      
+
       final response = await http.post(
         ApiConfig.uri('/api/rides/reserve'),
         headers: {'Content-Type': 'application/json'},
@@ -106,7 +109,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           'seats_reserved': 1,
         }),
       );
-      
+
       if (response.statusCode == 201) {
         setState(() {
           _reservedRides.add(rideId);
@@ -130,13 +133,110 @@ class _MatchesScreenState extends State<MatchesScreen> {
     }
   }
 
+  void _showRideDetails(Map<String, dynamic> ride) {
+    final isReserved = _reservedRides.contains(ride['id']);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.directions_car_filled),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        ride['title'] ?? 'Detail j��zdy',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _addressRow(
+                    'Odkud', ride['from_location'], Icons.location_on_outlined),
+                _addressRow('Kam', ride['to_location'], Icons.flag_outlined),
+                const SizedBox(height: 8),
+                Text('��as odjezdu: ${ride['departure_time'] ?? '-'}'),
+                Text('��idi��: ${ride['driver_name'] ?? 'Nezn��m��'}'),
+                Text('Telefon: ${ride['driver_phone'] ?? '+420721745084'}'),
+                Text('Cena za osobu: ${ride['price_per_person'] ?? '-'} K��'),
+                Text('Voln�� m��sta: ${ride['available_seats'] ?? '-'}'),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: isReserved
+                            ? null
+                            : () {
+                                Navigator.pop(context);
+                                _reserveRide(ride['id']);
+                              },
+                        icon: const Icon(Icons.event_available),
+                        label: Text(
+                            isReserved ? 'U�� je rezervov��no' : 'Rezervovat'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, '/chat', arguments: {
+                            'contact_name': ride['driver_name'],
+                            'contact_phone':
+                                ride['driver_phone'] ?? '+420721745084',
+                            'ride_info':
+                                '${ride['from_location']} -> ${ride['to_location']}'
+                          });
+                        },
+                        icon: const Icon(Icons.chat),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        label: const Text('Chat'),
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Zav�et'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildRatingStars(double rating) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (index) {
         return Icon(
-          index < rating.floor() ? Icons.star : 
-          index < rating ? Icons.star_half : Icons.star_border,
+          index < rating.floor()
+              ? Icons.star
+              : index < rating
+                  ? Icons.star_half
+                  : Icons.star_border,
           color: Colors.amber,
           size: 20,
         );
@@ -164,6 +264,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
         return Card(
           margin: const EdgeInsets.all(8.0),
           child: ListTile(
+            onTap: () => _showRideDetails(ride),
             leading: const CircleAvatar(
               child: Icon(Icons.person),
             ),
@@ -173,8 +274,8 @@ class _MatchesScreenState extends State<MatchesScreen> {
               children: [
                 _buildRatingStars(ride['driver_rating']?.toDouble() ?? 5.0),
                 const SizedBox(height: 4),
-                _addressRow('Odkud', ride['from_location'],
-                    Icons.location_on_outlined),
+                _addressRow(
+                    'Odkud', ride['from_location'], Icons.location_on_outlined),
                 _addressRow('Kam', ride['to_location'], Icons.flag_outlined),
                 const SizedBox(height: 2),
                 Text('Čas: ${ride['departure_time']}'),
@@ -214,7 +315,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                 'contact_phone':
                                     ride['driver_phone'] ?? '+420721745084',
                                 'ride_info':
-                                    '${ride['from_location']} → ${ride['to_location']}'
+                                    '${ride['from_location']} -> ${ride['to_location']}'
                               });
                             },
                             style: ElevatedButton.styleFrom(

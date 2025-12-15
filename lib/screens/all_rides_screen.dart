@@ -112,9 +112,98 @@ class _AllRidesScreenState extends State<AllRidesScreen> {
     );
   }
 
+  Widget _buildSeatBadge(int seatsAvailable, bool isMyRide) {
+    final color = isMyRide ? Colors.indigo : Colors.teal;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CircleAvatar(
+          backgroundColor: color,
+          radius: 28,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$seatsAvailable',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'volno',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons({
+    required Map<String, dynamic> ride,
+    required int? rideId,
+    required bool isMyRide,
+    required bool isReserved,
+  }) {
+    if (isMyRide) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _deleteRide(rideId ?? 0, ride['title']),
+          icon: const Icon(Icons.delete_outline),
+          label: const Text('Smazat'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!isReserved)
+          ElevatedButton.icon(
+            onPressed: () => _reserveRide(ride),
+            icon: const Icon(Icons.event_available),
+            label: const Text('Rezervovat'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              foregroundColor: Colors.white,
+            ),
+          )
+        else
+          Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: const Chip(
+              label: Text('Rezervovano'),
+              backgroundColor: Colors.green,
+              labelStyle: TextStyle(color: Colors.white),
+            ),
+          ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => _openChat(ride),
+          icon: const Icon(Icons.chat),
+          label: const Text('Chat'),
+        ),
+      ],
+    );
+  }
+
   Widget _addressRow(String label, String? value, IconData icon) {
     final display =
-        (value ?? '').trim().isEmpty ? 'Neznámá adresa' : value!.trim();
+        (value ?? '').trim().isEmpty ? 'Neznama adresa' : value!.trim();
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Row(
@@ -125,12 +214,13 @@ class _AllRidesScreenState extends State<AllRidesScreen> {
           Expanded(
             child: Text(
               '$label: $display',
-              maxLines: 1,
+              maxLines: 4,
+              softWrap: true,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 color: Colors.grey.shade800,
-                height: 1.2,
+                height: 1.3,
               ),
             ),
           ),
@@ -211,122 +301,80 @@ class _AllRidesScreenState extends State<AllRidesScreen> {
               itemBuilder: (context, index) {
                 final ride = rides[index];
                 final rideId = (ride['id'] as num?)?.toInt();
+                final seatsAvailable = (ride['seats'] as num?)?.toInt() ??
+                    (ride['available_seats'] as num?)?.toInt() ??
+                    0;
                 final isMyRide = ride['isMyRide'] == true;
                 final isReserved =
                     rideId != null && _reservedRides.contains(rideId);
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: isMyRide ? Colors.indigo : Colors.teal,
-                      child: Text(
-                        '${ride['seats']}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      ride['title'],
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Column(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 4),
-                        _addressRow('Odkud', ride['from_location'],
-                            Icons.location_on_outlined),
-                        _addressRow('Kam', ride['to_location'],
-                            Icons.flag_outlined),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Řidič: ${ride['driver']}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          'Čas: ${ride['time']}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          'Volná místa: ${ride['seats']} • ${ride['price']} Kč',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (ride['note'] != null &&
-                            ride['note'].toString().isNotEmpty)
-                          Text(
-                            'Poznámka: ${ride['note']}',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        if (isMyRide)
-                          const Text(
-                            '✅ Vaše jízda',
-                            style: TextStyle(
-                              color: Colors.indigo,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                      ],
-                    ),
-                    trailing: SizedBox(
-                      width: 140,
-                      child: isMyRide
-                          ? ElevatedButton(
-                              onPressed: () =>
-                                  _deleteRide(rideId ?? 0, ride['title']),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                              ),
-                              child: const Text(
-                                'Smazat',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            )
-                          : Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: [
-                                if (!isReserved)
-                                  SizedBox(
-                                    width: 130,
-                                    child: ElevatedButton(
-                                      onPressed: () => _reserveRide(ride),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.teal,
-                                        foregroundColor: Colors.white,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSeatBadge(seatsAvailable, isMyRide),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    ride['title'],
+                                    softWrap: true,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  _addressRow(
+                                    'Odkud',
+                                    ride['from_location'],
+                                    Icons.location_on_outlined,
+                                  ),
+                                  _addressRow(
+                                    'Kam',
+                                    ride['to_location'],
+                                    Icons.flag_outlined,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text('Ridic: ${ride['driver']}'),
+                                  Text('Cas: ${ride['time']}'),
+                                  Text(
+                                    'Volna mista: $seatsAvailable | ${ride['price']} Kc',
+                                  ),
+                                  if (ride['note'] != null &&
+                                      ride['note'].toString().isNotEmpty)
+                                    Text('Poznamka: ${ride['note']}'),
+                                  if (isMyRide)
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'Toto je vase jizda',
+                                        style: TextStyle(
+                                          color: Colors.indigo,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                      child: const Text('Rezervovat'),
                                     ),
-                                  )
-                                else
-                                  const Chip(
-                                    label: Text('Rezervováno'),
-                                    backgroundColor: Colors.green,
-                                    labelStyle:
-                                        TextStyle(color: Colors.white),
-                                  ),
-                                SizedBox(
-                                  width: 130,
-                                  child: ElevatedButton(
-                                    onPressed: () => _openChat(ride),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue,
-                                    ),
-                                    child: const Text(
-                                      'Chat',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildActionButtons(
+                          ride: ride,
+                          rideId: rideId,
+                          isMyRide: isMyRide,
+                          isReserved: isReserved,
+                        ),
+                      ],
                     ),
                   ),
                 );

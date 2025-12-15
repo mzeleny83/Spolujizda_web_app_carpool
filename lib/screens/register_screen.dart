@@ -118,6 +118,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       : const Text('Registrovat se'),
                   ),
                 ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                  child: const Text('Už máte účet? Přihlaste se'),
+                ),
+                OutlinedButton(
+                  onPressed: () => Navigator.pushReplacementNamed(context, '/guest-home'),
+                  child: const Text('Prozkoumat bez registrace'),
+                ),
               ],
             ),
           ),

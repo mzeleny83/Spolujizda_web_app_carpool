@@ -207,7 +207,7 @@ class RideService {
       'driver_id': ride['driver_id'],
       'driver': ride['driver_name'] ?? 'Neznámý řidič',
       'driver_phone': ride['driver_phone'] ?? '+420721745084',
-      'title': '${from.trim()} → ${to.trim()}',
+      'title': '${from.trim()} -> ${to.trim()}',
       'from_location': from,
       'to_location': to,
       'time': _formatDateTime(departure),
