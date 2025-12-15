@@ -63,10 +63,12 @@
       <p>Prozkoumejte funkce aplikace bez přihlášení:</p>
       <div class="nav-buttons">
         <button onclick="showAllRides()">Všechny jízdy</button>
-        <button onclick="showSection('mapSection')">Mapa jízd</button>
         <button onclick="showSection('loginSection')">Přihlásit se</button>
         <button class="secondary" onclick="showSection('registerSection')">Registrovat se</button>
       </div>
+      <h3>Mapa jízd</h3>
+      <div id="map"></div>
+      <div id="mapInfo" style="margin-top:10px;"></div>
     </div>
 
     <div class="section hidden" id="loginSection">

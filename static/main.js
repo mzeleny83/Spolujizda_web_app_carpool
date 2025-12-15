@@ -4,7 +4,7 @@ function showSection(sectionId) {
   const sections = ['guestSection','loginSection','registerSection','userSection','offerRideSection','searchRideSection','myRidesSection','myReservationsSection','allRidesSection','mapSection'];
   sections.forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById(sectionId).classList.remove('hidden');
-  if (sectionId === 'mapSection' && typeof initMap === 'function') {
+  if ((sectionId === 'mapSection' || sectionId === 'guestSection') && typeof initMap === 'function') {
     initMap();
     loadMapRides();
   }
