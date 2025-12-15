@@ -206,8 +206,8 @@ function loadMapRides() {
         markers.push(line);
       }
     });
-    document.getElementById('mapInfo').innerText = `Na?teno ${rides.length} j?zd.`;
-  }).catch(() => document.getElementById('mapInfo').innerText = 'Chyba na?ten? j?zd.');
+    document.getElementById('mapInfo').innerText = `Načteno ${rides.length} jízd.`;
+  }).catch(() => document.getElementById('mapInfo').innerText = 'Chyba načtení jízd.');
 }
 
 showSection('guestSection');
