@@ -205,4 +205,4 @@ function loadMapRides() {
   }).catch(() => document.getElementById('mapInfo').innerText = 'Chyba na?ten? j?zd.');
 }
 
-showSection('loginSection');
+showSection('guestSection');
