@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spoluj?zda | Sveztese.cz ? chci se sv?zt nebo svezu v?s</title>
-  <meta name="description" content="Spoluj?zda po ?R: chci se sv?zt nebo svezu v?s ? rychl? hled?n? a nab?dka j?zd Praha, Brno, Ostrava.">
-  <meta name="keywords" content="spoluj?zda, chci se sv?zt, svezu v?s, spoluj?zda Praha Brno, sd?len? auta">
-  <meta property="og:title" content="Spoluj?zda | Sveztese.cz">
-  <meta property="og:description" content="Najd?te j?zdu nebo nab?dn?te voln? m?sta.">
+  <title>Spolujízda | Sveztese.cz – chci se svézt nebo svezu vás</title>
+  <meta name="description" content="Spolujízda po ČR: chci se svézt nebo svezu vás – rychlé hledání a nabídka jízd Praha, Brno, Ostrava.">
+  <meta name="keywords" content="spolujízda, chci se svézt, svezu vás, spolujízda Praha Brno, sdílení auta">
+  <meta property="og:title" content="Spolujízda | Sveztese.cz">
+  <meta property="og:description" content="Najděte jízdu nebo nabídněte volná místa.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.sveztese.cz/">
   <meta property="og:image" content="https://www.sveztese.cz/static/icons/Icon-512.png">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Spoluj?zda | Sveztese.cz">
-  <meta name="twitter:description" content="Chci se sv?zt nebo svezu v?s.">
+  <meta name="twitter:title" content="Spolujízda | Sveztese.cz">
+  <meta name="twitter:description" content="Chci se svézt nebo svezu vás.">
   <link rel="icon" href="/static/favicon.ico">
   <link rel="canonical" href="https://www.sveztese.cz/">
   <link rel="alternate" href="https://www.sveztese.cz/" hreflang="cs-cz">
@@ -50,73 +50,73 @@
 </head>
 <body>
   <div class="container">
-    <h1>Spoluj?zda: chci se sv?zt nebo svezu v?s</h1>
-    <p style="text-align:center;margin:6px 0 14px;">Rychl? hled?n? i nab?dka j?zd po ?R ? Praha, Brno, Ostrava, Plze?.</p>
+    <h1>Spolujízda: chci se svézt nebo svezu vás</h1>
+    <p style="text-align:center;margin:6px 0 14px;">Rychlé hledání i nabídka jízd po ČR – Praha, Brno, Ostrava, Plzeň.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px;">
-      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">chci se sv?zt</span>
-      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">svezu v?s</span>
-      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">spoluj?zda Praha ? Brno</span>
+      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">chci se svézt</span>
+      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">svezu vás</span>
+      <span style="background:#eef2ff;color:#0f3b8c;padding:6px 10px;border-radius:8px;font-size:13px;">spolujízda Praha – Brno</span>
     </div>
 
     <div class="section" id="loginSection">
-      <h3>P?ihl??en?</h3>
+      <h3>Přihlášení</h3>
       <input type="tel" id="loginPhone" placeholder="Telefon (+420...)" value="">
       <input type="password" id="loginPassword" placeholder="Heslo">
-      <button onclick="loginUser()">P?ihl?sit se</button>
+      <button onclick="loginUser()">Přihlásit se</button>
       <button class="secondary" onclick="showSection('registerSection')">Registrovat se</button>
       <div id="loginResult" style="margin-top:8px;"></div>
     </div>
 
     <div class="section hidden" id="registerSection">
       <h3>Registrace</h3>
-      <input type="text" id="regName" placeholder="Jm?no a p??jmen?">
+      <input type="text" id="regName" placeholder="Jméno a příjmení">
       <input type="tel" id="regPhone" placeholder="Telefon (+420...)">
-      <input type="email" id="regEmail" placeholder="Email (voliteln?)">
-      <input type="password" id="regPassword" placeholder="Heslo (min. 6 znak?)">
-      <input type="password" id="regPasswordConfirm" placeholder="Potvrzen? hesla">
-      <button onclick="submitRegistration()">Vytvo?it ??et</button>
-      <button class="secondary" onclick="showSection('loginSection')">Zp?t na p?ihl??en?</button>
+      <input type="email" id="regEmail" placeholder="Email (volitelný)">
+      <input type="password" id="regPassword" placeholder="Heslo (min. 6 znaků)">
+      <input type="password" id="regPasswordConfirm" placeholder="Potvrzení hesla">
+      <button onclick="submitRegistration()">Vytvořit účet</button>
+      <button class="secondary" onclick="showSection('loginSection')">Zpět na přihlášení</button>
       <div id="registerResult" style="margin-top:8px;"></div>
     </div>
 
     <div class="section hidden" id="userSection">
-      <h3>M?j profil</h3>
+      <h3>Můj profil</h3>
       <div id="userInfo"></div>
       <div class="nav-buttons">
-        <button onclick="showSection('offerRideSection')">Nab?dnout j?zdu</button>
-        <button onclick="showSection('searchRideSection')">Hledat j?zdu</button>
-        <button onclick="showMyRides()">Moje j?zdy</button>
+        <button onclick="showSection('offerRideSection')">Nabídnout jízdu</button>
+        <button onclick="showSection('searchRideSection')">Hledat jízdu</button>
+        <button onclick="showMyRides()">Moje jízdy</button>
         <button onclick="showMyReservations()">Moje rezervace</button>
-        <button onclick="showAllRides()">V?echny j?zdy</button>
-        <button class="secondary" onclick="logoutUser()">Odhl?sit se</button>
+        <button onclick="showAllRides()">Všechny jízdy</button>
+        <button class="secondary" onclick="logoutUser()">Odhlásit se</button>
       </div>
     </div>
 
     <div class="section hidden" id="offerRideSection">
-      <h3>Nab?dnout j?zdu</h3>
-      <input type="text" id="offerFrom" placeholder="Odkud (m?sto, ulice)">
-      <input type="text" id="offerTo" placeholder="Kam (m?sto, ulice)">
+      <h3>Nabídnout jízdu</h3>
+      <input type="text" id="offerFrom" placeholder="Odkud (město, ulice)">
+      <input type="text" id="offerTo" placeholder="Kam (město, ulice)">
       <input type="datetime-local" id="offerDateTime">
-      <input type="number" id="offerSeats" placeholder="Po?et voln?ch m?st" min="1" max="8" value="3">
-      <input type="number" id="offerPrice" placeholder="Cena za osobu (K?)" min="0" value="200">
-      <textarea id="offerNote" placeholder="Pozn?mka (voliteln?)" rows="3"></textarea>
-      <button onclick="offerRide()">Nab?dnout j?zdu</button>
-      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <input type="number" id="offerSeats" placeholder="Počet volných míst" min="1" max="8" value="3">
+      <input type="number" id="offerPrice" placeholder="Cena za osobu (Kč)" min="0" value="200">
+      <textarea id="offerNote" placeholder="Poznámka (volitelná)" rows="3"></textarea>
+      <button onclick="offerRide()">Nabídnout jízdu</button>
+      <button class="secondary" onclick="showSection('userSection')">Zpět</button>
       <div id="offerResult" style="margin-top:8px;"></div>
     </div>
 
     <div class="section hidden" id="searchRideSection">
-      <h3>Hledat j?zdu</h3>
+      <h3>Hledat jízdu</h3>
       <input type="text" id="searchFrom" placeholder="Odkud">
       <input type="text" id="searchTo" placeholder="Kam">
       <button onclick="searchRides()">Hledat</button>
-      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <button class="secondary" onclick="showSection('userSection')">Zpět</button>
       <div id="searchResults" style="margin-top:8px;"></div>
     </div>
 
     <div class="section hidden" id="myRidesSection">
-      <h3>Moje j?zdy</h3>
-      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <h3>Moje jízdy</h3>
+      <button class="secondary" onclick="showSection('userSection')">Zpět</button>
       <div id="myOffers"></div>
     </div>
 
@@ -127,15 +127,15 @@
     </div>
 
     <div class="section hidden" id="allRidesSection">
-      <h3>V?echny j?zdy</h3>
-      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <h3>Všechny jízdy</h3>
+      <button class="secondary" onclick="showSection('userSection')">Zpět</button>
       <div id="allRidesList"></div>
     </div>
 
     <div class="section hidden" id="mapSection">
-      <h3>Mapa j?zd</h3>
-      <button onclick="loadMapRides()">Na??st j?zdy</button>
-      <button class="secondary" onclick="showSection('userSection')">Zp?t</button>
+      <h3>Mapa jízd</h3>
+      <button onclick="loadMapRides()">Načíst jízdy</button>
+      <button class="secondary" onclick="showSection('userSection')">Zpět</button>
       <div id="map"></div>
       <div id="mapInfo" style="margin-top:10px;"></div>
     </div>
